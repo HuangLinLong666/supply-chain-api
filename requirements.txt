@@ -1,0 +1,8 @@
+neo4j>=5.15,<7
+python-dotenv>=1.0
+fastapi>=0.115
+uvicorn>=0.30
+pandas>=2.0
+graphdatascience>=1.12
+jupyter>=1.0
+websockets>=12.0

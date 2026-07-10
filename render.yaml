@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: supply-chain-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AURA_NEO4J_URI
+        sync: false
+      - key: AURA_NEO4J_USERNAME
+        sync: false
+      - key: AURA_NEO4J_PASSWORD
+        sync: false
+      - key: AURA_NEO4J_DATABASE
+        sync: false
+      - key: API_CORS_ORIGINS
+        sync: false

@@ -1,0 +1,8 @@
+__pycache__/
+.env
+data-src/
+archive/
+scratch/
+.idea/
+.ipynb_checkpoints/
+.DS_Store
