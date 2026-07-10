@@ -24,7 +24,7 @@ class Neo4jSettings:
     uri: str
     username: str
     password: str
-    database: str
+    database: str | None
 
 
 _driver: Any | None = None
@@ -35,7 +35,7 @@ def get_settings() -> Neo4jSettings:
     uri = os.getenv("AURA_NEO4J_URI") or os.getenv("NEO4J_URI", "")
     username = os.getenv("AURA_NEO4J_USERNAME") or os.getenv("NEO4J_USER", "neo4j")
     password = os.getenv("AURA_NEO4J_PASSWORD") or os.getenv("NEO4J_PASSWORD", "")
-    database = os.getenv("AURA_NEO4J_DATABASE") or os.getenv("NEO4J_DATABASE", "neo4j")
+    database = os.getenv("AURA_NEO4J_DATABASE") or os.getenv("NEO4J_DATABASE") or None
     if not uri:
         raise RuntimeError("Missing AURA_NEO4J_URI in .env")
     if not password:
@@ -69,7 +69,8 @@ def run_query(query: str, parameters: dict[str, Any] | None = None) -> list[dict
     """Run a read query against AuraDB and return JSON-friendly dictionaries."""
     settings = get_settings()
     try:
-        with get_driver().session(database=settings.database) as session:
+        session_options = {"database": settings.database} if settings.database else {}
+        with get_driver().session(**session_options) as session:
             result = session.run(query, parameters or {})
             return [to_jsonable(record.data()) for record in result]
     except AuthError as exc:

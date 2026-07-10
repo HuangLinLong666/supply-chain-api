@@ -213,6 +213,42 @@ curl http://localhost:8000/health/aura
 curl http://localhost:8000/api/graph/summary
 ```
 
+### 风险、成本与路径推荐接口
+
+```text
+GET /api/risk/segments
+GET /api/cost/segments
+GET /api/routes/recommendations
+GET /api/routes/nodes
+GET /api/routes/optimize
+```
+
+调用动态路径优化前，先通过节点接口取得稳定的 `node_id`：
+
+```bash
+curl "http://localhost:8000/api/routes/nodes?search=Port&limit=20"
+```
+
+然后把返回的起点和终点 `node_id` 传给优化接口：
+
+```bash
+curl "http://localhost:8000/api/routes/optimize?origin_id=<起点ID>&destination_id=<终点ID>&objective=min_cost"
+curl "http://localhost:8000/api/routes/optimize?origin_id=<起点ID>&destination_id=<终点ID>&objective=min_risk"
+curl "http://localhost:8000/api/routes/optimize?origin_id=<起点ID>&destination_id=<终点ID>&objective=balanced&risk_weight=0.6"
+```
+
+`objective` 的含义：
+
+- `min_cost`：累计运输成本最低。
+- `min_risk`：累计综合风险权重最低。
+- `balanced`：按 `risk_weight` 平衡标准化风险和标准化成本。
+
+已有 `Route-HAS_SEGMENT->RouteSegment` 完整路线可直接排名：
+
+```bash
+curl "http://localhost:8000/api/routes/recommendations?objective=balanced&risk_weight=0.5&limit=10"
+```
+
 本地都正常后，再部署 Render。
 
 ## 8. Render 部署方式一：网页配置

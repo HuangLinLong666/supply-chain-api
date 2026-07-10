@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.route_optimizer import shortest_path
 from database.neo4j_client import close_driver, get_settings, run_query, verify_connectivity
 
 
@@ -26,7 +27,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="Supply Chain Graph API",
     description="Read-only API for querying the Neo4j AuraDB supply-chain graph.",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -177,3 +178,191 @@ def risk_overview(limit: int = 25) -> dict[str, Any]:
         "ports": ports,
         "route_segments": route_segments,
     }
+
+
+@app.get(
+    "/api/risk/segments",
+    tags=["Risk & Cost"],
+    summary="Rank route segments by comprehensive risk",
+)
+def ranked_risk_segments(
+    limit: int = Query(25, ge=1, le=100),
+    minimum_risk: float = Query(0.0, ge=0.0, le=1.0),
+) -> dict[str, Any]:
+    segments = safe_query(
+        """
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
+        MATCH (segment)-[:TO_NODE]->(toNode)
+        WITH segment, fromNode, toNode,
+             coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.0) AS riskScore
+        WHERE riskScore >= $minimum_risk
+        RETURN
+          coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
+          coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS origin,
+          coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS destination,
+          coalesce(segment.mode, segment.routeMode) AS mode,
+          riskScore AS comprehensive_risk_score,
+          segment.risk_breakdown AS risk_breakdown,
+          segment.risk_explanation AS risk_explanation,
+          coalesce(segment.confidence_score, 0.0) AS confidence_score,
+          coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS estimated_cost_usd
+        ORDER BY comprehensive_risk_score DESC
+        LIMIT $limit
+        """,
+        {"minimum_risk": minimum_risk, "limit": limit},
+    )
+    return {"count": len(segments), "segments": segments}
+
+
+@app.get(
+    "/api/cost/segments",
+    tags=["Risk & Cost"],
+    summary="Rank route segments by estimated cost",
+)
+def ranked_cost_segments(
+    order: Literal["asc", "desc"] = Query("asc", description="asc returns the lowest-cost segments first"),
+    limit: int = Query(25, ge=1, le=100),
+) -> dict[str, Any]:
+    order_clause = "ASC" if order == "asc" else "DESC"
+    segments = safe_query(
+        f"""
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
+        MATCH (segment)-[:TO_NODE]->(toNode)
+        RETURN
+          coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
+          coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS origin,
+          coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS destination,
+          coalesce(segment.mode, segment.routeMode) AS mode,
+          coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS estimated_cost_usd,
+          coalesce(segment.costScore, 0.0) AS normalized_cost_score,
+          coalesce(segment.costRiskScore, 0.0) AS cost_risk_score,
+          coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS estimated_time_days
+        ORDER BY estimated_cost_usd {order_clause}
+        LIMIT $limit
+        """,
+        {"limit": limit},
+    )
+    return {"count": len(segments), "order": order, "segments": segments}
+
+
+@app.get(
+    "/api/routes/nodes",
+    tags=["Route Optimization"],
+    summary="List selectable route origin and destination nodes",
+)
+def route_nodes(search: str | None = Query(None), limit: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
+    nodes = safe_query(
+        """
+        MATCH (segment:RouteSegment)-[:FROM_NODE|TO_NODE]->(node)
+        WITH DISTINCT node
+        WITH node, coalesce(node.name, node.code, node.id, elementId(node)) AS name
+        WHERE $search IS NULL OR toLower(toString(name)) CONTAINS toLower($search)
+        RETURN elementId(node) AS node_id, name, labels(node) AS labels
+        ORDER BY name
+        LIMIT $limit
+        """,
+        {"search": search, "limit": limit},
+    )
+    return {"count": len(nodes), "nodes": nodes}
+
+
+def route_graph_segments() -> list[dict[str, Any]]:
+    return safe_query(
+        """
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
+        MATCH (segment)-[:TO_NODE]->(toNode)
+        RETURN
+          elementId(fromNode) AS from_id,
+          coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS from_name,
+          labels(fromNode) AS from_labels,
+          elementId(toNode) AS to_id,
+          coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS to_name,
+          labels(toNode) AS to_labels,
+          coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
+          coalesce(segment.mode, segment.routeMode) AS mode,
+          coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.5) AS risk_score,
+          coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS cost_usd,
+          coalesce(segment.costScore, 0.5) AS cost_score,
+          coalesce(segment.costRiskScore, 0.5) AS cost_risk_score,
+          coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS time_days,
+          segment.risk_explanation AS risk_explanation
+        """
+    )
+
+
+@app.get(
+    "/api/routes/optimize",
+    tags=["Route Optimization"],
+    summary="Recommend the minimum-cost, minimum-risk, or balanced path",
+)
+def optimize_route(
+    origin_id: str = Query(..., description="node_id returned by GET /api/routes/nodes"),
+    destination_id: str = Query(..., description="node_id returned by GET /api/routes/nodes"),
+    objective: Literal["min_cost", "min_risk", "balanced"] = Query("balanced"),
+    risk_weight: float = Query(0.5, ge=0.0, le=1.0, description="Only used for balanced optimization"),
+) -> dict[str, Any]:
+    if origin_id == destination_id:
+        raise HTTPException(status_code=400, detail="origin_id and destination_id must be different")
+    result = shortest_path(route_graph_segments(), origin_id, destination_id, objective, risk_weight)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No directed RouteSegment path connects the selected nodes")
+    result["origin_id"] = origin_id
+    result["destination_id"] = destination_id
+    result["risk_weight"] = risk_weight if objective == "balanced" else None
+    return result
+
+
+@app.get(
+    "/api/routes/recommendations",
+    tags=["Route Optimization"],
+    summary="Rank complete predefined routes by cost, risk, or balanced score",
+)
+def route_recommendations(
+    objective: Literal["min_cost", "min_risk", "balanced"] = Query("balanced"),
+    risk_weight: float = Query(0.5, ge=0.0, le=1.0),
+    limit: int = Query(10, ge=1, le=50),
+) -> dict[str, Any]:
+    routes = safe_query(
+        """
+        MATCH (route:Route)-[membership:HAS_SEGMENT]->(segment:RouteSegment)
+        WITH route, segment, membership,
+             coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.5) AS risk,
+             coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS cost,
+             coalesce(segment.costScore, 0.5) AS costScore
+        ORDER BY coalesce(membership.sequence, segment.sequence, 0)
+        WITH route,
+             collect({
+               segment_id: coalesce(segment.segmentId, segment.segment_id, elementId(segment)),
+               sequence: coalesce(membership.sequence, segment.sequence),
+               origin: segment.fromNodeName,
+               destination: segment.toNodeName,
+               mode: coalesce(segment.mode, segment.routeMode),
+               risk_score: risk,
+               estimated_cost_usd: cost
+             }) AS segments,
+             sum(cost) AS totalCost,
+             avg(risk) AS averageRisk,
+             max(risk) AS maximumRisk,
+             avg(costScore) AS averageCostScore,
+             sum(coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0)) AS totalTime
+        WITH route, segments, totalCost, averageRisk, maximumRisk, averageCostScore, totalTime,
+             CASE $objective
+               WHEN 'min_cost' THEN totalCost
+               WHEN 'min_risk' THEN averageRisk
+               ELSE $risk_weight * averageRisk + (1.0 - $risk_weight) * averageCostScore
+             END AS optimizationScore
+        RETURN
+          coalesce(route.route_id, route.routeId, elementId(route)) AS route_id,
+          route.name AS name,
+          optimizationScore AS optimization_score,
+          totalCost AS total_cost_usd,
+          averageRisk AS average_risk_score,
+          maximumRisk AS maximum_risk_score,
+          totalTime AS total_time_days,
+          segments
+        ORDER BY optimization_score ASC
+        LIMIT $limit
+        """,
+        {"objective": objective, "risk_weight": risk_weight, "limit": limit},
+    )
+    return {"objective": objective, "risk_weight": risk_weight, "count": len(routes), "routes": routes}
