@@ -1,8 +1,6 @@
-__pycache__/
 .env
-data-src/
-archive/
-scratch/
-.idea/
-.ipynb_checkpoints/
+__pycache__/
+.venv/
+venv/
 .DS_Store
+*.pyc
