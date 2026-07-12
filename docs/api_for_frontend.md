@@ -221,6 +221,37 @@ GET /api/cost/segments
 GET /api/routes/recommendations
 GET /api/routes/nodes
 GET /api/routes/optimize
+GET /api/routes/recommend
+GET /api/suppliers
+GET /api/cities
+```
+
+前端路径规划主接口：
+
+```bash
+curl "http://localhost:8000/api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg&limit=5&risk_weight=0.5"
+```
+
+参数均支持名称；起点和终点也支持 `/api/cities` 返回的 ID。响应中的每条路线直接包含：
+
+- `riskScore`：0-100 综合风险。
+- `cost`：路线总成本 USD。
+- `durationDays`：总时效。
+- `distanceKm`：总距离。
+- `tags`：成本最优、风险最优、时效最优及运输方式。
+- `riskFactors`：前端风险进度条数据。
+- `legs`：地图分段及端点坐标。
+
+坐标的 `coordinateSource` 有三种取值：
+
+- `database`：AuraDB 原始坐标。
+- `city_estimate`：同城市已有节点坐标。
+- `graph_neighbor_estimate`：根据相邻运输节点估算，仅用于地图展示。
+
+Render 的 `API_CORS_ORIGINS` 应加入实际 Vercel 域名，例如：
+
+```text
+http://localhost:3000,https://your-project.vercel.app
 ```
 
 调用动态路径优化前，先通过节点接口取得稳定的 `node_id`：

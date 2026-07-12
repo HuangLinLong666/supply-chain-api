@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import os
+import time
 from contextlib import asynccontextmanager
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.route_optimizer import shortest_path
+from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, shortest_path
 from database.neo4j_client import close_driver, get_settings, run_query, verify_connectivity
+
+
+_route_graph_cache: tuple[float, list[dict[str, Any]]] | None = None
+ROUTE_GRAPH_CACHE_SECONDS = 300
 
 
 def cors_origins() -> list[str]:
@@ -45,6 +50,22 @@ def safe_query(query: str, parameters: dict[str, Any] | None = None) -> list[dic
         return run_query(query, parameters)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/", tags=["Service"], summary="API service information")
+def root() -> dict[str, str]:
+    return {
+        "service": "Supply Chain Graph API",
+        "status": "ok",
+        "documentation": "/docs",
+        "openapi": "/openapi.json",
+        "health": "/health",
+    }
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return Response(status_code=204)
 
 
 @app.get("/health")
@@ -267,16 +288,28 @@ def route_nodes(search: str | None = Query(None), limit: int = Query(100, ge=1, 
 
 
 def route_graph_segments() -> list[dict[str, Any]]:
-    return safe_query(
+    global _route_graph_cache
+    now = time.monotonic()
+    if _route_graph_cache is not None and now - _route_graph_cache[0] < ROUTE_GRAPH_CACHE_SECONDS:
+        return _route_graph_cache[1]
+    segments = safe_query(
         """
         MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
         MATCH (segment)-[:TO_NODE]->(toNode)
         RETURN
           elementId(fromNode) AS from_id,
           coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS from_name,
+          fromNode.city AS from_city,
+          fromNode.country AS from_country,
+          fromNode.latitude AS from_lat,
+          fromNode.longitude AS from_lng,
           labels(fromNode) AS from_labels,
           elementId(toNode) AS to_id,
           coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS to_name,
+          toNode.city AS to_city,
+          toNode.country AS to_country,
+          toNode.latitude AS to_lat,
+          toNode.longitude AS to_lng,
           labels(toNode) AS to_labels,
           coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
           coalesce(segment.mode, segment.routeMode) AS mode,
@@ -285,9 +318,171 @@ def route_graph_segments() -> list[dict[str, Any]]:
           coalesce(segment.costScore, 0.5) AS cost_score,
           coalesce(segment.costRiskScore, 0.5) AS cost_risk_score,
           coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS time_days,
-          segment.risk_explanation AS risk_explanation
+          coalesce(segment.distance_km, segment.distanceKm, 0.0) AS distance_km,
+          segment.risk_explanation AS risk_explanation,
+          segment.risk_breakdown AS risk_breakdown
         """
     )
+    add_coordinate_fallbacks(segments)
+    _route_graph_cache = (now, segments)
+    return segments
+
+
+def matching_node_ids(segments: list[dict[str, Any]], value: str) -> set[str]:
+    expected = value.strip().casefold()
+    exact_matches: set[str] = set()
+    partial_matches: set[str] = set()
+    for segment in segments:
+        for prefix in ("from", "to"):
+            node_id = str(segment[f"{prefix}_id"])
+            values = {
+                node_id,
+                str(segment.get(f"{prefix}_name") or ""),
+                str(segment.get(f"{prefix}_city") or ""),
+            }
+            normalized = {item.strip().casefold() for item in values if item.strip()}
+            if expected in normalized:
+                exact_matches.add(node_id)
+            elif any(expected in item for item in normalized):
+                partial_matches.add(node_id)
+    return exact_matches or partial_matches
+
+
+@app.get(
+    "/api/suppliers",
+    tags=["Route Planning"],
+    summary="List suppliers available for route planning",
+)
+def suppliers(search: str | None = Query(None), limit: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (supplier:Supplier)
+        OPTIONAL MATCH (segment:RouteSegment)-[:FROM_NODE]->(supplier)
+        WITH supplier, count(segment) AS routeCount
+        WHERE $search IS NULL
+           OR toLower(coalesce(supplier.name, '')) CONTAINS toLower($search)
+           OR toLower(coalesce(supplier.supplier_id, supplier.supplierCode, '')) CONTAINS toLower($search)
+        RETURN
+          coalesce(supplier.supplier_id, supplier.supplierCode, elementId(supplier)) AS id,
+          supplier.name AS name,
+          supplier.city AS city,
+          supplier.country AS country,
+          coalesce(supplier.total_risk_score, supplier.supplier_risk, 0.5) AS riskScore,
+          supplier.risk_explanation AS riskExplanation,
+          routeCount AS routeCount
+        ORDER BY routeCount DESC, name
+        LIMIT $limit
+        """,
+        {"search": search, "limit": limit},
+    )
+    return {"count": len(rows), "suppliers": rows}
+
+
+@app.get(
+    "/api/cities",
+    tags=["Route Planning"],
+    summary="List origin and destination cities or named route nodes",
+)
+def cities(search: str | None = Query(None), limit: int = Query(200, ge=1, le=500)) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (:RouteSegment)-[:FROM_NODE|TO_NODE]->(node)
+        WITH DISTINCT node,
+             coalesce(node.city, node.name, node.code, node.id, elementId(node)) AS value,
+             coalesce(node.name, node.code, node.id, elementId(node)) AS name
+        WHERE $search IS NULL OR toLower(toString(value)) CONTAINS toLower($search)
+        RETURN value AS id, value, name, node.city AS city, node.country AS country,
+               node.latitude AS lat, node.longitude AS lng, labels(node) AS labels
+        ORDER BY value, name
+        LIMIT $limit
+        """,
+        {"search": search, "limit": limit},
+    )
+    return {"count": len(rows), "cities": rows}
+
+
+@app.get(
+    "/api/routes/recommend",
+    tags=["Route Planning"],
+    summary="Query multiple complete routes by supplier, origin, and destination",
+)
+def recommend_routes(
+    supplier: str = Query(..., description="Supplier ID or name, for example CATL or SUP-CATL"),
+    origin: str = Query(..., description="Origin node ID, node name, or city"),
+    destination: str = Query(..., description="Destination node ID, node name, or city"),
+    limit: int = Query(5, ge=1, le=10),
+    risk_weight: float = Query(0.5, ge=0.0, le=1.0),
+    max_hops: int = Query(12, ge=1, le=20),
+) -> dict[str, Any]:
+    supplier_rows = suppliers(search=supplier, limit=20)["suppliers"]
+    exact_supplier = next(
+        (
+            row
+            for row in supplier_rows
+            if supplier.casefold() in {str(row.get("id", "")).casefold(), str(row.get("name", "")).casefold()}
+        ),
+        supplier_rows[0] if supplier_rows else None,
+    )
+    if exact_supplier is None:
+        raise HTTPException(status_code=404, detail=f"Supplier {supplier!r} was not found")
+
+    segments = route_graph_segments()
+    origin_ids = matching_node_ids(segments, origin)
+    destination_ids = matching_node_ids(segments, destination)
+    if not origin_ids:
+        raise HTTPException(status_code=404, detail=f"Origin {origin!r} was not found in the route network")
+    if not destination_ids:
+        raise HTTPException(status_code=404, detail=f"Destination {destination!r} was not found in the route network")
+
+    candidates = k_shortest_paths(
+        segments,
+        origin_ids,
+        destination_ids,
+        "balanced",
+        risk_weight,
+        limit * 2,
+        max_hops,
+    )
+
+    if not candidates:
+        raise HTTPException(
+            status_code=404,
+            detail="No directed RouteSegment path connects the selected origin and destination",
+        )
+
+    formatted = [format_route(path, index + 1) for index, path in enumerate(candidates)]
+    supplier_risk = float(exact_supplier.get("riskScore") or 0.5)
+    for route in formatted:
+        route["riskScore"] = round(0.2 * supplier_risk * 100 + 0.8 * route["riskScore"])
+        route["riskFactors"].insert(
+            0,
+            {
+                "key": "supplier",
+                "label": "供应商",
+                "score": round(supplier_risk * 100),
+                "detail": exact_supplier.get("riskExplanation") or f"供应商 {exact_supplier['name']} 综合风险",
+            },
+        )
+    maximum_cost = max(item["cost"] for item in formatted) or 1.0
+    formatted.sort(
+        key=lambda route: risk_weight * route["riskScore"] / 100
+        + (1 - risk_weight) * route["cost"] / maximum_cost
+    )
+    routes = formatted[:limit]
+    if routes:
+        min(routes, key=lambda route: route["cost"])["tags"].insert(0, "成本最优")
+        min(routes, key=lambda route: route["riskScore"])["tags"].insert(0, "风险最优")
+        min(routes, key=lambda route: route["durationDays"])["tags"].insert(0, "时效最优")
+    return {
+        "query": {
+            "supplier": exact_supplier,
+            "origin": origin,
+            "destination": destination,
+            "riskWeight": risk_weight,
+        },
+        "count": len(routes),
+        "routes": routes,
+    }
 
 
 @app.get(

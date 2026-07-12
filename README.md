@@ -21,6 +21,8 @@ Render: https://supply-chain-api.onrender.com/docs
 - `GET /api/routes/recommendations` ranks complete predefined routes.
 - `GET /api/routes/nodes` returns node IDs accepted by the optimizer.
 - `GET /api/routes/optimize` calculates a minimum-cost, minimum-risk, or balanced path.
+- `GET /api/routes/recommend` returns multiple frontend-ready routes by supplier, origin, and destination.
+- `GET /api/suppliers` and `GET /api/cities` populate route-planning selectors.
 
 Example:
 
@@ -28,4 +30,5 @@ Example:
 curl "http://localhost:8000/api/routes/nodes?search=Port"
 curl "http://localhost:8000/api/routes/recommendations?objective=min_risk&limit=5"
 curl "http://localhost:8000/api/routes/optimize?origin_id=ORIGIN_ID&destination_id=DESTINATION_ID&objective=balanced&risk_weight=0.6"
+curl "http://localhost:8000/api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg&limit=5"
 ```
