@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 from pydantic import BaseModel
 
 from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, shortest_path
@@ -52,6 +53,15 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def declare_json_utf8(request: Request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if content_type.casefold().startswith("application/json") and "charset=" not in content_type.casefold():
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
 
 
 def safe_query(query: str, parameters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
