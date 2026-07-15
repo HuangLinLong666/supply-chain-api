@@ -1,0 +1,97 @@
+[
+  {
+    "port": {
+      "port_id": "CNTXG",
+      "name": "Tianjin Port",
+      "city": "Tianjin",
+      "country": "China"
+    },
+    "query": "Tianjin",
+    "countryCode": "CN",
+    "status": "manual_confirmation_required",
+    "reason": "Geocoding returns city/administrative locations rather than a verified port coordinate; no automatic write performed.",
+    "candidates": [
+      {
+        "id": 1792947,
+        "name": "Tianjin",
+        "latitude": 39.14222,
+        "longitude": 117.17667,
+        "elevation": 11.0,
+        "feature_code": "PPLA",
+        "country_code": "CN",
+        "admin1_id": 1792943,
+        "admin2_id": 12324202,
+        "timezone": "Asia/Shanghai",
+        "population": 11090314,
+        "country_id": 1814991,
+        "country": "China",
+        "admin1": "Tianjin Municipality",
+        "admin2": "Tianjin Municipality"
+      },
+      {
+        "id": 6856383,
+        "name": "Tianjin",
+        "latitude": 22.45146,
+        "longitude": 112.91933,
+        "elevation": 5.0,
+        "feature_code": "PPL",
+        "country_code": "CN",
+        "admin1_id": 1809935,
+        "admin2_id": 1806297,
+        "timezone": "Asia/Shanghai",
+        "country_id": 1814991,
+        "country": "China",
+        "admin1": "Guangdong",
+        "admin2": "Jiangmen Shi"
+      },
+      {
+        "id": 7679015,
+        "name": "Tianjin",
+        "latitude": 30.73454,
+        "longitude": 119.52652,
+        "elevation": 203.0,
+        "feature_code": "PPL",
+        "country_code": "CN",
+        "admin1_id": 1784764,
+        "admin2_id": 1806534,
+        "timezone": "Asia/Shanghai",
+        "country_id": 1814991,
+        "country": "China",
+        "admin1": "Zhejiang",
+        "admin2": "Huzhou Shi"
+      },
+      {
+        "id": 1792944,
+        "name": "Tianjing",
+        "latitude": 31.46583,
+        "longitude": 120.77196,
+        "elevation": 3.0,
+        "feature_code": "PPL",
+        "country_code": "CN",
+        "admin1_id": 1806260,
+        "admin2_id": 1881771,
+        "timezone": "Asia/Shanghai",
+        "country_id": 1814991,
+        "country": "China",
+        "admin1": "Jiangsu",
+        "admin2": "Suzhou Shi"
+      },
+      {
+        "id": 6824057,
+        "name": "Tianjing",
+        "latitude": 24.5135,
+        "longitude": 102.29,
+        "elevation": 2177.0,
+        "feature_code": "PPL",
+        "country_code": "CN",
+        "admin1_id": 1785694,
+        "admin2_id": 1804649,
+        "timezone": "Asia/Shanghai",
+        "country_id": 1814991,
+        "country": "China",
+        "admin1": "Yunnan",
+        "admin2": "Kunming Shi"
+      }
+    ]
+  }
+]

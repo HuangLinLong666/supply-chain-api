@@ -1,0 +1,75 @@
+{
+  "scoring_version": "gdelt-global-corridor-v2",
+  "zones": [
+    {
+      "id": "red-sea",
+      "name": "红海与苏伊士走廊",
+      "type": "maritime_corridor",
+      "query": "(\"Red Sea\" OR Suez OR \"Bab el-Mandeb\") (shipping OR vessel OR maritime OR port) (attack OR conflict OR war OR disruption OR closure OR strike OR missile OR piracy OR tariff OR sanction)",
+      "aliases": ["red sea", "suez", "bab el-mandeb", "bab el mandeb", "port said", "jeddah", "aden"]
+    },
+    {
+      "id": "malacca-strait",
+      "name": "马六甲海峡",
+      "type": "maritime_corridor",
+      "query": "(\"Strait of Malacca\" OR \"Malacca Strait\") (shipping OR vessel OR maritime OR trade) (attack OR conflict OR war OR disruption OR closure OR collision OR piracy OR tariff OR sanction OR congestion)",
+      "aliases": ["strait of malacca", "malacca strait", "malacca", "马六甲海峡"]
+    },
+    {
+      "id": "indian-ocean",
+      "name": "印度洋航运区域",
+      "type": "maritime_region",
+      "query": "\"Indian Ocean\" (shipping OR vessel OR maritime OR trade) (attack OR conflict OR war OR disruption OR cyclone OR piracy OR tariff OR sanction)",
+      "aliases": ["indian ocean", "印度洋"]
+    },
+    {
+      "id": "pacific-ocean",
+      "name": "太平洋航运区域",
+      "type": "maritime_region",
+      "query": "(\"Pacific Ocean\" OR \"trans-Pacific\") (shipping OR vessel OR maritime OR trade) (attack OR conflict OR war OR disruption OR typhoon OR tariff OR sanction OR congestion)",
+      "aliases": ["pacific ocean", "trans-pacific", "太平洋"]
+    },
+    {
+      "id": "middle-east",
+      "name": "中东海运与空运区域",
+      "type": "multimodal_region",
+      "query": "\"Middle East\" (shipping OR aviation OR airline OR airspace OR logistics OR trade) (attack OR conflict OR war OR disruption OR closure OR missile OR tariff OR sanction)",
+      "aliases": ["middle east", "中东"]
+    },
+    {
+      "id": "hormuz-strait",
+      "name": "霍尔木兹海峡",
+      "type": "maritime_corridor",
+      "query": "(\"Strait of Hormuz\" OR Hormuz) (shipping OR vessel OR oil OR maritime) (attack OR conflict OR war OR disruption OR closure OR missile OR tariff OR sanction)",
+      "aliases": ["strait of hormuz", "hormuz", "霍尔木兹海峡"]
+    },
+    {
+      "id": "south-china-sea",
+      "name": "南海航运区域",
+      "type": "maritime_region",
+      "query": "\"South China Sea\" (shipping OR vessel OR maritime OR trade) (attack OR conflict OR war OR disruption OR collision OR tariff OR sanction)",
+      "aliases": ["south china sea", "南海"]
+    },
+    {
+      "id": "port-shanghai",
+      "name": "上海港",
+      "type": "port",
+      "query": "(\"Port of Shanghai\" OR \"Shanghai port\") (closure OR congestion OR strike OR accident OR disruption OR typhoon OR tariff)",
+      "aliases": ["shanghai port", "port of shanghai", "上海港"]
+    },
+    {
+      "id": "port-singapore",
+      "name": "新加坡港",
+      "type": "port",
+      "query": "(\"Port of Singapore\" OR \"Singapore port\") (closure OR congestion OR strike OR accident OR disruption OR tariff)",
+      "aliases": ["singapore port", "port of singapore", "新加坡港"]
+    },
+    {
+      "id": "port-rotterdam",
+      "name": "鹿特丹港",
+      "type": "port",
+      "query": "(\"Port of Rotterdam\" OR \"Rotterdam port\") (closure OR congestion OR strike OR accident OR disruption OR tariff)",
+      "aliases": ["rotterdam port", "port of rotterdam", "鹿特丹港"]
+    }
+  ]
+}

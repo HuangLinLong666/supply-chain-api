@@ -193,6 +193,7 @@ RISK_LABELS = {
     "security_risk": "安全",
     "route_reliability_risk": "路线可靠性",
     "capacity_risk": "运力",
+    "news_risk": "实时新闻",
 }
 
 
@@ -210,6 +211,9 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
         for key, value in (breakdown or {}).items():
             if isinstance(value, dict) and value.get("value") is not None:
                 risk_values[key].append(float(value["value"]))
+        news_risk = float(segment.get("news_risk_score") or 0.0)
+        if news_risk > 0:
+            risk_values["news_risk"].append(news_risk)
 
     cost = sum(float(segment.get("cost_usd") or 0.0) for segment in path)
     duration = sum(float(segment.get("time_days") or 0.0) for segment in path)
@@ -257,6 +261,8 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
                 "durationDays": round(float(segment.get("time_days") or 0.0), 2),
                 "distanceKm": round(float(segment.get("distance_km") or 0.0), 2),
                 "riskScore": round(float(segment.get("risk_score") or 0.5) * 100),
+                "newsRiskScore": round(float(segment.get("news_risk_score") or 0.0) * 100),
+                "newsRiskZones": segment.get("news_risk_zones") or [],
             }
             for segment in path
         ],
