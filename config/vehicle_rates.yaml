@@ -1,0 +1,19 @@
+currency: USD
+mode_rates_per_km:
+  road: 1.20
+  rail: 0.55
+  sea: 0.11
+  air: 3.80
+handling_fees:
+  port: 420
+  airport: 680
+  rail_terminal: 180
+fuel_surcharge_ratio:
+  road: 0.18
+  rail: 0.10
+  sea: 0.16
+  air: 0.24
+uncertainty:
+  min_ratio: 0.82
+  max_ratio: 1.45
+optional_tariff_rate: 0.0

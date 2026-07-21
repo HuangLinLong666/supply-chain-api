@@ -1,0 +1,14 @@
+risk_weights:
+  news_weight: 0.25
+  weather_weight: 0.20
+  congestion_weight: 0.20
+  sanctions_weight: 0.25
+  schedule_reliability_weight: 0.10
+ranking_weights:
+  risk_weight: 0.40
+  cost_weight: 0.30
+  speed_weight: 0.20
+  confidence_weight: 0.10
+high_risk_threshold: 60
+critical_risk_threshold: 80
+default_ranking_strategy: hybrid

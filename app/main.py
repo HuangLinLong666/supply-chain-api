@@ -19,6 +19,7 @@ from weather.config import WeatherSettings
 from weather.service import update_ports
 from gdelt.config import GdeltSettings
 from gdelt.service import update_news_risk
+from app.vehicle_network.api import router as vehicle_network_router
 
 
 _route_graph_cache: tuple[float, list[dict[str, Any]]] | None = None
@@ -53,6 +54,8 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+app.include_router(vehicle_network_router)
 
 
 @app.middleware("http")

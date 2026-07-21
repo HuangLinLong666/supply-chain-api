@@ -1,0 +1,8 @@
+[
+  {"id":"CN-LYG","kind":"port","name_zh":"连云港港","name_en":"Lianyungang Port","country_code":"CN","unlocode":"CNLYG","latitude":34.75,"longitude":119.45,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true},
+  {"id":"CN-SHA","kind":"port","name_zh":"上海港","name_en":"Shanghai Port","country_code":"CN","unlocode":"CNSHA","latitude":31.23,"longitude":121.47,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true},
+  {"id":"US-LGB","kind":"port","name_zh":"长滩港","name_en":"Port of Long Beach","country_code":"US","unlocode":"USLGB","latitude":33.75,"longitude":-118.22,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true},
+  {"id":"DE-HAM","kind":"port","name_zh":"汉堡港","name_en":"Port of Hamburg","country_code":"DE","unlocode":"DEHAM","latitude":53.55,"longitude":9.99,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true},
+  {"id":"CN-PVG","kind":"airport","name_zh":"上海浦东国际机场","name_en":"Shanghai Pudong International Airport","country_code":"CN","iata":"PVG","icao":"ZSPD","latitude":31.14,"longitude":121.81,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true},
+  {"id":"DE-FRA","kind":"airport","name_zh":"法兰克福机场","name_en":"Frankfurt Airport","country_code":"DE","iata":"FRA","icao":"EDDF","latitude":50.04,"longitude":8.56,"eligible_for_vehicle_export":true,"eligible_for_vehicle_import":true}
+]
