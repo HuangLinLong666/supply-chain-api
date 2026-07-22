@@ -1,6 +1,7 @@
 from app.vehicle_network.core import load_rates, load_strategy
-from app.vehicle_network.models import RouteLegRecord, RouteRecord, SourceType
+from app.vehicle_network.models import LocationKind, LocationRecord, RouteLegRecord, RouteRecord, SourceType
 from app.vehicle_network.providers.route_estimator import haversine_km
+from app.vehicle_network.repository import VehicleNetworkRepository
 from app.vehicle_network.scoring import calculate_risk, estimate_cost, rank_routes
 
 
@@ -40,3 +41,36 @@ def test_hybrid_ranking_prefers_safer_route_when_other_values_equal():
         routes.append(route)
     ranked = rank_routes(routes, "hybrid", strategy)
     assert ranked[0].route_id == "safe"
+
+
+def test_existing_unlocode_reuses_node_instead_of_creating_duplicate():
+    class FakeResult(list):
+        def consume(self):
+            return None
+
+    class FakeTransaction:
+        def __init__(self):
+            self.queries = []
+
+        def run(self, query, **parameters):
+            self.queries.append(query)
+            if "RETURN elementId(location) AS element_id" in query:
+                return FakeResult([{"element_id": "existing-port"}])
+            return FakeResult()
+
+    class FakeRepository(VehicleNetworkRepository):
+        def __init__(self):
+            self.transaction = FakeTransaction()
+
+        def _execute_write(self, callback):
+            return callback(self.transaction)
+
+    location = LocationRecord(
+        source="测试", source_type=SourceType.FABRICATED_FOR_TESTING, confidence=0.2,
+        is_inferred=True, id="CN-SHA", kind=LocationKind.PORT, name_en="Shanghai Port",
+        country_code="CN", unlocode="CNSHA", latitude=31.23, longitude=121.47,
+    )
+    repository = FakeRepository()
+    assert repository.merge_locations([location], "job-test") == 1
+    assert any("elementId(location)=$element_id" in query for query in repository.transaction.queries)
+    assert not any("MERGE (location:TransportLocation:Port {location_id:$id})" in query for query in repository.transaction.queries)

@@ -63,6 +63,19 @@ class RouteGenerationService:
             modes.extend(["rail", "road"])
         return list(dict.fromkeys(modes or ["road"]))
 
+    def _canonical_location_id(self, location: dict[str, Any], fallback: str) -> str:
+        """将名称查询解析成可稳定写入关系的地点标识。"""
+        return str(
+            location.get("location_id")
+            or location.get("unlocode")
+            or location.get("code")
+            or location.get("iata")
+            or location.get("iata_code")
+            or location.get("icao")
+            or location.get("id")
+            or fallback
+        )
+
     def generate(self, request: RouteGenerateRequest, trace_id: str) -> dict[str, Any]:
         self.repository.ensure_schema()
         job_id = self.repository.start_job("route_generation", trace_id)
@@ -74,7 +87,11 @@ class RouteGenerationService:
             raise ValueError(f"地点不存在: {missing}，请先执行地点采集或人工添加地点")
         required = ("latitude", "longitude")
         if any(origin.get(field) is None or destination.get(field) is None for field in required):
+            self.repository.finish_job(job_id, "failed", {"error": "起点或终点缺少经纬度"})
             raise ValueError("起点或终点缺少经纬度，无法生成估算路线")
+
+        origin_id = self._canonical_location_id(origin, request.origin)
+        destination_id = self._canonical_location_id(destination, request.destination)
 
         strategy = load_strategy()
         rates = load_rates()
@@ -88,8 +105,8 @@ class RouteGenerationService:
                 "is_inferred": True, "review_status": "pending",
             }
             leg = RouteLegRecord(
-                **provenance, leg_id=f"leg_{request.origin}_{request.destination}_{mode}_1".lower().replace("-", "_"),
-                sequence=1, mode=mode, origin_id=request.origin, destination_id=request.destination,
+                **provenance, leg_id=f"leg_{origin_id}_{destination_id}_{mode}_1".lower().replace("-", "_"),
+                sequence=1, mode=mode, origin_id=origin_id, destination_id=destination_id,
                 **estimate,
             )
             signals = {
@@ -98,10 +115,10 @@ class RouteGenerationService:
                 "congestion": float(origin.get("congestion_score") or destination.get("congestion_score") or 25),
                 "sanctions": 10, "schedule_reliability": 45 if mode in {"rail", "road"} else 30,
             }
-            route_id = f"vehicle_route_{request.origin}_{request.destination}_{mode}_{index}".lower().replace("-", "_")
+            route_id = f"vehicle_route_{origin_id}_{destination_id}_{mode}_{index}".lower().replace("-", "_")
             route = RouteRecord(
-                **provenance, route_id=route_id, route_type=mode, origin_id=request.origin,
-                destination_id=request.destination, legs_count=1,
+                **provenance, route_id=route_id, route_type=mode, origin_id=origin_id,
+                destination_id=destination_id, legs_count=1,
                 estimated_distance_km=leg.distance_km, estimated_duration_h=leg.duration_h,
                 evidence_count=0, historical_supported=False, needs_review=True, legs=[leg],
             )
@@ -114,7 +131,7 @@ class RouteGenerationService:
                 self.repository.merge_route(route, job_id)
         result = {
             "success": True, "job_id": job_id, "trace_id": trace_id,
-            "query": {"origin": request.origin, "destination": request.destination, "ranking_strategy": request.ranking_strategy},
+            "query": {"origin": request.origin, "destination": request.destination, "resolved_origin_id": origin_id, "resolved_destination_id": destination_id, "ranking_strategy": request.ranking_strategy},
             "routes": [route.model_dump(mode="json") for route in routes],
         }
         self.repository.finish_job(job_id, "success", {"routes_generated": len(routes), "persisted": request.persist})

@@ -71,32 +71,102 @@ class VehicleNetworkRepository:
 
         def write(transaction):
             for row in rows:
-                query = f"""
-                    MERGE (location:TransportLocation:{row['label']} {{location_id:$id}})
-                    SET location += $properties,location.updated_at=datetime($updated_at),location.deleted_at=null
-                    WITH location
-                    MATCH (job:IngestionJob {{job_id:$job_id}})
-                    MERGE (job)-[:INGESTED]->(location)
-                """
                 properties = {key: value for key, value in row.items() if key not in {"id", "label", "updated_at"}}
-                transaction.run(query, id=row["id"], properties=properties, updated_at=row["updated_at"], job_id=job_id).consume()
+                candidates = list(transaction.run(f"""
+                    MATCH (location:{row['label']})
+                    WHERE location.location_id=$id
+                       OR ($unlocode IS NOT NULL AND (location.unlocode=$unlocode OR location.code=$unlocode))
+                       OR ($iata IS NOT NULL AND (location.iata=$iata OR location.iata_code=$iata OR location.code=$iata))
+                       OR ($icao IS NOT NULL AND location.icao=$icao)
+                    RETURN elementId(location) AS element_id,
+                           CASE WHEN location.location_id=$id THEN 0 ELSE 1 END AS priority
+                    ORDER BY priority LIMIT 2
+                """, id=row["id"], unlocode=row.get("unlocode"), iata=row.get("iata"), icao=row.get("icao")))
+                if len(candidates) > 1:
+                    raise RuntimeError(f"地点身份冲突: {row['id']} 同时匹配多个已有节点，请先人工合并重复地点")
+                if candidates:
+                    transaction.run(f"""
+                        MATCH (location) WHERE elementId(location)=$element_id
+                        SET location:TransportLocation:{row['label']},
+                            location.location_id=coalesce(location.location_id,$id),
+                            location.name_en=coalesce(location.name_en,$name_en),
+                            location.name_zh=coalesce(location.name_zh,$name_zh),
+                            location.country_code=coalesce(location.country_code,$country_code),
+                            location.unlocode=coalesce(location.unlocode,$unlocode),
+                            location.iata=coalesce(location.iata,$iata),
+                            location.icao=coalesce(location.icao,$icao),
+                            location.latitude=CASE WHEN location.latitude IS NULL OR location.latitude=0 THEN $latitude ELSE location.latitude END,
+                            location.longitude=CASE WHEN location.longitude IS NULL OR location.longitude=0 THEN $longitude ELSE location.longitude END,
+                            location.eligible_for_vehicle_export=coalesce(location.eligible_for_vehicle_export,false) OR $eligible_export,
+                            location.eligible_for_vehicle_import=coalesce(location.eligible_for_vehicle_import,false) OR $eligible_import,
+                            location.vehicle_network_source=$source,
+                            location.vehicle_network_source_type=$source_type,
+                            location.vehicle_network_confidence=$confidence,
+                            location.vehicle_network_updated_at=datetime($updated_at),
+                            location.deleted_at=null
+                        WITH location
+                        MATCH (job:IngestionJob {{job_id:$job_id}})
+                        MERGE (job)-[:INGESTED]->(location)
+                    """, element_id=candidates[0]["element_id"], id=row["id"], name_en=row.get("name_en"),
+                         name_zh=row.get("name_zh"), country_code=row.get("country_code"), unlocode=row.get("unlocode"),
+                         iata=row.get("iata"), icao=row.get("icao"), latitude=row.get("latitude"), longitude=row.get("longitude"),
+                         eligible_export=row.get("eligible_for_vehicle_export", False), eligible_import=row.get("eligible_for_vehicle_import", False),
+                         source=row.get("source"), source_type=row.get("source_type"), confidence=row.get("confidence"),
+                         updated_at=row["updated_at"], job_id=job_id).consume()
+                else:
+                    transaction.run(f"""
+                        MERGE (location:TransportLocation:{row['label']} {{location_id:$id}})
+                        SET location += $properties,location.updated_at=datetime($updated_at),location.deleted_at=null
+                        WITH location
+                        MATCH (job:IngestionJob {{job_id:$job_id}})
+                        MERGE (job)-[:INGESTED]->(location)
+                    """, id=row["id"], properties=properties, updated_at=row["updated_at"], job_id=job_id).consume()
             return len(rows)
 
         return self._execute_write(write)
 
     def get_location(self, location_id: str) -> dict[str, Any] | None:
+        expected = location_id.strip()
         rows = self._execute_read("""
-            MATCH (location:TransportLocation {location_id:$location_id})
-            WHERE location.deleted_at IS NULL
-            RETURN properties(location) AS location,labels(location) AS labels
-        """, {"location_id": location_id})
-        if rows:
-            return rows[0]["location"] | {"labels": rows[0]["labels"]}
-        rows = self._execute_read("""
-            MATCH (location) WHERE coalesce(location.unlocode,location.code,location.id,location.location_id)=$location_id
-            RETURN properties(location) AS location,labels(location) AS labels LIMIT 1
-        """, {"location_id": location_id})
-        return (rows[0]["location"] | {"labels": rows[0]["labels"]}) if rows else None
+            MATCH (location)
+            WHERE location.deleted_at IS NULL AND (
+                toLower(coalesce(location.location_id,''))=toLower($value)
+                OR toLower(coalesce(location.unlocode,''))=toLower($value)
+                OR toLower(coalesce(location.code,''))=toLower($value)
+                OR toLower(coalesce(location.iata,''))=toLower($value)
+                OR toLower(coalesce(location.iata_code,''))=toLower($value)
+                OR toLower(coalesce(location.icao,''))=toLower($value)
+                OR toLower(coalesce(location.name,''))=toLower($value)
+                OR toLower(coalesce(location.name_en,''))=toLower($value)
+                OR toLower(coalesce(location.name_zh,''))=toLower($value)
+                OR toLower(coalesce(location.city,''))=toLower($value)
+            )
+            WITH location,
+                 CASE
+                   WHEN toLower(coalesce(location.location_id,''))=toLower($value) THEN 0
+                   WHEN toLower(coalesce(location.unlocode,location.code,location.iata,location.iata_code,''))=toLower($value) THEN 1
+                   WHEN toLower(coalesce(location.name,location.name_en,location.name_zh,''))=toLower($value) THEN 2
+                   ELSE 3
+                 END AS priority
+            ORDER BY CASE WHEN location:TransportLocation THEN 0 ELSE 1 END,
+                     CASE WHEN location:Port OR location:Airport OR location:Factory THEN 0 ELSE 1 END,
+                     priority
+            RETURN properties(location) AS location,labels(location) AS labels,elementId(location) AS element_id
+            LIMIT 1
+        """, {"value": expected})
+        if not rows:
+            rows = self._execute_read("""
+                MATCH (location)
+                WHERE location.deleted_at IS NULL AND (
+                    toLower(coalesce(location.name,'')) CONTAINS toLower($value)
+                    OR toLower(coalesce(location.name_en,'')) CONTAINS toLower($value)
+                    OR toLower(coalesce(location.city,'')) CONTAINS toLower($value)
+                )
+                ORDER BY CASE WHEN location:Port OR location:Airport OR location:Factory THEN 0 ELSE 1 END
+                RETURN properties(location) AS location,labels(location) AS labels,elementId(location) AS element_id
+                LIMIT 1
+            """, {"value": expected})
+        return (rows[0]["location"] | {"labels": rows[0]["labels"], "element_id": rows[0]["element_id"]}) if rows else None
 
     def merge_route(self, route: RouteRecord, job_id: str | None = None) -> None:
         payload = route.model_dump(mode="json", exclude={"legs", "risk", "estimated_cost"})
@@ -157,8 +227,24 @@ class VehicleNetworkRepository:
             MATCH (route:VehicleRoute)-[:ORIGIN]->(origin)
             MATCH (route)-[:DESTINATION]->(destination)
             WHERE route.deleted_at IS NULL
-              AND coalesce(origin.location_id,origin.unlocode,origin.code,origin.id)=$origin
-              AND coalesce(destination.location_id,destination.unlocode,destination.code,destination.id)=$destination
+              AND (toLower(coalesce(origin.location_id,''))=toLower($origin)
+                   OR toLower(coalesce(origin.unlocode,''))=toLower($origin)
+                   OR toLower(coalesce(origin.code,''))=toLower($origin)
+                   OR toLower(coalesce(origin.iata,''))=toLower($origin)
+                   OR toLower(coalesce(origin.iata_code,''))=toLower($origin)
+                   OR toLower(coalesce(origin.name,''))=toLower($origin)
+                   OR toLower(coalesce(origin.name_en,''))=toLower($origin)
+                   OR toLower(coalesce(origin.name_zh,''))=toLower($origin)
+                   OR toLower(coalesce(origin.city,''))=toLower($origin))
+              AND (toLower(coalesce(destination.location_id,''))=toLower($destination)
+                   OR toLower(coalesce(destination.unlocode,''))=toLower($destination)
+                   OR toLower(coalesce(destination.code,''))=toLower($destination)
+                   OR toLower(coalesce(destination.iata,''))=toLower($destination)
+                   OR toLower(coalesce(destination.iata_code,''))=toLower($destination)
+                   OR toLower(coalesce(destination.name,''))=toLower($destination)
+                   OR toLower(coalesce(destination.name_en,''))=toLower($destination)
+                   OR toLower(coalesce(destination.name_zh,''))=toLower($destination)
+                   OR toLower(coalesce(destination.city,''))=toLower($destination))
             OPTIONAL MATCH (route)-[membership:HAS_LEG]->(leg:RouteLeg)
             OPTIONAL MATCH (route)-[:HAS_RISK_SNAPSHOT]->(risk:RiskSnapshot)
             OPTIONAL MATCH (route)-[:HAS_COST_ESTIMATE]->(cost:CostEstimate)
