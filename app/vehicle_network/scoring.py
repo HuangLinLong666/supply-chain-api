@@ -47,7 +47,49 @@ def calculate_risk(signals: dict[str, float], strategy: Any, evidence_refs: list
         factors.append(f"{labels[signal_key]}风险 {value:.0f}/100，权重 {weight:.0%}")
     score = round(weighted / used_weight if used_weight else 0, 2)
     level = "critical" if score >= strategy.critical_risk_threshold else "high" if score >= strategy.high_risk_threshold else "medium" if score >= 30 else "low"
-    return RiskResult(risk_score=score, risk_level=level, risk_factors=factors, evidence_refs=evidence_refs or [])
+    return RiskResult(risk_score=score, risk_level=level, risk_factors=factors, evidence_refs=evidence_refs or [], data_completeness=1.0)
+
+
+MODE_RISK_LABELS = {
+    "weather": "天气与自然条件", "piracy": "海盗与海上安全", "port_congestion": "港口拥堵",
+    "geopolitical": "地缘政治与冲突", "sanctions": "制裁与禁运", "schedule_reliability": "班期可靠性",
+    "border_customs": "边境与海关", "infrastructure": "铁路基础设施", "traffic": "道路拥堵",
+    "road_security": "陆路治安", "regulatory": "道路监管", "airspace_conflict": "空域冲突与关闭",
+    "airport_capacity": "机场货运容量", "cargo_handling": "航空货物装卸",
+}
+
+
+def calculate_mode_risk(mode: str, signals: dict[str, float | None], strategy: Any, evidence_refs: list[str] | None = None) -> RiskResult:
+    """使用运输方式专属风险维度，避免海运与铁路返回相同因子。"""
+    weights = strategy.mode_risk_weights.get(mode)
+    if not weights:
+        return calculate_risk(signals, strategy, evidence_refs)
+    weighted = 0.0
+    used_weight = 0.0
+    factors = []
+    missing = []
+    for key, weight in weights.items():
+        raw_value = signals.get(key)
+        if raw_value is None:
+            missing.append(MODE_RISK_LABELS.get(key, key))
+            continue
+        value = float(raw_value)
+        weighted += value * float(weight)
+        used_weight += float(weight)
+        factors.append(f"{MODE_RISK_LABELS.get(key, key)}风险 {value:.0f}/100，权重 {float(weight):.0%}")
+    total_weight = sum(float(value) for value in weights.values()) or 1.0
+    completeness = round(used_weight / total_weight, 4)
+    if used_weight == 0:
+        return RiskResult(
+            risk_score=None, risk_level="unknown", risk_factors=[], evidence_refs=evidence_refs or [],
+            data_completeness=0.0, missing_factors=missing,
+        )
+    score = round(weighted / used_weight, 2)
+    level = "critical" if score >= strategy.critical_risk_threshold else "high" if score >= strategy.high_risk_threshold else "medium" if score >= 30 else "low"
+    return RiskResult(
+        risk_score=score, risk_level=level, risk_factors=factors, evidence_refs=evidence_refs or [],
+        data_completeness=completeness, missing_factors=missing,
+    )
 
 
 def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) -> list[RouteRecord]:
@@ -57,7 +99,8 @@ def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) ->
     maximum_cost = max(route.estimated_cost.most_likely for route in routes if route.estimated_cost) or 1
     maximum_time = max(route.estimated_duration_h for route in routes) or 1
     for route in routes:
-        inverse_risk = 1 - (route.risk.risk_score if route.risk else 50) / 100
+        measured_risk = route.risk.risk_score if route.risk and route.risk.risk_score is not None else 50
+        inverse_risk = 1 - measured_risk / 100
         inverse_cost = 1 - (route.estimated_cost.most_likely if route.estimated_cost else maximum_cost) / maximum_cost
         inverse_duration = 1 - route.estimated_duration_h / maximum_time
         if strategy_name == "min_risk":
@@ -69,5 +112,6 @@ def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) ->
         else:
             weights = strategy.ranking_weights
             route.score = round(weights["risk_weight"] * inverse_risk + weights["cost_weight"] * inverse_cost + weights["speed_weight"] * inverse_duration + weights["confidence_weight"] * route.confidence, 4)
-        route.why_recommended = [f"综合排序得分 {route.score:.3f}", f"风险 {route.risk.risk_score if route.risk else 0:.1f}/100", f"预计费用 {route.estimated_cost.most_likely if route.estimated_cost else 0:.2f} {route.estimated_cost.currency if route.estimated_cost else 'USD'}"]
+        risk_text = f"风险 {route.risk.risk_score:.1f}/100" if route.risk and route.risk.risk_score is not None else "风险数据不足，按中性值参与排序"
+        route.why_recommended = [f"综合排序得分 {route.score:.3f}", risk_text, f"预计费用 {route.estimated_cost.most_likely if route.estimated_cost else 0:.2f} {route.estimated_cost.currency if route.estimated_cost else 'USD'}"]
     return sorted(routes, key=lambda route: route.score, reverse=True)

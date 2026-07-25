@@ -4,15 +4,15 @@ import logging
 from typing import Any
 from uuid import uuid4
 
-from app.vehicle_network.core import load_rates, load_strategy
+from app.vehicle_network.core import load_carriers, load_rates, load_strategy
 from app.vehicle_network.models import (
-    LocationIngestRequest, Provenance, RouteGenerateRequest, RouteLegRecord, RouteRecord, SourceType,
+    LocationIngestRequest, LocationSummary, RouteGenerateRequest, RouteLegRecord, RouteRecord, SourceType,
 )
 from app.vehicle_network.providers.caac import CaacAirportProvider
 from app.vehicle_network.providers.route_estimator import estimate_leg
 from app.vehicle_network.providers.sample_registry import SampleRegistryProvider
 from app.vehicle_network.repository import VehicleNetworkRepository
-from app.vehicle_network.scoring import calculate_risk, estimate_cost, rank_routes
+from app.vehicle_network.scoring import calculate_mode_risk, estimate_cost, rank_routes
 
 
 logger = logging.getLogger(__name__)
@@ -49,19 +49,53 @@ class RouteGenerationService:
     def __init__(self, repository: VehicleNetworkRepository | None = None):
         self.repository = repository or VehicleNetworkRepository()
 
-    def _mode_candidates(self, origin: dict[str, Any], destination: dict[str, Any], request: RouteGenerateRequest) -> list[str]:
-        if request.mode_preferences:
-            return request.mode_preferences
+    COUNTRY_CODES = {
+        "china": "CN", "united states": "US", "usa": "US", "germany": "DE", "netherlands": "NL",
+        "france": "FR", "belgium": "BE", "spain": "ES", "italy": "IT", "poland": "PL",
+        "kazakhstan": "KZ", "russia": "RU", "mexico": "MX", "canada": "CA", "brazil": "BR",
+    }
+    LANDMASSES = {
+        "eurasia": {"CN", "DE", "NL", "FR", "BE", "ES", "IT", "PL", "KZ", "RU", "TR"},
+        "north_america": {"US", "CA", "MX"},
+        "south_america": {"BR", "AR", "CL", "PE"},
+    }
+
+    def _country_code(self, location: dict[str, Any]) -> str:
+        code = str(location.get("country_code") or "").upper()
+        if code:
+            return code
+        return self.COUNTRY_CODES.get(str(location.get("country") or "").casefold(), "")
+
+    def _same_landmass(self, origin: dict[str, Any], destination: dict[str, Any]) -> bool:
+        origin_code = self._country_code(origin)
+        destination_code = self._country_code(destination)
+        return any(origin_code in countries and destination_code in countries for countries in self.LANDMASSES.values())
+
+    def _mode_candidates(self, origin: dict[str, Any], destination: dict[str, Any], request: RouteGenerateRequest) -> tuple[list[str], list[dict[str, str]]]:
         origin_labels = set(origin.get("labels", []))
         destination_labels = set(destination.get("labels", []))
         modes = []
+        rejected = []
         if "Port" in origin_labels and "Port" in destination_labels:
             modes.append("sea")
         if "Airport" in origin_labels and "Airport" in destination_labels:
             modes.append("air")
-        if request.allow_multimodal:
-            modes.extend(["rail", "road"])
-        return list(dict.fromkeys(modes or ["road"]))
+        same_landmass = self._same_landmass(origin, destination)
+        direct_distance = estimate_leg(origin, destination, "rail")["distance_km"]
+        if request.allow_multimodal and same_landmass and direct_distance <= 12000:
+            modes.append("rail")
+        else:
+            rejected.append({"mode": "rail", "reason": "起终点不在同一连续陆地区域，禁止生成跨大洋铁路"})
+        if request.allow_multimodal and same_landmass and direct_distance <= 5000:
+            modes.append("road")
+        else:
+            rejected.append({"mode": "road", "reason": "公路距离过长或起终点之间存在海洋阻隔"})
+        feasible = list(dict.fromkeys(modes))
+        if request.mode_preferences:
+            requested = set(request.mode_preferences)
+            rejected.extend({"mode": mode, "reason": "该运输方式不满足当前地点类型或地理可行性"} for mode in requested if mode not in feasible)
+            feasible = [mode for mode in feasible if mode in requested]
+        return feasible, rejected
 
     def _canonical_location_id(self, location: dict[str, Any], fallback: str) -> str:
         """将名称查询解析成可稳定写入关系的地点标识。"""
@@ -75,6 +109,36 @@ class RouteGenerationService:
             or location.get("id")
             or fallback
         )
+
+    def _location_summary(self, location: dict[str, Any], location_id: str) -> LocationSummary:
+        labels = location.get("labels", [])
+        kind = "port" if "Port" in labels else "airport" if "Airport" in labels else "factory" if "Factory" in labels else "terminal"
+        name_en = location.get("name_en") or location.get("name")
+        name_zh = location.get("name_zh")
+        return LocationSummary(
+            id=location_id, name=str(name_zh or name_en or location_id), name_zh=name_zh, name_en=name_en,
+            kind=kind, city=location.get("city"), country=location.get("country"),
+            country_code=self._country_code(location) or None, latitude=location.get("latitude"), longitude=location.get("longitude"),
+        )
+
+    def _risk_value(self, *values: Any) -> float | None:
+        for value in values:
+            if value is not None:
+                number = float(value)
+                return number * 100 if 0 <= number <= 1 else number
+        return None
+
+    def _mode_signals(self, mode: str, origin: dict[str, Any], destination: dict[str, Any]) -> dict[str, float | None]:
+        news = self._risk_value(origin.get("news_risk_score"), destination.get("news_risk_score"))
+        weather = self._risk_value(origin.get("weather_risk_score"), destination.get("weather_risk_score"))
+        congestion = self._risk_value(origin.get("congestion_score"), destination.get("congestion_score"))
+        profiles = {
+            "sea": {"weather": weather, "piracy": None, "port_congestion": congestion, "geopolitical": news, "sanctions": None, "schedule_reliability": None},
+            "rail": {"border_customs": None, "geopolitical": news, "infrastructure": None, "weather": weather, "schedule_reliability": None, "sanctions": None},
+            "road": {"traffic": None, "border_customs": None, "road_security": None, "weather": weather, "regulatory": None, "schedule_reliability": None},
+            "air": {"weather": weather, "airspace_conflict": news, "airport_capacity": congestion, "schedule_reliability": None, "sanctions": None, "cargo_handling": None},
+        }
+        return profiles[mode]
 
     def generate(self, request: RouteGenerateRequest, trace_id: str) -> dict[str, Any]:
         self.repository.ensure_schema()
@@ -92,11 +156,18 @@ class RouteGenerationService:
 
         origin_id = self._canonical_location_id(origin, request.origin)
         destination_id = self._canonical_location_id(destination, request.destination)
+        origin_summary = self._location_summary(origin, origin_id)
+        destination_summary = self._location_summary(destination, destination_id)
 
         strategy = load_strategy()
         rates = load_rates()
+        carriers = load_carriers()
+        modes, rejected_modes = self._mode_candidates(origin, destination, request)
+        if not modes:
+            self.repository.finish_job(job_id, "failed", {"error": "没有地理可行的运输方式", "rejected_modes": rejected_modes})
+            raise ValueError(f"没有地理可行的运输方式: {rejected_modes}")
         routes: list[RouteRecord] = []
-        for index, mode in enumerate(self._mode_candidates(origin, destination, request), start=1):
+        for index, mode in enumerate(modes, start=1):
             estimate = estimate_leg(origin, destination, mode)
             confidence = 0.58 if mode in {"sea", "air"} else 0.42
             provenance = {
@@ -107,23 +178,23 @@ class RouteGenerationService:
             leg = RouteLegRecord(
                 **provenance, leg_id=f"leg_{origin_id}_{destination_id}_{mode}_1".lower().replace("-", "_"),
                 sequence=1, mode=mode, origin_id=origin_id, destination_id=destination_id,
+                from_location=origin_summary, to_location=destination_summary,
+                carrier_candidates=carriers.get(mode, []),
+                carrier_display_name="候选承运人（待真实班期验证）",
+                vessel_name_display="待 AIS 或船公司班期匹配" if mode == "sea" else "不适用",
+                flight_number_display="待航班 Provider 匹配" if mode == "air" else "不适用",
+                train_number_display="待铁路班列数据匹配" if mode == "rail" else "不适用",
                 **estimate,
             )
-            signals = {
-                "news": float(origin.get("news_risk_score") or destination.get("news_risk_score") or 20),
-                "weather": float(origin.get("weather_risk_score") or destination.get("weather_risk_score") or 20),
-                "congestion": float(origin.get("congestion_score") or destination.get("congestion_score") or 25),
-                "sanctions": 10, "schedule_reliability": 45 if mode in {"rail", "road"} else 30,
-            }
             route_id = f"vehicle_route_{origin_id}_{destination_id}_{mode}_{index}".lower().replace("-", "_")
             route = RouteRecord(
                 **provenance, route_id=route_id, route_type=mode, origin_id=origin_id,
-                destination_id=destination_id, legs_count=1,
+                destination_id=destination_id, origin=origin_summary, destination=destination_summary, legs_count=1,
                 estimated_distance_km=leg.distance_km, estimated_duration_h=leg.duration_h,
                 evidence_count=0, historical_supported=False, needs_review=True, legs=[leg],
             )
             route.estimated_cost = estimate_cost(route.legs, rates)
-            route.risk = calculate_risk(signals, strategy)
+            route.risk = calculate_mode_risk(mode, self._mode_signals(mode, origin, destination), strategy)
             routes.append(route)
         routes = rank_routes(routes, request.ranking_strategy, strategy)
         if request.persist:
@@ -132,6 +203,7 @@ class RouteGenerationService:
         result = {
             "success": True, "job_id": job_id, "trace_id": trace_id,
             "query": {"origin": request.origin, "destination": request.destination, "resolved_origin_id": origin_id, "resolved_destination_id": destination_id, "ranking_strategy": request.ranking_strategy},
+            "rejected_modes": rejected_modes,
             "routes": [route.model_dump(mode="json") for route in routes],
         }
         self.repository.finish_job(job_id, "success", {"routes_generated": len(routes), "persisted": request.persist})

@@ -1,0 +1,14 @@
+sea:
+  - COSCO SHIPPING
+  - Maersk
+  - CMA CGM
+  - MSC
+air:
+  - Cargolux
+  - Lufthansa Cargo
+  - Emirates SkyCargo
+  - Cathay Cargo
+rail:
+  - 中欧班列运营平台（待线路核验）
+road:
+  - 当地整车公路承运人（待询价）

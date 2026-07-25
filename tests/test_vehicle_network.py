@@ -3,6 +3,9 @@ from app.vehicle_network.models import LocationKind, LocationRecord, RouteLegRec
 from app.vehicle_network.providers.route_estimator import haversine_km
 from app.vehicle_network.repository import VehicleNetworkRepository
 from app.vehicle_network.scoring import calculate_risk, estimate_cost, rank_routes
+from app.vehicle_network.scoring import calculate_mode_risk
+from app.vehicle_network.models import RouteGenerateRequest
+from app.vehicle_network.services import RouteGenerationService
 
 
 PROVENANCE = {
@@ -74,3 +77,42 @@ def test_existing_unlocode_reuses_node_instead_of_creating_duplicate():
     assert repository.merge_locations([location], "job-test") == 1
     assert any("elementId(location)=$element_id" in query for query in repository.transaction.queries)
     assert not any("MERGE (location:TransportLocation:Port {location_id:$id})" in query for query in repository.transaction.queries)
+
+
+def test_transpacific_port_route_rejects_rail_and_road():
+    service = RouteGenerationService()
+    origin = {"labels": ["Port"], "country_code": "CN", "latitude": 31.23, "longitude": 121.47}
+    destination = {"labels": ["Port"], "country_code": "US", "latitude": 33.74, "longitude": -118.27}
+    modes, rejected = service._mode_candidates(origin, destination, RouteGenerateRequest(origin="CN-SHA", destination="US-LAX"))
+    assert modes == ["sea"]
+    assert {item["mode"] for item in rejected} == {"rail", "road"}
+
+
+def test_sea_and_rail_use_different_risk_factors():
+    strategy = load_strategy()
+    sea = calculate_mode_risk("sea", {"weather": 50, "piracy": 80, "port_congestion": 40, "geopolitical": 30, "sanctions": 10, "schedule_reliability": 35}, strategy)
+    rail = calculate_mode_risk("rail", {"border_customs": 60, "geopolitical": 30, "infrastructure": 20, "weather": 50, "schedule_reliability": 35, "sanctions": 10}, strategy)
+    assert any("海盗" in factor for factor in sea.risk_factors)
+    assert any("边境与海关" in factor for factor in rail.risk_factors)
+    assert sea.risk_factors != rail.risk_factors
+
+
+def test_missing_provider_signals_do_not_join_risk_calculation():
+    strategy = load_strategy()
+    risk = calculate_mode_risk(
+        "sea",
+        {"weather": 40, "piracy": None, "port_congestion": 60, "geopolitical": None, "sanctions": None, "schedule_reliability": None},
+        strategy,
+    )
+    expected = (40 * 0.22 + 60 * 0.20) / (0.22 + 0.20)
+    assert risk.risk_score == round(expected, 2)
+    assert all("海盗" not in factor for factor in risk.risk_factors)
+    assert "海盗与海上安全" in risk.missing_factors
+    assert risk.data_completeness == 0.42
+
+
+def test_all_missing_signals_return_unknown_not_low_risk():
+    risk = calculate_mode_risk("rail", {}, load_strategy())
+    assert risk.risk_score is None
+    assert risk.risk_level == "unknown"
+    assert risk.data_completeness == 0

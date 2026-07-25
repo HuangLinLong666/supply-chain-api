@@ -13,6 +13,7 @@ from app.vehicle_network.models import StrategyConfig
 ROOT = Path(__file__).resolve().parents[2]
 STRATEGY_PATH = ROOT / "config" / "vehicle_strategy.yaml"
 RATES_PATH = ROOT / "config" / "vehicle_rates.yaml"
+CARRIERS_PATH = ROOT / "config" / "vehicle_carriers.yaml"
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -33,6 +34,10 @@ def save_strategy(strategy: StrategyConfig) -> None:
 
 def load_rates() -> dict[str, Any]:
     return load_yaml(RATES_PATH)
+
+
+def load_carriers() -> dict[str, list[str]]:
+    return load_yaml(CARRIERS_PATH)
 
 
 def json_text(value: Any) -> str:

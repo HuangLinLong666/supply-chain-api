@@ -169,8 +169,14 @@ class VehicleNetworkRepository:
         return (rows[0]["location"] | {"labels": rows[0]["labels"], "element_id": rows[0]["element_id"]}) if rows else None
 
     def merge_route(self, route: RouteRecord, job_id: str | None = None) -> None:
-        payload = route.model_dump(mode="json", exclude={"legs", "risk", "estimated_cost"})
+        payload = route.model_dump(mode="json", exclude={"legs", "risk", "estimated_cost", "origin", "destination"})
         payload["why_recommended_json"] = json_text(payload.pop("why_recommended", []))
+        if route.origin:
+            payload["origin_name"] = route.origin.name
+            payload["origin_name_zh"] = route.origin.name_zh
+        if route.destination:
+            payload["destination_name"] = route.destination.name
+            payload["destination_name_zh"] = route.destination.name_zh
 
         def write(transaction):
             transaction.run("""
@@ -186,6 +192,12 @@ class VehicleNetworkRepository:
                 properties = leg.model_dump(mode="json")
                 properties["geometry_json"] = json_text(properties.pop("geometry", []))
                 properties["evidence_refs_json"] = json_text(properties.pop("evidence_refs", []))
+                from_location = properties.pop("from_location", None)
+                to_location = properties.pop("to_location", None)
+                properties["from_location_json"] = json_text(from_location or {})
+                properties["to_location_json"] = json_text(to_location or {})
+                properties["from_name"] = (from_location or {}).get("name")
+                properties["to_name"] = (to_location or {}).get("name")
                 transaction.run("""
                     MATCH (route:VehicleRoute {route_id:$route_id})
                     MERGE (leg:RouteLeg {leg_id:$leg_id}) SET leg += $properties
@@ -248,8 +260,17 @@ class VehicleNetworkRepository:
             OPTIONAL MATCH (route)-[membership:HAS_LEG]->(leg:RouteLeg)
             OPTIONAL MATCH (route)-[:HAS_RISK_SNAPSHOT]->(risk:RiskSnapshot)
             OPTIONAL MATCH (route)-[:HAS_COST_ESTIMATE]->(cost:CostEstimate)
-            WITH route,leg,membership,risk,cost ORDER BY membership.sequence,risk.calculated_at DESC,cost.calculated_at DESC
-            RETURN properties(route) AS route,collect(DISTINCT properties(leg)) AS legs,
+            WITH route,origin,destination,leg,membership,risk,cost ORDER BY membership.sequence,risk.calculated_at DESC,cost.calculated_at DESC
+            RETURN properties(route) AS route,
+                   {id:coalesce(origin.location_id,origin.unlocode,origin.code,origin.iata),
+                    name:coalesce(origin.name_zh,origin.name,origin.name_en,origin.city),
+                    nameZh:origin.name_zh,nameEn:coalesce(origin.name_en,origin.name),city:origin.city,
+                    country:origin.country,countryCode:origin.country_code,latitude:origin.latitude,longitude:origin.longitude} AS origin,
+                   {id:coalesce(destination.location_id,destination.unlocode,destination.code,destination.iata),
+                    name:coalesce(destination.name_zh,destination.name,destination.name_en,destination.city),
+                    nameZh:destination.name_zh,nameEn:coalesce(destination.name_en,destination.name),city:destination.city,
+                    country:destination.country,countryCode:destination.country_code,latitude:destination.latitude,longitude:destination.longitude} AS destination,
+                   collect(DISTINCT properties(leg)) AS legs,
                    head(collect(DISTINCT properties(risk))) AS risk,head(collect(DISTINCT properties(cost))) AS cost
             ORDER BY route.score DESC LIMIT $limit
         """, {"origin": origin, "destination": destination, "limit": limit})
@@ -257,9 +278,19 @@ class VehicleNetworkRepository:
     def get_route(self, route_id: str) -> dict[str, Any] | None:
         rows = self._execute_read("""
             MATCH (route:VehicleRoute {route_id:$route_id})
+            OPTIONAL MATCH (route)-[:ORIGIN]->(origin)
+            OPTIONAL MATCH (route)-[:DESTINATION]->(destination)
             OPTIONAL MATCH (route)-[membership:HAS_LEG]->(leg:RouteLeg)
-            WITH route,leg,membership ORDER BY membership.sequence
-            RETURN properties(route) AS route,collect(properties(leg)) AS legs
+            OPTIONAL MATCH (leg)-[:FROM_NODE]->(legOrigin)
+            OPTIONAL MATCH (leg)-[:TO_NODE]->(legDestination)
+            WITH route,origin,destination,leg,legOrigin,legDestination,membership ORDER BY membership.sequence
+            RETURN properties(route) AS route,
+                   {id:coalesce(origin.location_id,origin.unlocode,origin.code,origin.iata),name:coalesce(origin.name_zh,origin.name,origin.name_en,origin.city),nameZh:origin.name_zh,nameEn:coalesce(origin.name_en,origin.name),city:origin.city,country:origin.country,countryCode:origin.country_code,latitude:origin.latitude,longitude:origin.longitude} AS origin,
+                   {id:coalesce(destination.location_id,destination.unlocode,destination.code,destination.iata),name:coalesce(destination.name_zh,destination.name,destination.name_en,destination.city),nameZh:destination.name_zh,nameEn:coalesce(destination.name_en,destination.name),city:destination.city,country:destination.country,countryCode:destination.country_code,latitude:destination.latitude,longitude:destination.longitude} AS destination,
+                   collect(leg{.*,
+                     from_location:{id:coalesce(legOrigin.location_id,legOrigin.unlocode,legOrigin.code,legOrigin.iata),name:coalesce(legOrigin.name_zh,legOrigin.name,legOrigin.name_en,legOrigin.city),city:legOrigin.city,country:legOrigin.country,latitude:legOrigin.latitude,longitude:legOrigin.longitude},
+                     to_location:{id:coalesce(legDestination.location_id,legDestination.unlocode,legDestination.code,legDestination.iata),name:coalesce(legDestination.name_zh,legDestination.name,legDestination.name_en,legDestination.city),city:legDestination.city,country:legDestination.country,latitude:legDestination.latitude,longitude:legDestination.longitude}
+                   }) AS legs
         """, {"route_id": route_id})
         return rows[0] if rows else None
 

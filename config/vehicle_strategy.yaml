@@ -4,6 +4,35 @@ risk_weights:
   congestion_weight: 0.20
   sanctions_weight: 0.25
   schedule_reliability_weight: 0.10
+mode_risk_weights:
+  sea:
+    weather: 0.22
+    piracy: 0.18
+    port_congestion: 0.20
+    geopolitical: 0.18
+    sanctions: 0.12
+    schedule_reliability: 0.10
+  rail:
+    border_customs: 0.24
+    geopolitical: 0.22
+    infrastructure: 0.18
+    weather: 0.12
+    schedule_reliability: 0.16
+    sanctions: 0.08
+  road:
+    traffic: 0.24
+    border_customs: 0.20
+    road_security: 0.20
+    weather: 0.16
+    regulatory: 0.12
+    schedule_reliability: 0.08
+  air:
+    weather: 0.20
+    airspace_conflict: 0.24
+    airport_capacity: 0.18
+    schedule_reliability: 0.20
+    sanctions: 0.10
+    cargo_handling: 0.08
 ranking_weights:
   risk_weight: 0.40
   cost_weight: 0.30

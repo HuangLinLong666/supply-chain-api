@@ -63,6 +63,19 @@ class LocationRecord(Provenance):
     updated_at: datetime = Field(default_factory=utc_now)
 
 
+class LocationSummary(BaseModel):
+    id: str
+    name: str
+    name_zh: str | None = None
+    name_en: str | None = None
+    kind: str
+    city: str | None = None
+    country: str | None = None
+    country_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
 class EvidenceRecord(BaseModel):
     evidence_id: str = Field(default_factory=lambda: f"evidence_{uuid4().hex}")
     source: str
@@ -79,15 +92,25 @@ class RouteLegRecord(Provenance):
     mode: str
     origin_id: str
     destination_id: str
+    from_location: LocationSummary | None = None
+    to_location: LocationSummary | None = None
     distance_km: float = Field(ge=0)
     duration_h: float = Field(ge=0)
     geometry: list[list[float]] = []
     carrier: str | None = None
+    carrier_display_name: str = "未匹配真实班期"
+    carrier_status: str = "unavailable_estimated"
+    carrier_candidates: list[str] = []
+    operator_data_source: str = "候选承运人配置，非真实班期"
+    requires_schedule_verification: bool = True
     flight_number: str | None = None
     voyage_number: str | None = None
     vessel_name: str | None = None
+    vessel_name_display: str = "不适用"
     aircraft_type: str | None = None
+    flight_number_display: str = "不适用"
     train_number: str | None = None
+    train_number_display: str = "不适用"
     historical_supported: bool = False
     evidence_refs: list[str] = []
 
@@ -102,10 +125,12 @@ class CostRange(BaseModel):
 
 
 class RiskResult(BaseModel):
-    risk_score: float = Field(ge=0, le=100)
+    risk_score: float | None = Field(default=None, ge=0, le=100)
     risk_level: str
     risk_factors: list[str]
     evidence_refs: list[str] = []
+    data_completeness: float = Field(default=0, ge=0, le=1)
+    missing_factors: list[str] = []
 
 
 class RouteRecord(Provenance):
@@ -113,6 +138,8 @@ class RouteRecord(Provenance):
     route_type: str
     origin_id: str
     destination_id: str
+    origin: LocationSummary | None = None
+    destination: LocationSummary | None = None
     legs_count: int = Field(ge=1)
     estimated_distance_km: float = Field(ge=0)
     estimated_duration_h: float = Field(ge=0)
@@ -124,6 +151,7 @@ class RouteRecord(Provenance):
     risk: RiskResult | None = None
     why_recommended: list[str] = []
     needs_review: bool = True
+    service_data_status: str = "estimated_without_verified_schedule"
     legs: list[RouteLegRecord]
 
 
@@ -167,6 +195,7 @@ class AuditSourceRequest(BaseModel):
 
 class StrategyConfig(BaseModel):
     risk_weights: dict[str, float]
+    mode_risk_weights: dict[str, dict[str, float]] = {}
     ranking_weights: dict[str, float]
     high_risk_threshold: float = 60
     critical_risk_threshold: float = 80

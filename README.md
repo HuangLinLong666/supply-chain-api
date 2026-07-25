@@ -252,6 +252,18 @@ SET route.route_status='candidate';
 
 不要执行 `MATCH (n) DETACH DELETE n`。
 
+审计历史估算路线是否存在跨大洋铁路、跨海公路等问题：
+
+```bash
+python scripts/audit_vehicle_route_feasibility.py
+```
+
+确认列表后执行软删除：
+
+```bash
+python scripts/audit_vehicle_route_feasibility.py --apply
+```
+
 ## 14. 手工添加路线与来源
 
 推荐流程：
