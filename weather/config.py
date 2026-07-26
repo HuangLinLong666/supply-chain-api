@@ -20,6 +20,9 @@ class WeatherSettings:
     batch_size: int = int(os.getenv("WEATHER_BATCH_SIZE", "25"))
     cache_ttl_minutes: int = int(os.getenv("WEATHER_CACHE_TTL_MINUTES", "45"))
     retention_days: int = int(os.getenv("WEATHER_SNAPSHOT_RETENTION_DAYS", "30"))
+    route_sample_points: int = int(os.getenv("WEATHER_ROUTE_SAMPLE_POINTS", "5"))
+    route_forecast_hours: int = int(os.getenv("WEATHER_ROUTE_FORECAST_HOURS", "168"))
+    route_risk_ttl_hours: int = int(os.getenv("WEATHER_ROUTE_RISK_TTL_HOURS", "2"))
     admin_token: str = os.getenv("WEATHER_ADMIN_TOKEN", "")
     scheduler_enabled: bool = os.getenv("WEATHER_SCHEDULER_ENABLED", "false").lower() == "true"
 

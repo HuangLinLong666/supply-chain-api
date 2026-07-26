@@ -1,0 +1,42 @@
+name: Update Open-Meteo route weather risk
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: open-meteo-route-weather-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Update port weather snapshots
+        env:
+          AURA_NEO4J_URI: ${{ secrets.AURA_NEO4J_URI }}
+          AURA_NEO4J_USERNAME: ${{ secrets.AURA_NEO4J_USERNAME }}
+          AURA_NEO4J_PASSWORD: ${{ secrets.AURA_NEO4J_PASSWORD }}
+          AURA_NEO4J_DATABASE: ${{ secrets.AURA_NEO4J_DATABASE }}
+          WEATHER_SCHEDULER_ENABLED: "false"
+          WEATHER_ROUTE_RISK_TTL_HOURS: "2"
+        run: python scripts/update_port_weather.py
+      - name: Sample route weather and recalculate recommendation risk
+        env:
+          AURA_NEO4J_URI: ${{ secrets.AURA_NEO4J_URI }}
+          AURA_NEO4J_USERNAME: ${{ secrets.AURA_NEO4J_USERNAME }}
+          AURA_NEO4J_PASSWORD: ${{ secrets.AURA_NEO4J_PASSWORD }}
+          AURA_NEO4J_DATABASE: ${{ secrets.AURA_NEO4J_DATABASE }}
+          WEATHER_SCHEDULER_ENABLED: "false"
+          WEATHER_ROUTE_SAMPLE_POINTS: "5"
+          WEATHER_ROUTE_FORECAST_HOURS: "168"
+          WEATHER_ROUTE_RISK_TTL_HOURS: "2"
+        run: python scripts/update_route_weather.py

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
@@ -7,42 +8,80 @@ from gdelt.client import GdeltClient
 from gdelt.config import GdeltSettings, load_zone_config
 from gdelt.exposure import exposed_zone_ids
 from gdelt.repository import apply_segment_overlay, ensure_schema, route_segments, write_zone
-from gdelt.risk import parse_seen_date, score_zone
+from gdelt.risk import score_zone
 
 
-def update_news_risk(dry_run: bool = False, client: GdeltClient | None = None) -> dict[str, Any]:
+LOGGER = logging.getLogger(__name__)
+
+
+def update_news_risk(
+    dry_run: bool = False,
+    client: GdeltClient | None = None,
+    zone_ids: list[str] | None = None,
+) -> dict[str, Any]:
     settings = GdeltSettings()
     config = load_zone_config()
-    zones = config["zones"]
+    zones = [zone for zone in config["zones"] if zone_ids is None or zone["id"] in zone_ids]
     gdelt_client = client or GdeltClient(settings)
+    reference = datetime.now(timezone.utc)
     zone_results: dict[str, dict[str, Any]] = {}
     failures: list[dict[str, str]] = []
     for zone in zones:
         try:
+            LOGGER.info("gdelt_zone_fetch_start zone_id=%s", zone["id"])
             articles = gdelt_client.search(zone["query"])
-            result = score_zone(articles)
-            for article in result["articles"]:
-                article["seen_at"] = parse_seen_date(article.get("seendate"))
+            result = score_zone(articles, now=reference, cluster_namespace=zone["id"])
             zone_results[zone["id"]] = result
+            LOGGER.info(
+                "gdelt_zone_fetch_complete zone_id=%s articles=%s clusters=%s status=%s",
+                zone["id"],
+                result["valid_article_count"],
+                result["cluster_count"],
+                result["status"],
+            )
         except Exception as exc:
+            LOGGER.warning("gdelt_zone_fetch_failed zone_id=%s error=%s", zone["id"], exc)
             failures.append({"zoneId": zone["id"], "error": str(exc)})
     segments = route_segments()
     overlays = []
+    failed_zone_ids = {failure["zoneId"] for failure in failures}
     for segment in segments:
-        exposed = [zone_id for zone_id in exposed_zone_ids(segment, zones) if zone_id in zone_results]
+        inferred = exposed_zone_ids(segment, zones)
+        exposed = [zone_id for zone_id in inferred if zone_id in zone_results]
         if exposed:
-            overlays.append({"segmentId": segment["segment_id"], "zones": exposed})
+            overlays.append(
+                {
+                    "segmentId": segment["segment_id"],
+                    "zones": exposed,
+                    "activeZones": [zone_id for zone_id in exposed if zone_results[zone_id]["status"] == "available"],
+                    "skippedBecauseFetchFailed": bool(set(inferred) & failed_zone_ids),
+                }
+            )
     if not dry_run:
         ensure_schema()
         for zone in zones:
             if zone["id"] in zone_results:
                 write_zone(zone, zone_results[zone["id"]], config["scoring_version"], settings.risk_ttl_hours)
         for segment in segments:
-            exposed = [zone_id for zone_id in exposed_zone_ids(segment, zones) if zone_id in zone_results]
+            inferred = exposed_zone_ids(segment, zones)
+            if set(inferred) & failed_zone_ids:
+                continue
+            exposed = [zone_id for zone_id in inferred if zone_id in zone_results]
             apply_segment_overlay(segment, zone_results, exposed, settings.risk_ttl_hours)
     return {
         "updatedAt": datetime.now(timezone.utc).isoformat(), "dryRun": dry_run,
-        "zonesUpdated": len(zone_results), "segmentsScanned": len(segments),
+        "zonesRequested": len(zones), "zonesUpdated": len(zone_results), "segmentsScanned": len(segments),
         "segmentsExposed": len(overlays), "overlays": overlays, "failures": failures,
-        "zoneRisks": {zone_id: {key: value for key, value in result.items() if key != "articles"} | {"articleCount": len(result["articles"])} for zone_id, result in zone_results.items()},
+        "zoneRisks": {
+            zone_id: {
+                key: value
+                for key, value in result.items()
+                if key not in {"articles", "clusters"}
+            }
+            | {
+                "articleCount": len(result["articles"]),
+                "clusterCount": len(result["clusters"]),
+            }
+            for zone_id, result in zone_results.items()
+        },
     }

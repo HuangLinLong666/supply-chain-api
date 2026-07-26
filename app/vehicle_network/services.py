@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from app.vehicle_network.providers.route_estimator import estimate_leg
 from app.vehicle_network.providers.sample_registry import SampleRegistryProvider
 from app.vehicle_network.repository import VehicleNetworkRepository
 from app.vehicle_network.scoring import calculate_mode_risk, estimate_cost, rank_routes
+from app.provider_risk import is_fresh
 
 
 logger = logging.getLogger(__name__)
@@ -128,10 +130,59 @@ class RouteGenerationService:
                 return number * 100 if 0 <= number <= 1 else number
         return None
 
+    def _provider_risk_value(
+        self,
+        origin: dict[str, Any],
+        destination: dict[str, Any],
+        *,
+        value_fields: tuple[str, ...],
+        provider_fields: tuple[str, ...],
+        provider_markers: tuple[str, ...],
+        observed_field: str | None = None,
+        max_age_hours: float | None = None,
+    ) -> float | None:
+        values: list[float] = []
+        for location in (origin, destination):
+            provider_text = " ".join(str(location.get(field) or "") for field in provider_fields).casefold()
+            if not any(marker in provider_text for marker in provider_markers):
+                continue
+            if observed_field and max_age_hours is not None and not is_fresh(
+                location.get(observed_field),
+                now=datetime.now(timezone.utc),
+                max_age_hours=max_age_hours,
+            ):
+                continue
+            value = self._risk_value(*(location.get(field) for field in value_fields))
+            if value is not None:
+                values.append(value)
+        return max(values) if values else None
+
     def _mode_signals(self, mode: str, origin: dict[str, Any], destination: dict[str, Any]) -> dict[str, float | None]:
-        news = self._risk_value(origin.get("news_risk_score"), destination.get("news_risk_score"))
-        weather = self._risk_value(origin.get("weather_risk_score"), destination.get("weather_risk_score"))
-        congestion = self._risk_value(origin.get("congestion_score"), destination.get("congestion_score"))
+        news = self._provider_risk_value(
+            origin,
+            destination,
+            value_fields=("news_risk_score",),
+            provider_fields=("news_risk_provider", "news_source"),
+            provider_markers=("gdelt",),
+            observed_field="news_risk_updated_at",
+            max_age_hours=6,
+        )
+        weather = self._provider_risk_value(
+            origin,
+            destination,
+            value_fields=("weather_risk_score",),
+            provider_fields=("weather_risk_provider", "weather_source"),
+            provider_markers=("open-meteo", "open meteo"),
+            observed_field="weather_updated_at",
+            max_age_hours=6,
+        )
+        congestion = self._provider_risk_value(
+            origin,
+            destination,
+            value_fields=("congestion_score", "congestionRisk"),
+            provider_fields=("congestion_provider", "port_congestion_provider", "congestion_source"),
+            provider_markers=("official", "port authority", "project44", "fourkites", "marinetraffic", "portcast"),
+        )
         profiles = {
             "sea": {"weather": weather, "piracy": None, "port_congestion": congestion, "geopolitical": news, "sanctions": None, "schedule_reliability": None},
             "rail": {"border_customs": None, "geopolitical": news, "infrastructure": None, "weather": weather, "schedule_reliability": None, "sanctions": None},

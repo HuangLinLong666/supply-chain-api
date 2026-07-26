@@ -13,9 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from pydantic import BaseModel
 
-from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, shortest_path
+from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, risk_optimization_value, shortest_path
 from database.neo4j_client import close_driver, get_settings, run_query, verify_connectivity
 from weather.config import WeatherSettings
+from weather.route_service import update_route_weather
 from weather.service import update_ports
 from gdelt.config import GdeltSettings
 from gdelt.service import update_news_risk
@@ -23,7 +24,7 @@ from app.vehicle_network.api import router as vehicle_network_router
 
 
 _route_graph_cache: tuple[float, list[dict[str, Any]]] | None = None
-ROUTE_GRAPH_CACHE_SECONDS = 300
+ROUTE_GRAPH_CACHE_SECONDS = 60
 
 
 def cors_origins() -> list[str]:
@@ -206,7 +207,10 @@ def risk_overview(limit: int = 25) -> dict[str, Any]:
         RETURN
           coalesce(s.segment_id, s.segmentId, elementId(s)) AS segment_id,
           coalesce(s.mode, s.routeMode) AS mode,
-          coalesce(s.base_risk_score, s.riskScore, s.costRiskScore) AS risk_score,
+          CASE WHEN s.provider_risk_status IN ['available','partial']
+                 AND s.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(s.provider_risk_expires_at)) > datetime()
+               THEN s.provider_risk_score END AS risk_score,
           coalesce(s.estimated_cost_usd, s.totalCostUSD) AS estimated_cost_usd,
           coalesce(s.estimated_time_days, s.estimatedTimeHours) AS estimated_time,
           properties(s) AS properties
@@ -237,14 +241,23 @@ def ranked_risk_segments(
         MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
         MATCH (segment)-[:TO_NODE]->(toNode)
         WITH segment, fromNode, toNode,
-             coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.0) AS riskScore
-        WHERE riskScore >= $minimum_risk
+             CASE WHEN segment.provider_risk_status IN ['available','partial']
+                    AND segment.provider_risk_expires_at IS NOT NULL
+                    AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+                  THEN segment.provider_risk_score END AS riskScore
+        WHERE riskScore IS NOT NULL AND riskScore >= $minimum_risk
         RETURN
           coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
           coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS origin,
           coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS destination,
           coalesce(segment.mode, segment.routeMode) AS mode,
           riskScore AS comprehensive_risk_score,
+          segment.provider_risk_score_100 AS comprehensive_risk_score_100,
+          segment.provider_risk_status AS risk_status,
+          segment.provider_risk_data_completeness AS risk_data_completeness,
+          properties(segment)['provider_risk_confidence'] AS risk_confidence,
+          segment.provider_risk_missing_factors AS missing_factors,
+          segment.provider_risk_providers AS providers,
           segment.risk_breakdown AS risk_breakdown,
           segment.risk_explanation AS risk_explanation,
           coalesce(segment.confidence_score, 0.0) AS confidence_score,
@@ -278,7 +291,7 @@ def ranked_cost_segments(
           coalesce(segment.mode, segment.routeMode) AS mode,
           coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS estimated_cost_usd,
           coalesce(segment.costScore, 0.0) AS normalized_cost_score,
-          coalesce(segment.costRiskScore, 0.0) AS cost_risk_score,
+          segment.costRiskScore AS cost_risk_score,
           coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS estimated_time_days
         ORDER BY estimated_cost_usd {order_clause}
         LIMIT $limit
@@ -335,19 +348,50 @@ def route_graph_segments() -> list[dict[str, Any]]:
           labels(toNode) AS to_labels,
           coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
           coalesce(segment.mode, segment.routeMode) AS mode,
-          CASE WHEN segment.news_risk_expires_at > datetime()
-               THEN coalesce(segment.dynamic_risk_score, segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.5)
-               ELSE coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.5)
-          END AS risk_score,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN segment.provider_risk_score END AS risk_score,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN segment.provider_risk_status ELSE 'unavailable' END AS risk_status,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN coalesce(segment.provider_risk_data_completeness,0.0) ELSE 0.0 END AS risk_data_completeness,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN properties(segment)['provider_risk_confidence'] END AS risk_confidence,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN coalesce(segment.provider_risk_missing_factors,[]) ELSE ['expired_provider_risk'] END AS risk_missing_factors,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN coalesce(segment.provider_risk_providers,[]) ELSE [] END AS risk_providers,
+          segment.provider_risk_factors_json AS risk_factors_json,
           coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS cost_usd,
           coalesce(segment.costScore, 0.5) AS cost_score,
-          coalesce(segment.costRiskScore, 0.5) AS cost_risk_score,
           coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS time_days,
           coalesce(segment.distance_km, segment.distanceKm, 0.0) AS distance_km,
           segment.risk_explanation AS risk_explanation,
-          segment.risk_breakdown AS risk_breakdown,
+          CASE WHEN segment.provider_risk_status IN ['available','partial']
+                 AND segment.provider_risk_expires_at IS NOT NULL
+                 AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+               THEN segment.risk_breakdown END AS risk_breakdown,
           CASE WHEN segment.news_risk_expires_at > datetime() THEN coalesce(segment.news_risk_score,0.0) ELSE 0.0 END AS news_risk_score,
-          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_zones ELSE [] END AS news_risk_zones
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_zones ELSE [] END AS news_risk_zones,
+          CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_risk END AS route_weather_risk,
+          CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_status ELSE 'unavailable' END AS route_weather_status,
+          CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_confidence END AS route_weather_confidence,
+          segment.route_weather_data_completeness AS route_weather_data_completeness,
+          segment.route_weather_sampling_method AS route_weather_sampling_method,
+          segment.route_weather_updated_at AS route_weather_updated_at,
+          segment.route_weather_expires_at AS route_weather_expires_at,
+          coalesce(segment.route_weather_evidence,[]) AS route_weather_evidence
         """
     )
     add_coordinate_fallbacks(segments)
@@ -410,7 +454,12 @@ def suppliers(search: str | None = Query(None), limit: int = Query(100, ge=1, le
           supplier.name AS name,
           supplier.city AS city,
           supplier.country AS country,
-          coalesce(supplier.total_risk_score, supplier.supplier_risk, 0.5) AS riskScore,
+	          CASE WHEN supplier.provider_risk_status IN ['available','partial']
+	               THEN supplier.provider_risk_score END AS riskScore,
+	          coalesce(supplier.provider_risk_status,'unavailable') AS riskStatus,
+	          coalesce(supplier.provider_risk_data_completeness,0.0) AS riskDataCompleteness,
+	          coalesce(supplier.provider_risk_missing_factors,[]) AS riskMissingFactors,
+	          coalesce(supplier.provider_risk_providers,[]) AS riskProviders,
           supplier.risk_explanation AS riskExplanation,
           routeCount AS routeCount
         ORDER BY routeCount DESC, name
@@ -505,27 +554,58 @@ def recommend_routes(
         )
 
     formatted = [format_route(path, index + 1) for index, path in enumerate(candidates)]
-    supplier_risk = float(exact_supplier.get("riskScore") or 0.5)
+    supplier_risk = exact_supplier.get("riskScore")
+    supplier_risk = float(supplier_risk) if supplier_risk is not None else None
+    supplier_completeness = float(exact_supplier.get("riskDataCompleteness") or 0.0)
     for route in formatted:
-        route["riskScore"] = round(0.2 * supplier_risk * 100 + 0.8 * route["riskScore"])
+        route_risk = route.get("riskScore")
+        if supplier_risk is not None and route_risk is not None:
+            route["riskScore"] = round(0.2 * supplier_risk * 100 + 0.8 * float(route_risk))
+            route["riskDataCompleteness"] = round(
+                0.2 * supplier_completeness + 0.8 * float(route.get("riskDataCompleteness") or 0.0),
+                4,
+            )
+            route["riskStatus"] = (
+                "available"
+                if exact_supplier.get("riskStatus") == "available" and route.get("riskStatus") == "available"
+                else "partial"
+            )
+            route["riskProviders"] = sorted(
+                set(route.get("riskProviders") or []) | set(exact_supplier.get("riskProviders") or [])
+            )
+        elif supplier_risk is None:
+            route["riskStatus"] = "unavailable" if route_risk is None else "partial"
+            route["riskMissingFactors"] = sorted(
+                set(route.get("riskMissingFactors") or []) | {"supplier_risk"}
+            )
         route["riskFactors"].insert(
             0,
             {
                 "key": "supplier",
                 "label": "供应商",
-                "score": round(supplier_risk * 100),
-                "detail": exact_supplier.get("riskExplanation") or f"供应商 {exact_supplier['name']} 综合风险",
+                "score": round(supplier_risk * 100) if supplier_risk is not None else None,
+                "status": exact_supplier.get("riskStatus") or "unavailable",
+                "provider": (exact_supplier.get("riskProviders") or [None])[0],
+                "detail": exact_supplier.get("riskExplanation") or f"供应商 {exact_supplier['name']} 暂无可验证风险 Provider",
             },
         )
     maximum_cost = max(item["cost"] for item in formatted) or 1.0
     formatted.sort(
-        key=lambda route: risk_weight * route["riskScore"] / 100
+        key=lambda route: risk_weight
+        * risk_optimization_value(
+            {
+                "risk_score": route["riskScore"] / 100 if route.get("riskScore") is not None else None,
+                "risk_data_completeness": route.get("riskDataCompleteness"),
+            }
+        )
         + (1 - risk_weight) * route["cost"] / maximum_cost
     )
     routes = formatted[:limit]
     if routes:
         min(routes, key=lambda route: route["cost"])["tags"].insert(0, "成本最优")
-        min(routes, key=lambda route: route["riskScore"])["tags"].insert(0, "风险最优")
+        known_risk_routes = [route for route in routes if route.get("riskScore") is not None]
+        if known_risk_routes:
+            min(known_risk_routes, key=lambda route: route["riskScore"])["tags"].insert(0, "风险最优")
         min(routes, key=lambda route: route["durationDays"])["tags"].insert(0, "时效最优")
     return {
         "query": {
@@ -589,9 +669,27 @@ def route_recommendations(
         """
         MATCH (route:Route)-[membership:HAS_SEGMENT]->(segment:RouteSegment)
         WITH route, segment, membership,
-             coalesce(segment.total_risk_score, segment.riskScore, segment.base_risk_score, 0.5) AS risk,
+             CASE WHEN segment.provider_risk_status IN ['available','partial']
+                    AND segment.provider_risk_expires_at IS NOT NULL
+                    AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+                  THEN segment.provider_risk_score END AS risk,
+             CASE WHEN segment.provider_risk_status IN ['available','partial']
+                    AND segment.provider_risk_expires_at IS NOT NULL
+                    AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+                  THEN coalesce(segment.provider_risk_data_completeness,0.0) ELSE 0.0 END AS riskCompleteness,
+             CASE WHEN segment.provider_risk_status IN ['available','partial']
+                    AND segment.provider_risk_expires_at IS NOT NULL
+                    AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+                  THEN segment.provider_risk_status ELSE 'unavailable' END AS riskStatus,
+             CASE WHEN segment.provider_risk_status IN ['available','partial']
+                    AND segment.provider_risk_expires_at IS NOT NULL
+                    AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
+                  THEN coalesce(segment.provider_risk_missing_factors,[]) ELSE ['expired_provider_risk'] END AS missingFactors,
              coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS cost,
              coalesce(segment.costScore, 0.5) AS costScore
+        WITH route,segment,membership,risk,riskCompleteness,riskStatus,missingFactors,cost,costScore,
+             CASE WHEN risk IS NULL THEN 1.0
+                  ELSE risk + (1.0-riskCompleteness)*0.25 END AS riskPenalty
         ORDER BY coalesce(membership.sequence, segment.sequence, 0)
         WITH route,
              collect({
@@ -601,18 +699,26 @@ def route_recommendations(
                destination: segment.toNodeName,
                mode: coalesce(segment.mode, segment.routeMode),
                risk_score: risk,
+               risk_status: riskStatus,
+               risk_data_completeness: riskCompleteness,
+               missing_factors: missingFactors,
                estimated_cost_usd: cost
              }) AS segments,
              sum(cost) AS totalCost,
              avg(risk) AS averageRisk,
              max(risk) AS maximumRisk,
+             avg(riskPenalty) AS averageRiskPenalty,
+             avg(riskCompleteness) AS riskDataCompleteness,
+             count(risk) AS knownRiskSegments,
+             count(segment) AS segmentCount,
              avg(costScore) AS averageCostScore,
              sum(coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0)) AS totalTime
-        WITH route, segments, totalCost, averageRisk, maximumRisk, averageCostScore, totalTime,
+        WITH route, segments, totalCost, averageRisk, maximumRisk,averageRiskPenalty,
+             riskDataCompleteness,knownRiskSegments,segmentCount,averageCostScore,totalTime,
              CASE $objective
                WHEN 'min_cost' THEN totalCost
-               WHEN 'min_risk' THEN averageRisk
-               ELSE $risk_weight * averageRisk + (1.0 - $risk_weight) * averageCostScore
+               WHEN 'min_risk' THEN averageRiskPenalty
+               ELSE $risk_weight * averageRiskPenalty + (1.0 - $risk_weight) * averageCostScore
              END AS optimizationScore
         RETURN
           coalesce(route.route_id, route.routeId, elementId(route)) AS route_id,
@@ -621,6 +727,11 @@ def route_recommendations(
           totalCost AS total_cost_usd,
           averageRisk AS average_risk_score,
           maximumRisk AS maximum_risk_score,
+          CASE WHEN knownRiskSegments=0 THEN 'unavailable'
+               WHEN knownRiskSegments=segmentCount AND riskDataCompleteness>=0.9999 THEN 'available'
+               ELSE 'partial' END AS risk_status,
+          riskDataCompleteness AS risk_data_completeness,
+          knownRiskSegments AS risk_known_segments,
           totalTime AS total_time_days,
           segments
         ORDER BY optimization_score ASC
@@ -674,13 +785,114 @@ def trigger_weather_update(payload: WeatherUpdateRequest, background_tasks: Back
     return {"status":"accepted"}
 
 
+@app.get("/api/routes/weather-risks", tags=["Route Weather"])
+def route_weather_risks(
+    mode: Literal["sea", "air", "rail", "road"] | None = None,
+    status: Literal["available", "partial", "unavailable"] | None = None,
+    active_only: bool = True,
+    limit: int = Query(100, ge=1, le=500),
+) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(origin)
+        MATCH (segment)-[:TO_NODE]->(destination)
+        WHERE segment.route_weather_provider='Open-Meteo'
+          AND ($mode IS NULL OR toLower(toString(coalesce(segment.canonical_mode,segment.mode,segment.routeMode)))=$mode)
+          AND ($status IS NULL OR coalesce(segment.route_weather_status,'unavailable')=$status)
+          AND (NOT $active_only OR segment.route_weather_expires_at > datetime())
+        RETURN coalesce(segment.segment_id,segment.segmentId,elementId(segment)) AS segmentId,
+               coalesce(origin.name,origin.code,origin.id) AS origin,
+               coalesce(destination.name,destination.code,destination.id) AS destination,
+               toLower(toString(coalesce(segment.canonical_mode,segment.mode,segment.routeMode))) AS mode,
+               segment.route_weather_risk AS score,segment.route_weather_level AS level,
+               segment.route_weather_status AS status,
+               segment.route_weather_confidence AS confidence,
+               segment.route_weather_data_completeness AS dataCompleteness,
+               segment.route_weather_sampling_method AS samplingMethod,
+               segment.route_weather_geometry_status AS geometryStatus,
+               segment.route_weather_sample_count AS sampleCount,
+               segment.route_weather_valid_sample_count AS validSampleCount,
+               segment.route_weather_evidence AS evidence,
+               segment.route_weather_updated_at AS updatedAt,
+               segment.route_weather_expires_at AS expiresAt,
+               segment.route_weather_expires_at > datetime() AS active
+        ORDER BY active DESC,score DESC
+        LIMIT $limit
+        """,
+        {"mode": mode, "status": status, "active_only": active_only, "limit": limit},
+    )
+    return {"count": len(rows), "routes": rows}
+
+
+@app.get("/api/routes/weather-risks/{segment_id}", tags=["Route Weather"])
+def route_weather_risk_detail(segment_id: str) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (segment:RouteSegment)
+        WHERE coalesce(segment.segment_id,segment.segmentId,elementId(segment))=$segment_id
+        OPTIONAL MATCH (segment)-[:HAS_ROUTE_WEATHER_SNAPSHOT]->(snapshot:RouteWeatherRiskSnapshot)
+        WITH segment,snapshot ORDER BY snapshot.observed_at DESC
+        WITH segment,head(collect(snapshot)) AS snapshot
+        RETURN coalesce(segment.segment_id,segment.segmentId,elementId(segment)) AS segmentId,
+               properties(segment) AS segmentWeather,
+               properties(snapshot) AS latestSnapshot
+        """,
+        {"segment_id": segment_id},
+    )
+    if not rows:
+        raise HTTPException(404, "Route segment not found")
+    result = rows[0]
+    snapshot = result.get("latestSnapshot") or {}
+    for field in ("samples_json", "risk_factors_json"):
+        value = snapshot.pop(field, None)
+        if isinstance(value, str):
+            try:
+                snapshot[field.removesuffix("_json")] = json.loads(value)
+            except json.JSONDecodeError:
+                snapshot[field.removesuffix("_json")] = []
+    result["latestSnapshot"] = snapshot or None
+    return result
+
+
+class RouteWeatherUpdateRequest(BaseModel):
+    segmentIds: list[str] = []
+    limit: int | None = None
+    dryRun: bool = False
+
+
+@app.post("/api/admin/weather/routes/update", tags=["Route Weather Admin"], status_code=202)
+def trigger_route_weather_update(
+    payload: RouteWeatherUpdateRequest,
+    background_tasks: BackgroundTasks,
+    x_weather_admin_token: str | None = Header(None),
+) -> dict[str, str]:
+    token = WeatherSettings().admin_token
+    if not token or x_weather_admin_token != token:
+        raise HTTPException(401, "Invalid or missing weather admin token")
+    background_tasks.add_task(
+        update_route_weather,
+        payload.segmentIds or None,
+        limit=payload.limit,
+        dry_run=payload.dryRun,
+    )
+    return {"status": "accepted"}
+
+
 @app.get("/api/risk/news", tags=["Dynamic News Risk"])
 def news_risk_events(zone_id: str | None = None, limit: int = Query(50, ge=1, le=200)) -> dict[str, Any]:
     rows = safe_query("""
         MATCH (event:NewsRiskEvent)-[:AFFECTS_ZONE]->(zone:NewsRiskZone)
         WHERE $zone_id IS NULL OR zone.zone_id=$zone_id
+        OPTIONAL MATCH (event)-[:MEMBER_OF_EVENT_CLUSTER]->(cluster:NewsRiskCluster)-[:AFFECTS_ZONE]->(zone)
+        WITH event,zone,head(collect(DISTINCT cluster)) AS cluster
         RETURN event.article_id AS id,event.title AS title,event.url AS url,event.domain AS domain,
                event.seen_at AS seenAt,event.severity AS severity,event.matched_terms AS matchedTerms,
+               event.canonical_url AS canonicalUrl,event.event_category AS category,
+               event.matched_categories AS matchedCategories,
+               event.classification_status AS classificationStatus,event.time_status AS timeStatus,
+               event.source_credibility_status AS sourceCredibilityStatus,
+               cluster.cluster_id AS clusterId,cluster.article_count AS clusterArticleCount,
+               cluster.distinct_domain_count AS clusterSourceCount,
                zone.zone_id AS zoneId,zone.name AS zoneName
         ORDER BY event.seen_at DESC LIMIT $limit
     """, {"zone_id": zone_id, "limit": limit})
@@ -693,16 +905,59 @@ def news_risk_zones() -> dict[str, Any]:
         MATCH (zone:NewsRiskZone)
         RETURN zone.zone_id AS id,zone.name AS name,zone.zone_type AS type,
                zone.current_risk_score AS riskScore,zone.current_risk_level AS riskLevel,
-               zone.confidence AS confidence,zone.article_count AS articleCount,
+               zone.status AS status,zone.confidence AS confidence,zone.article_count AS articleCount,
+               zone.raw_article_count AS rawArticleCount,zone.valid_article_count AS validArticleCount,
+               zone.event_cluster_count AS clusterCount,zone.category_counts_json AS categoryCounts,
+               zone.rejected_counts_json AS rejectedCounts,
+               zone.source_credibility_status AS sourceCredibilityStatus,
                zone.updated_at AS updatedAt,zone.expires_at AS expiresAt,
                zone.expires_at > datetime() AS active
         ORDER BY riskScore DESC
     """)
+    for row in rows:
+        for field in ("categoryCounts", "rejectedCounts"):
+            if isinstance(row.get(field), str):
+                try:
+                    row[field] = json.loads(row[field])
+                except json.JSONDecodeError:
+                    row[field] = {}
     return {"count": len(rows), "zones": rows}
+
+
+@app.get("/api/risk/news/clusters", tags=["Dynamic News Risk"])
+def news_risk_clusters(
+    zone_id: str | None = None,
+    category: str | None = None,
+    active_only: bool = False,
+    limit: int = Query(50, ge=1, le=200),
+) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (cluster:NewsRiskCluster)-[:AFFECTS_ZONE]->(zone:NewsRiskZone)
+        WHERE ($zone_id IS NULL OR zone.zone_id=$zone_id)
+          AND ($category IS NULL OR cluster.event_category=$category)
+          AND (NOT $active_only OR cluster.expires_at > datetime())
+        RETURN cluster.cluster_id AS id,cluster.event_category AS category,
+               cluster.representative_title AS title,cluster.severity AS severity,
+               cluster.effective_severity AS effectiveSeverity,
+               cluster.article_count AS articleCount,
+               cluster.distinct_domain_count AS sourceCount,cluster.domains AS domains,
+               cluster.first_seen AS firstSeen,cluster.last_seen AS lastSeen,
+               cluster.source_credibility_status AS sourceCredibilityStatus,
+               cluster.expires_at AS expiresAt,
+               coalesce(cluster.expires_at > datetime(),false) AS active,
+               zone.zone_id AS zoneId,zone.name AS zoneName
+        ORDER BY lastSeen DESC,effectiveSeverity DESC
+        LIMIT $limit
+        """,
+        {"zone_id": zone_id, "category": category, "active_only": active_only, "limit": limit},
+    )
+    return {"count": len(rows), "clusters": rows}
 
 
 class GdeltUpdateRequest(BaseModel):
     dryRun: bool = False
+    zoneIds: list[str] = []
 
 
 @app.post("/api/admin/gdelt/update", tags=["Dynamic News Risk Admin"], status_code=202)
@@ -710,5 +965,5 @@ def trigger_gdelt_update(payload: GdeltUpdateRequest, background_tasks: Backgrou
     token = GdeltSettings().admin_token
     if not token or x_gdelt_admin_token != token:
         raise HTTPException(401, "Invalid or missing GDELT admin token")
-    background_tasks.add_task(update_news_risk, payload.dryRun)
+    background_tasks.add_task(update_news_risk, payload.dryRun, zone_ids=payload.zoneIds or None)
     return {"status": "accepted"}

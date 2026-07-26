@@ -10,7 +10,7 @@ from typing import Any
 @dataclass(frozen=True)
 class GdeltSettings:
     base_url: str = os.getenv("GDELT_DOC_API_URL", "https://api.gdeltproject.org/api/v2/doc/doc")
-    timespan: str = os.getenv("GDELT_TIMESPAN", "24h")
+    timespan: str = os.getenv("GDELT_TIMESPAN", "48h")
     max_records: int = int(os.getenv("GDELT_MAX_RECORDS", "100"))
     timeout_seconds: float = float(os.getenv("GDELT_REQUEST_TIMEOUT_SECONDS", "30"))
     max_retries: int = int(os.getenv("GDELT_MAX_RETRIES", "3"))

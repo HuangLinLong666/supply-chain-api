@@ -7,9 +7,30 @@ import json
 from collections import defaultdict
 from typing import Any
 
+from app.provider_risk import FACTOR_LABELS
+
+
+UNKNOWN_RISK_PENALTY = 1.0
+INCOMPLETENESS_PENALTY = 0.25
+
+
+def optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    return float(value)
+
+
+def risk_optimization_value(segment: dict[str, Any]) -> float:
+    risk_score = optional_float(segment.get("risk_score"))
+    if risk_score is None:
+        return UNKNOWN_RISK_PENALTY
+    completeness = optional_float(segment.get("risk_data_completeness"))
+    completeness = min(max(completeness if completeness is not None else 0.0, 0.0), 1.0)
+    return round(min(1.0, max(risk_score, 0.0) + (1.0 - completeness) * INCOMPLETENESS_PENALTY), 6)
+
 
 def segment_weight(segment: dict[str, Any], objective: str, risk_weight: float) -> float:
-    risk_score = float(segment.get("risk_score") or 0.5)
+    risk_score = risk_optimization_value(segment)
     cost_score = float(segment.get("cost_score") or 0.5)
     if objective == "min_risk":
         return risk_score
@@ -60,14 +81,26 @@ def shortest_path(
 
     total_cost = sum(float(segment.get("cost_usd") or 0.0) for segment in path_segments)
     total_time = sum(float(segment.get("time_days") or 0.0) for segment in path_segments)
-    risk_scores = [float(segment.get("risk_score") or 0.5) for segment in path_segments]
+    risk_scores = [value for segment in path_segments if (value := optional_float(segment.get("risk_score"))) is not None]
+    completeness_values = [float(segment.get("risk_data_completeness") or 0.0) for segment in path_segments]
+    missing_factors = sorted(
+        {
+            str(factor)
+            for segment in path_segments
+            for factor in segment.get("risk_missing_factors") or []
+        }
+    )
     return {
         "objective": objective,
         "optimization_score": round(distances[destination], 6),
         "total_cost_usd": round(total_cost, 2),
         "total_time_days": round(total_time, 2),
-        "average_risk_score": round(sum(risk_scores) / len(risk_scores), 4),
-        "maximum_risk_score": round(max(risk_scores), 4),
+        "average_risk_score": round(sum(risk_scores) / len(risk_scores), 4) if risk_scores else None,
+        "maximum_risk_score": round(max(risk_scores), 4) if risk_scores else None,
+        "risk_status": "unavailable" if not risk_scores else "available" if len(risk_scores) == len(path_segments) and all(segment.get("risk_status") == "available" for segment in path_segments) else "partial",
+        "risk_data_completeness": round(sum(completeness_values) / len(completeness_values), 4) if completeness_values else 0.0,
+        "risk_known_segments": len(risk_scores),
+        "risk_missing_factors": missing_factors,
         "segment_count": len(path_segments),
         "segments": path_segments,
     }
@@ -194,13 +227,16 @@ RISK_LABELS = {
     "route_reliability_risk": "路线可靠性",
     "capacity_risk": "运力",
     "news_risk": "实时新闻",
+    **FACTOR_LABELS,
 }
 
 
 def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
     modes = list(dict.fromkeys(str(segment.get("mode") or "multimodal") for segment in path))
-    risks = [float(segment.get("risk_score") or 0.5) for segment in path]
+    risks = [value for segment in path if (value := optional_float(segment.get("risk_score"))) is not None]
+    completeness_values = [float(segment.get("risk_data_completeness") or 0.0) for segment in path]
     risk_values: dict[str, list[float]] = defaultdict(list)
+    risk_metadata: dict[str, dict[str, set[str]]] = defaultdict(lambda: {"providers": set(), "evidence": set()})
     for segment in path:
         breakdown = segment.get("risk_breakdown")
         if isinstance(breakdown, str):
@@ -211,10 +247,9 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
         for key, value in (breakdown or {}).items():
             if isinstance(value, dict) and value.get("value") is not None:
                 risk_values[key].append(float(value["value"]))
-        news_risk = float(segment.get("news_risk_score") or 0.0)
-        if news_risk > 0:
-            risk_values["news_risk"].append(news_risk)
-
+                if value.get("provider"):
+                    risk_metadata[key]["providers"].add(str(value["provider"]))
+                risk_metadata[key]["evidence"].update(str(item) for item in value.get("evidence") or [] if item)
     cost = sum(float(segment.get("cost_usd") or 0.0) for segment in path)
     duration = sum(float(segment.get("time_days") or 0.0) for segment in path)
     distance = sum(float(segment.get("distance_km") or 0.0) for segment in path)
@@ -222,7 +257,12 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
     return {
         "id": "route-" + "-".join(str(segment["segment_id"]) for segment in path),
         "name": " + ".join(modes).upper() + f" 路线 {rank}",
-        "riskScore": round(sum(risks) / len(risks) * 100),
+        "riskScore": round(sum(risks) / len(risks) * 100) if risks else None,
+        "riskStatus": "unavailable" if not risks else "available" if len(risks) == len(path) and all(segment.get("risk_status") == "available" for segment in path) else "partial",
+        "riskDataCompleteness": round(sum(completeness_values) / len(completeness_values), 4) if completeness_values else 0.0,
+        "riskKnownLegs": len(risks),
+        "riskMissingFactors": sorted({str(factor) for segment in path for factor in segment.get("risk_missing_factors") or []}),
+        "riskProviders": sorted({str(provider) for segment in path for provider in segment.get("risk_providers") or []}),
         "cost": round(cost, 2),
         "durationDays": round(duration, 2),
         "distanceKm": round(distance, 2),
@@ -232,7 +272,11 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
                 "key": key.removesuffix("_risk"),
                 "label": RISK_LABELS.get(key, key),
                 "score": round(sum(values) / len(values) * 100),
-                "detail": f"该路线各分段{RISK_LABELS.get(key, key)}风险平均值",
+                "status": "available",
+                "provider": next(iter(sorted(risk_metadata[key]["providers"])), None),
+                "providers": sorted(risk_metadata[key]["providers"]),
+                "evidence": sorted(risk_metadata[key]["evidence"]),
+                "detail": f"仅聚合带真实 Provider 的{RISK_LABELS.get(key, key)}风险观测",
             }
             for key, values in sorted(risk_values.items(), key=lambda item: sum(item[1]) / len(item[1]), reverse=True)
         ],
@@ -260,9 +304,21 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
                 "cost": round(float(segment.get("cost_usd") or 0.0), 2),
                 "durationDays": round(float(segment.get("time_days") or 0.0), 2),
                 "distanceKm": round(float(segment.get("distance_km") or 0.0), 2),
-                "riskScore": round(float(segment.get("risk_score") or 0.5) * 100),
+                "riskScore": round(risk_score * 100) if (risk_score := optional_float(segment.get("risk_score"))) is not None else None,
+                "riskStatus": segment.get("risk_status") or "unavailable",
+                "riskDataCompleteness": float(segment.get("risk_data_completeness") or 0.0),
+                "riskMissingFactors": segment.get("risk_missing_factors") or [],
+                "riskProviders": segment.get("risk_providers") or [],
                 "newsRiskScore": round(float(segment.get("news_risk_score") or 0.0) * 100),
                 "newsRiskZones": segment.get("news_risk_zones") or [],
+                "weatherRiskScore": round(float(segment["route_weather_risk"]), 1) if segment.get("route_weather_risk") is not None else None,
+                "weatherRiskStatus": segment.get("route_weather_status") or "unavailable",
+                "weatherRiskConfidence": segment.get("route_weather_confidence"),
+                "weatherDataCompleteness": segment.get("route_weather_data_completeness"),
+                "weatherSamplingMethod": segment.get("route_weather_sampling_method") or "unavailable",
+                "weatherEvidence": segment.get("route_weather_evidence") or [],
+                "weatherUpdatedAt": segment.get("route_weather_updated_at"),
+                "weatherExpiresAt": segment.get("route_weather_expires_at"),
             }
             for segment in path
         ],

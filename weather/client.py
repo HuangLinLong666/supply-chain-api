@@ -36,12 +36,12 @@ class OpenMeteoClient:
                 time.sleep(min(2 ** attempt, 8))
         raise RuntimeError(f"Open-Meteo request failed after retries: {last_error}") from last_error
 
-    def weather_batch(self, ports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        result = self._get(self.settings.weather_url, {"latitude": ",".join(str(p["latitude"]) for p in ports), "longitude": ",".join(str(p["longitude"]) for p in ports), "current": CURRENT, "hourly": HOURLY, "forecast_days": 2, "forecast_hours": 24, "timezone": "auto", "wind_speed_unit": "kmh"})
+    def weather_batch(self, ports: list[dict[str, Any]], forecast_hours: int = 24) -> list[dict[str, Any]]:
+        result = self._get(self.settings.weather_url, {"latitude": ",".join(str(p["latitude"]) for p in ports), "longitude": ",".join(str(p["longitude"]) for p in ports), "current": CURRENT, "hourly": HOURLY, "forecast_hours": max(1, forecast_hours), "timezone": "UTC", "wind_speed_unit": "kmh"})
         return result if isinstance(result, list) else [result]
 
-    def marine_batch(self, ports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        result = self._get(self.settings.marine_url, {"latitude": ",".join(str(p["latitude"]) for p in ports), "longitude": ",".join(str(p["longitude"]) for p in ports), "current": MARINE, "hourly": MARINE, "forecast_hours": 24, "timezone": "auto", "cell_selection": "sea"})
+    def marine_batch(self, ports: list[dict[str, Any]], forecast_hours: int = 24) -> list[dict[str, Any]]:
+        result = self._get(self.settings.marine_url, {"latitude": ",".join(str(p["latitude"]) for p in ports), "longitude": ",".join(str(p["longitude"]) for p in ports), "current": MARINE, "hourly": MARINE, "forecast_hours": max(1, forecast_hours), "timezone": "UTC", "cell_selection": "sea"})
         return result if isinstance(result, list) else [result]
 
     def geocode(self, name: str, country_code: str | None = None) -> list[dict[str, Any]]:

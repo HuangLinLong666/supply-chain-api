@@ -1,5 +1,5 @@
 {
-  "scoring_version": "gdelt-global-corridor-v2",
+  "scoring_version": "gdelt-event-cluster-v3",
   "zones": [
     {
       "id": "red-sea",

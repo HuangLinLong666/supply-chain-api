@@ -5,6 +5,7 @@ from typing import Any
 from uuid import uuid4
 
 from database.neo4j_client import get_driver, get_settings, to_jsonable
+from database.unified_schema import SCHEMA_VERSION, data_status_for_source_type, unified_schema_statements
 from app.vehicle_network.core import json_text
 from app.vehicle_network.models import AuditSourceRequest, LocationRecord, RouteRecord
 
@@ -43,6 +44,7 @@ class VehicleNetworkRepository:
             "CREATE CONSTRAINT route_cost_estimate_id IF NOT EXISTS FOR (n:CostEstimate) REQUIRE n.estimate_id IS UNIQUE",
             "CREATE CONSTRAINT ingestion_job_id IF NOT EXISTS FOR (n:IngestionJob) REQUIRE n.job_id IS UNIQUE",
             "CREATE CONSTRAINT audit_log_id IF NOT EXISTS FOR (n:AuditLog) REQUIRE n.audit_id IS UNIQUE",
+            *unified_schema_statements(),
         ]
         for statement in constraints:
             self._execute_write(lambda transaction, query=statement: transaction.run(query).consume())
@@ -67,6 +69,13 @@ class VehicleNetworkRepository:
             row = location.model_dump(mode="json")
             row["label"] = LABEL_BY_KIND[location.kind.value]
             row["aliases_json"] = json_text(row.pop("aliases", []))
+            row["schema_version"] = SCHEMA_VERSION
+            row["location_kind"] = location.kind.value
+            row["data_status"] = data_status_for_source_type(
+                str(location.source_type),
+                review_status=location.review_status,
+                is_inferred=location.is_inferred,
+            )
             rows.append(row)
 
         def write(transaction):
@@ -103,6 +112,15 @@ class VehicleNetworkRepository:
                             location.vehicle_network_source_type=$source_type,
                             location.vehicle_network_confidence=$confidence,
                             location.vehicle_network_updated_at=datetime($updated_at),
+                            location.source=coalesce(location.source,$source),
+                            location.source_type=coalesce(location.source_type,$source_type),
+                            location.source_url=coalesce(location.source_url,$source_url),
+                            location.collected_at=coalesce(location.collected_at,datetime($collected_at)),
+                            location.confidence=coalesce(location.confidence,$confidence),
+                            location.is_inferred=coalesce(location.is_inferred,$is_inferred),
+                            location.data_status=$data_status,
+                            location.location_kind=$location_kind,
+                            location.schema_version=$schema_version,
                             location.deleted_at=null
                         WITH location
                         MATCH (job:IngestionJob {{job_id:$job_id}})
@@ -112,6 +130,8 @@ class VehicleNetworkRepository:
                          iata=row.get("iata"), icao=row.get("icao"), latitude=row.get("latitude"), longitude=row.get("longitude"),
                          eligible_export=row.get("eligible_for_vehicle_export", False), eligible_import=row.get("eligible_for_vehicle_import", False),
                          source=row.get("source"), source_type=row.get("source_type"), confidence=row.get("confidence"),
+                         source_url=row.get("source_url"), collected_at=row.get("collected_at"), is_inferred=row.get("is_inferred"),
+                         data_status=row["data_status"], location_kind=row["location_kind"], schema_version=SCHEMA_VERSION,
                          updated_at=row["updated_at"], job_id=job_id).consume()
                 else:
                     transaction.run(f"""
@@ -170,6 +190,12 @@ class VehicleNetworkRepository:
 
     def merge_route(self, route: RouteRecord, job_id: str | None = None) -> None:
         payload = route.model_dump(mode="json", exclude={"legs", "risk", "estimated_cost", "origin", "destination"})
+        payload["schema_version"] = SCHEMA_VERSION
+        payload["data_status"] = data_status_for_source_type(
+            str(route.source_type), review_status=route.review_status, is_inferred=route.is_inferred
+        )
+        payload["scoring_version"] = "vehicle-network-v1"
+        payload["validity_status"] = "unavailable"
         payload["why_recommended_json"] = json_text(payload.pop("why_recommended", []))
         if route.origin:
             payload["origin_name"] = route.origin.name
@@ -198,25 +224,43 @@ class VehicleNetworkRepository:
                 properties["to_location_json"] = json_text(to_location or {})
                 properties["from_name"] = (from_location or {}).get("name")
                 properties["to_name"] = (to_location or {}).get("name")
+                properties["segment_id"] = leg.leg_id
+                properties["schema_version"] = SCHEMA_VERSION
+                properties["data_status"] = data_status_for_source_type(
+                    str(leg.source_type), review_status=leg.review_status, is_inferred=leg.is_inferred
+                )
+                properties["canonical_mode"] = leg.mode if leg.mode in {"road", "rail", "sea", "air"} else None
+                properties["scoring_version"] = "vehicle-network-v1"
+                properties["feasibility_status"] = "estimated_requires_review"
+                properties["validity_status"] = "unavailable"
                 transaction.run("""
                     MATCH (route:VehicleRoute {route_id:$route_id})
-                    MERGE (leg:RouteLeg {leg_id:$leg_id}) SET leg += $properties
+                    MERGE (leg:RouteLeg {leg_id:$leg_id})
+                    SET leg:RouteSegment,leg += $properties
                     MERGE (route)-[relationship:HAS_LEG]->(leg) SET relationship.sequence=$sequence
+                    MERGE (route)-[canonical:HAS_SEGMENT]->(leg)
+                    SET canonical.sequence=$sequence,canonical.schema_version=$schema_version
                     WITH leg
                     MATCH (origin) WHERE coalesce(origin.location_id,origin.unlocode,origin.code,origin.id)=$origin_id
                     MATCH (destination) WHERE coalesce(destination.location_id,destination.unlocode,destination.code,destination.id)=$destination_id
                     MERGE (leg)-[:FROM_NODE]->(origin)
                     MERGE (leg)-[:TO_NODE]->(destination)
                 """, route_id=route.route_id, leg_id=leg.leg_id, properties=properties, sequence=leg.sequence,
+                     schema_version=SCHEMA_VERSION,
                      origin_id=leg.origin_id, destination_id=leg.destination_id).consume()
             if route.risk:
                 snapshot_id = f"risk_{route.route_id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H')}"
                 transaction.run("""
                     MATCH (route:VehicleRoute {route_id:$route_id})
                     MERGE (snapshot:RiskSnapshot {snapshot_id:$snapshot_id})
-                    SET snapshot += $properties,snapshot.calculated_at=datetime()
+                    SET snapshot:RiskObservation,snapshot += $properties,snapshot.calculated_at=datetime(),
+                        snapshot.observation_id=$snapshot_id,snapshot.observation_type='route_risk_snapshot',
+                        snapshot.observed_at=datetime(),snapshot.data_status='estimated',snapshot.status='unavailable',
+                        snapshot.schema_version=$schema_version
                     MERGE (route)-[:HAS_RISK_SNAPSHOT]->(snapshot)
-                """, route_id=route.route_id, snapshot_id=snapshot_id,
+                    MERGE (route)-[canonical:HAS_RISK_OBSERVATION]->(snapshot)
+                    SET canonical.schema_version=$schema_version
+                """, route_id=route.route_id, snapshot_id=snapshot_id, schema_version=SCHEMA_VERSION,
                      properties={**route.risk.model_dump(mode="json"), "risk_factors_json": json_text(route.risk.risk_factors), "evidence_refs_json": json_text(route.risk.evidence_refs)}).consume()
             if route.estimated_cost:
                 estimate_id = f"cost_{route.route_id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H')}"
@@ -225,9 +269,14 @@ class VehicleNetworkRepository:
                 transaction.run("""
                     MATCH (route:VehicleRoute {route_id:$route_id})
                     MERGE (estimate:CostEstimate {estimate_id:$estimate_id})
-                    SET estimate += $properties,estimate.calculated_at=datetime()
+                    SET estimate:CostObservation,estimate += $properties,estimate.calculated_at=datetime(),
+                        estimate.observation_id=$estimate_id,estimate.observation_type='route_cost_estimate',
+                        estimate.observed_at=datetime(),estimate.data_status='estimated',estimate.status='unavailable',
+                        estimate.schema_version=$schema_version
                     MERGE (route)-[:HAS_COST_ESTIMATE]->(estimate)
-                """, route_id=route.route_id, estimate_id=estimate_id,
+                    MERGE (route)-[canonical:HAS_COST_OBSERVATION]->(estimate)
+                    SET canonical.schema_version=$schema_version
+                """, route_id=route.route_id, estimate_id=estimate_id, schema_version=SCHEMA_VERSION,
                      properties=cost_properties).consume()
             if job_id:
                 transaction.run("""MATCH (job:IngestionJob {job_id:$job_id}),(route:VehicleRoute {route_id:$route_id}) MERGE (job)-[:GENERATED]->(route)""", job_id=job_id, route_id=route.route_id).consume()
@@ -318,10 +367,12 @@ class VehicleNetworkRepository:
         evidence_id = f"evidence_{uuid4().hex}"
         self._execute_write(lambda transaction: transaction.run("""
             MERGE (evidence:Evidence {evidence_id:$evidence_id})
-            SET evidence += $properties,evidence.collected_at=datetime()
+            SET evidence += $properties,evidence.collected_at=datetime(),
+                evidence.schema_version=$schema_version,evidence.data_status=$data_status
             WITH evidence
             OPTIONAL MATCH (entity) WHERE coalesce(entity.route_id,entity.leg_id,entity.location_id,entity.evidence_id)=$entity_id
             FOREACH (_ IN CASE WHEN entity IS NULL THEN [] ELSE [1] END | MERGE (entity)-[:SUPPORTED_BY]->(evidence))
-        """, evidence_id=evidence_id, entity_id=request.entity_id,
+        """, evidence_id=evidence_id, entity_id=request.entity_id, schema_version=SCHEMA_VERSION,
+             data_status=data_status_for_source_type(str(request.source_type)),
              properties=request.model_dump(mode="json", exclude={"entity_id", "entity_type"})).consume())
         return evidence_id

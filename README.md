@@ -329,6 +329,8 @@ ORDER BY job.started_at DESC;
 
 ```bash
 python scripts/update_port_weather.py
+python scripts/update_route_weather.py --dry-run
+python scripts/update_route_weather.py
 ```
 
 GDELT 全球航运新闻风险：
@@ -337,7 +339,7 @@ GDELT 全球航运新闻风险：
 python scripts/update_gdelt_risk.py
 ```
 
-GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml`。详细教程见 `docs/gdelt_dynamic_route_risk.md`。
+GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml` 和 `.github/workflows/update-weather-risk.yml`。任务直接更新 AuraDB，本地 FastAPI 不需要持续开启。详细教程见 `docs/gdelt_dynamic_route_risk.md` 和 `docs/stage5_gdelt_weather_mapping.md`。
 
 ## 17. 简化调度与生产调度
 
@@ -351,7 +353,7 @@ GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml`。详细�
 pytest -q
 ```
 
-测试覆盖距离计算、费用区间、风险权重、混合排序、GDELT 和天气评分。
+当前完整测试为 `98 passed`，覆盖距离计算、费用区间、风险权重、混合排序、GDELT 聚类、天气沿线采样、TTL 和 API 返回。
 
 ## 19. 常见报错
 
@@ -401,3 +403,60 @@ cypher/               查询、审核、软删除示例
 scripts/              命令行入口
 tests/                单元测试
 ```
+
+## 21. 阶段 3 统一 Neo4j 模型
+
+统一迁移采用增量多标签方式，不删除旧节点、旧标签或旧关系：
+
+```bash
+python scripts/migrate_unified_schema.py --dry-run
+```
+
+确认 dry-run 没有 `blocking_conflicts` 后，才执行：
+
+```bash
+python scripts/migrate_unified_schema.py \
+  --execute \
+  --confirm APPLY_UNIFIED_SCHEMA_V1
+```
+
+迁移后的规范实体、字段、约束、实际数量和 Neo4j Browser 验证语句见 `docs/unified_neo4j_model.md`。迁移后的重复 dry-run 应显示节点更新、关系新增、缺失约束和缺失索引全部为 0。
+
+## 22. 阶段 4 Provider 风险清理与重算
+
+阶段 4 删除无 Provider、无 Evidence 且明确来自合成/派生来源的旧 `RiskFactor`，并按运输方式只使用有效期内的 GDELT 与 Open-Meteo 信号重算：
+
+```bash
+python scripts/recalculate_provider_risk.py --dry-run
+```
+
+实际执行需要显式确认：
+
+```bash
+python scripts/recalculate_provider_risk.py \
+  --execute \
+  --confirm CLEAN_AND_RECALCULATE_PROVIDER_RISK_V1
+```
+
+风险缺失现在返回 `null` 和 `unavailable`，不会使用 `0.5/50` 中性默认值；路径排序会对未知风险施加显式不确定性惩罚。完整字段、实际迁移前后统计、备份位置和验证 Cypher 见 `docs/provider_risk_recalculation.md`。
+
+## 23. 阶段 5 GDELT 与路线天气
+
+阶段 5 将 GDELT 原始文章规范化、分类并按 48 小时窗口聚类，保留每一条原始 `NewsRiskEvent`，聚类后只对同一事件计分一次：
+
+```bash
+python scripts/migrate_gdelt_events.py
+python scripts/migrate_gdelt_events.py \
+  --execute \
+  --confirm MIGRATE_GDELT_EVENTS_V3
+```
+
+Open-Meteo 路线天气优先按 `geometry_json` 采样；没有几何时只使用起终点并标记低置信度。估算几何不会伪装成已验证航线，合成、失效和地理不可行路线不会写入真实天气风险。
+
+新增前端查询：
+
+- `GET /api/risk/news/clusters`
+- `GET /api/routes/weather-risks`
+- `GET /api/routes/weather-risks/{segment_id}`
+
+推荐接口会在读取时再次检查 Provider TTL；过期分数立即按 `unavailable` 处理，不等待下一次重算。算法、数据库实测结果和 GitHub Secrets 配置见 `docs/stage5_gdelt_weather_mapping.md`。

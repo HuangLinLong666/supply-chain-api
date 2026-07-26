@@ -1,0 +1,1344 @@
+{
+  "metadata": {
+    "generated_at_utc": "2026-07-26T03:21:12.216156+00:00",
+    "database": "94a63264",
+    "scoring_version": "provider-risk-v1",
+    "plan_sha256": "dcb0af9f6108982b1430b07b67eacdbdb49d0297a5447f1b8a815551e0283d9d",
+    "credentials_redacted": true,
+    "sensitive_properties_redacted": true
+  },
+  "mode": "execute",
+  "safety": {
+    "deletion_scope": "RiskFactor only",
+    "max_delete": 1000,
+    "protected_realtime_labels": [
+      "NewsRiskEvent",
+      "NewsRiskZone",
+      "PortTrafficSnapshot",
+      "Shipment",
+      "Vessel",
+      "VesselObservation",
+      "WeatherRiskSnapshot"
+    ],
+    "protected_counts_must_not_decrease": true,
+    "backup_written_before_execute": true
+  },
+  "before": {
+    "totals": {
+      "nodes": 14624,
+      "relationships": 22497
+    },
+    "statistics": {
+      "summary": {
+        "risk_factor_nodes": 0,
+        "providerless_risk_factors": 0,
+        "route_segments": 613,
+        "risk_available": 0,
+        "risk_partial": 5,
+        "risk_unavailable": 608,
+        "legacy_risk_nodes": 0
+      },
+      "risk_observations_by_provider": [
+        {
+          "provider": "GDELT",
+          "count": 11946
+        },
+        {
+          "provider": "unattributed",
+          "count": 40
+        },
+        {
+          "provider": "Open-Meteo",
+          "count": 3
+        }
+      ],
+      "segment_coverage_by_mode": [
+        {
+          "mode": "air",
+          "status": "unavailable",
+          "count": 10
+        },
+        {
+          "mode": "delivery",
+          "status": "unavailable",
+          "count": 82
+        },
+        {
+          "mode": "multimodal",
+          "status": "unavailable",
+          "count": 390
+        },
+        {
+          "mode": "rail",
+          "status": "unavailable",
+          "count": 17
+        },
+        {
+          "mode": "road",
+          "status": "unavailable",
+          "count": 91
+        },
+        {
+          "mode": "sea",
+          "status": "partial",
+          "count": 5
+        },
+        {
+          "mode": "sea",
+          "status": "unavailable",
+          "count": 18
+        }
+      ]
+    },
+    "protected_baseline": {
+      "NewsRiskEvent": 11946,
+      "NewsRiskZone": 10,
+      "PortTrafficSnapshot": 0,
+      "Shipment": 1,
+      "Vessel": 1,
+      "VesselObservation": 1,
+      "WeatherRiskSnapshot": 3
+    }
+  },
+  "plan": {
+    "risk_factor_counts": {},
+    "risk_factor_deletion_ids": [],
+    "risk_factors": [],
+    "relationships_attached_to_deletion_candidates": [],
+    "segment_recalculations": [
+      {
+        "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:121",
+        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:75_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+        "mode": "sea",
+        "before": {
+          "risk_scored_at": "2026-07-05T09:09:41.281000000+00:00",
+          "totalCostUSD": 2030,
+          "provider_risk_evidence": [
+            "port-singapore",
+            "south-china-sea"
+          ],
+          "total_risk_score": 0.4882,
+          "source": "external_repos_reference_fields",
+          "provider_risk_status": "partial",
+          "provider_risk_data_completeness": 0.18,
+          "mode": "sea",
+          "fromNodeName": "Shanghai Port",
+          "legacy_mode": "sea",
+          "risk_input_hash": "b7965c16dc3dd0f563758de5d38e4dac826a4a9c74e87fad8a05d0e0ed2f96ae",
+          "data_status": "synthetic",
+          "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:75_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "provider_risk_score_100": 48.82,
+          "canonical_mode": "sea",
+          "updatedAt": "2026-06-28T08:52:51.665000000+00:00",
+          "last_updated": "2026-07-04T09:53:22.938000000+00:00",
+          "distance_km": 3800,
+          "matrixCategory": "Low Cost - Low Risk",
+          "source_type": "fabricated_for_testing",
+          "estimatedTimeHours": 168,
+          "news_risk_score": 0.4882,
+          "collected_at": "2026-07-04T09:53:22.938000000+00:00",
+          "route_weather_risk": 34.5,
+          "risk_data_completeness": 0.18,
+          "provider_risk_providers": [
+            "GDELT"
+          ],
+          "schema_migrated_at": "2026-07-26T02:28:04.260492000+00:00",
+          "provider_risk_level": "medium",
+          "news_risk_updated_at": "2026-07-26T00:18:19.743000000+00:00",
+          "confidence_score": 0.65,
+          "provider_risk_expires_at": "2026-07-26T03:18:19.657213000+00:00",
+          "estimated_cost_usd": 2030,
+          "timeScore": 0.0,
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":0.4882,\"score100\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"weight\":0.18,\"observedAt\":\"2026-07-26T00:18:19.743000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:19.657213000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "dynamic_risk_score": 0.4882,
+          "missing_risk_fields": [
+            "production_risk",
+            "inventory_risk",
+            "port_congestion_risk",
+            "transport_delay_risk",
+            "geopolitical_risk",
+            "trade_risk",
+            "sanction_risk",
+            "conflict_risk",
+            "weather_risk",
+            "security_risk"
+          ],
+          "risk_scoring_version": "provider-risk-v1",
+          "scoring_version": "legacy_unversioned",
+          "baseCostUSD": 1450,
+          "modelSource": "external_repos_reference_fields",
+          "update_method": "risk_calculation",
+          "news_risk_zones": [
+            "south-china-sea",
+            "port-singapore"
+          ],
+          "data_quality": "derived",
+          "provider_risk_score": 0.4882,
+          "distanceKm": 3800,
+          "toLabels": [
+            "TransitHub"
+          ],
+          "provider_risk_observed_at": "2026-07-26T00:18:19.743000000+00:00",
+          "source_file": "unknown",
+          "feasibility_status": "unreviewed",
+          "schema_version": "unified-transport-v1",
+          "fromLabels": [
+            "Port"
+          ],
+          "news_risk_expires_at": "2026-07-26T03:18:19.657213000+00:00",
+          "segmentId": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:75_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "relationshipType": "SEA_ROUTE",
+          "source_repo": "existing_neo4j_graph",
+          "confidence": 0.65,
+          "validity_status": "unavailable",
+          "origin_port_weather_risk": 34.5,
+          "capacity_score": 0.8,
+          "estimated_time_days": 7.0,
+          "risk_status": "partial",
+          "risk_recalculated_at": "2026-07-26T03:03:21.176457000+00:00",
+          "risk_explanation": "仅使用真实 Provider 的可用维度重算：地缘政治与冲突",
+          "toNodeName": "Singapore Port",
+          "routeMode": "sea",
+          "reliability_score": 0.709,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"observedAt\":\"2026-07-26T00:18:19.743000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:19.657213000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "route_weather_updated_at": "2026-07-12T06:50:45.456492000+00:00",
+          "costScore": 0.0
+        },
+        "properties": {
+          "provider_risk_score": null,
+          "provider_risk_score_100": null,
+          "provider_risk_level": "unknown",
+          "provider_risk_status": "unavailable",
+          "provider_risk_data_completeness": 0.0,
+          "provider_risk_confidence": null,
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "provider_risk_providers": [],
+          "provider_risk_evidence": [],
+          "provider_risk_observed_at": null,
+          "provider_risk_expires_at": null,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "risk_explanation": "没有处于有效期内且带真实 Provider 的适用风险信号",
+          "risk_status": "unavailable",
+          "risk_data_completeness": 0.0,
+          "risk_scoring_version": "provider-risk-v1",
+          "risk_input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "risk_recalculated_at": "2026-07-26T03:21:12.216156+00:00",
+          "total_risk_score": null,
+          "dynamic_risk_score": null
+        },
+        "result": {
+          "score": null,
+          "score_100": null,
+          "level": "unknown",
+          "status": "unavailable",
+          "data_completeness": 0.0,
+          "confidence": null,
+          "missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "providers": [],
+          "evidence": [],
+          "factors": [
+            {
+              "key": "weather",
+              "label": "天气与自然条件",
+              "weight": 0.22,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "piracy",
+              "label": "海盗与海上安全",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "port_congestion",
+              "label": "港口拥堵",
+              "weight": 0.2,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "geopolitical",
+              "label": "地缘政治与冲突",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "sanctions",
+              "label": "制裁与禁运",
+              "weight": 0.12,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "schedule_reliability",
+              "label": "班期可靠性",
+              "weight": 0.1,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            }
+          ],
+          "observed_at": null,
+          "expires_at": null,
+          "input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "scoring_version": "provider-risk-v1"
+        },
+        "signals": {}
+      },
+      {
+        "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:122",
+        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:76_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+        "mode": "sea",
+        "before": {
+          "risk_scored_at": "2026-07-05T09:09:41.287000000+00:00",
+          "totalCostUSD": 1925,
+          "provider_risk_evidence": [
+            "port-singapore",
+            "south-china-sea"
+          ],
+          "total_risk_score": 0.4882,
+          "source": "external_repos_reference_fields",
+          "provider_risk_status": "partial",
+          "provider_risk_data_completeness": 0.18,
+          "mode": "sea",
+          "fromNodeName": "Ningbo-Zhoushan Port",
+          "legacy_mode": "sea",
+          "risk_input_hash": "65deff8998f157806736075c15303f513e16b8c9acfa16cd4db0e0b53e75b6f2",
+          "data_status": "synthetic",
+          "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:76_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "provider_risk_score_100": 48.82,
+          "canonical_mode": "sea",
+          "updatedAt": "2026-06-28T08:52:51.665000000+00:00",
+          "last_updated": "2026-07-04T09:53:22.938000000+00:00",
+          "distance_km": 3650,
+          "matrixCategory": "Low Cost - Low Risk",
+          "source_type": "fabricated_for_testing",
+          "estimatedTimeHours": 160,
+          "news_risk_score": 0.4882,
+          "collected_at": "2026-07-04T09:53:22.938000000+00:00",
+          "risk_data_completeness": 0.18,
+          "provider_risk_providers": [
+            "GDELT"
+          ],
+          "schema_migrated_at": "2026-07-26T02:28:04.260492000+00:00",
+          "provider_risk_level": "medium",
+          "news_risk_updated_at": "2026-07-26T00:18:19.960000000+00:00",
+          "confidence_score": 0.65,
+          "provider_risk_expires_at": "2026-07-26T03:18:19.872964000+00:00",
+          "estimated_cost_usd": 1925,
+          "timeScore": 0.0,
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":0.4882,\"score100\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"weight\":0.18,\"observedAt\":\"2026-07-26T00:18:19.960000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:19.872964000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "dynamic_risk_score": 0.4882,
+          "missing_risk_fields": [
+            "production_risk",
+            "inventory_risk",
+            "port_congestion_risk",
+            "transport_delay_risk",
+            "geopolitical_risk",
+            "trade_risk",
+            "sanction_risk",
+            "conflict_risk",
+            "weather_risk",
+            "security_risk"
+          ],
+          "risk_scoring_version": "provider-risk-v1",
+          "scoring_version": "legacy_unversioned",
+          "baseCostUSD": 1380,
+          "modelSource": "external_repos_reference_fields",
+          "update_method": "risk_calculation",
+          "news_risk_zones": [
+            "south-china-sea",
+            "port-singapore"
+          ],
+          "data_quality": "derived",
+          "provider_risk_score": 0.4882,
+          "distanceKm": 3650,
+          "toLabels": [
+            "TransitHub"
+          ],
+          "provider_risk_observed_at": "2026-07-26T00:18:19.960000000+00:00",
+          "source_file": "unknown",
+          "feasibility_status": "unreviewed",
+          "schema_version": "unified-transport-v1",
+          "fromLabels": [
+            "Port"
+          ],
+          "news_risk_expires_at": "2026-07-26T03:18:19.872964000+00:00",
+          "segmentId": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:76_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "relationshipType": "SEA_ROUTE",
+          "source_repo": "existing_neo4j_graph",
+          "confidence": 0.65,
+          "validity_status": "unavailable",
+          "capacity_score": 0.8,
+          "estimated_time_days": 6.67,
+          "risk_status": "partial",
+          "risk_recalculated_at": "2026-07-26T03:03:21.176457000+00:00",
+          "risk_explanation": "仅使用真实 Provider 的可用维度重算：地缘政治与冲突",
+          "toNodeName": "Singapore Port",
+          "routeMode": "sea",
+          "reliability_score": 0.731,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"observedAt\":\"2026-07-26T00:18:19.960000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:19.872964000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "costScore": 0.0
+        },
+        "properties": {
+          "provider_risk_score": null,
+          "provider_risk_score_100": null,
+          "provider_risk_level": "unknown",
+          "provider_risk_status": "unavailable",
+          "provider_risk_data_completeness": 0.0,
+          "provider_risk_confidence": null,
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "provider_risk_providers": [],
+          "provider_risk_evidence": [],
+          "provider_risk_observed_at": null,
+          "provider_risk_expires_at": null,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "risk_explanation": "没有处于有效期内且带真实 Provider 的适用风险信号",
+          "risk_status": "unavailable",
+          "risk_data_completeness": 0.0,
+          "risk_scoring_version": "provider-risk-v1",
+          "risk_input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "risk_recalculated_at": "2026-07-26T03:21:12.216156+00:00",
+          "total_risk_score": null,
+          "dynamic_risk_score": null
+        },
+        "result": {
+          "score": null,
+          "score_100": null,
+          "level": "unknown",
+          "status": "unavailable",
+          "data_completeness": 0.0,
+          "confidence": null,
+          "missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "providers": [],
+          "evidence": [],
+          "factors": [
+            {
+              "key": "weather",
+              "label": "天气与自然条件",
+              "weight": 0.22,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "piracy",
+              "label": "海盗与海上安全",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "port_congestion",
+              "label": "港口拥堵",
+              "weight": 0.2,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "geopolitical",
+              "label": "地缘政治与冲突",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "sanctions",
+              "label": "制裁与禁运",
+              "weight": 0.12,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "schedule_reliability",
+              "label": "班期可靠性",
+              "weight": 0.1,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            }
+          ],
+          "observed_at": null,
+          "expires_at": null,
+          "input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "scoring_version": "provider-risk-v1"
+        },
+        "signals": {}
+      },
+      {
+        "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:123",
+        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:77_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+        "mode": "sea",
+        "before": {
+          "risk_scored_at": "2026-07-05T09:09:41.291000000+00:00",
+          "totalCostUSD": 1710,
+          "provider_risk_evidence": [
+            "port-singapore",
+            "south-china-sea"
+          ],
+          "total_risk_score": 0.4882,
+          "source": "external_repos_reference_fields",
+          "provider_risk_status": "partial",
+          "provider_risk_data_completeness": 0.18,
+          "mode": "sea",
+          "fromNodeName": "Yantian Port",
+          "legacy_mode": "sea",
+          "risk_input_hash": "6fbcc85668489ce5f770fd394e96c19d1737f1e644dd29e8b30595dd6b09f399",
+          "data_status": "synthetic",
+          "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:77_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "provider_risk_score_100": 48.82,
+          "canonical_mode": "sea",
+          "updatedAt": "2026-06-28T08:52:51.665000000+00:00",
+          "last_updated": "2026-07-04T09:53:22.938000000+00:00",
+          "distance_km": 2600,
+          "matrixCategory": "Low Cost - Low Risk",
+          "source_type": "fabricated_for_testing",
+          "estimatedTimeHours": 120,
+          "news_risk_score": 0.4882,
+          "collected_at": "2026-07-04T09:53:22.938000000+00:00",
+          "risk_data_completeness": 0.18,
+          "provider_risk_providers": [
+            "GDELT"
+          ],
+          "schema_migrated_at": "2026-07-26T02:28:04.260492000+00:00",
+          "provider_risk_level": "medium",
+          "news_risk_updated_at": "2026-07-26T00:18:20.138000000+00:00",
+          "confidence_score": 0.65,
+          "provider_risk_expires_at": "2026-07-26T03:18:20.050906000+00:00",
+          "estimated_cost_usd": 1710,
+          "timeScore": 0.0,
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":0.4882,\"score100\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"weight\":0.18,\"observedAt\":\"2026-07-26T00:18:20.138000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.050906000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "dynamic_risk_score": 0.4882,
+          "missing_risk_fields": [
+            "production_risk",
+            "inventory_risk",
+            "port_congestion_risk",
+            "transport_delay_risk",
+            "geopolitical_risk",
+            "trade_risk",
+            "sanction_risk",
+            "conflict_risk",
+            "weather_risk",
+            "security_risk"
+          ],
+          "risk_scoring_version": "provider-risk-v1",
+          "scoring_version": "legacy_unversioned",
+          "baseCostUSD": 1180,
+          "modelSource": "external_repos_reference_fields",
+          "update_method": "risk_calculation",
+          "news_risk_zones": [
+            "south-china-sea",
+            "port-singapore"
+          ],
+          "data_quality": "derived",
+          "provider_risk_score": 0.4882,
+          "distanceKm": 2600,
+          "toLabels": [
+            "TransitHub"
+          ],
+          "provider_risk_observed_at": "2026-07-26T00:18:20.138000000+00:00",
+          "source_file": "unknown",
+          "feasibility_status": "unreviewed",
+          "schema_version": "unified-transport-v1",
+          "fromLabels": [
+            "Port"
+          ],
+          "news_risk_expires_at": "2026-07-26T03:18:20.050906000+00:00",
+          "segmentId": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:77_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
+          "relationshipType": "SEA_ROUTE",
+          "source_repo": "existing_neo4j_graph",
+          "confidence": 0.65,
+          "validity_status": "unavailable",
+          "capacity_score": 0.8,
+          "estimated_time_days": 5.0,
+          "risk_status": "partial",
+          "risk_recalculated_at": "2026-07-26T03:03:21.176457000+00:00",
+          "risk_explanation": "仅使用真实 Provider 的可用维度重算：地缘政治与冲突",
+          "toNodeName": "Singapore Port",
+          "routeMode": "sea",
+          "reliability_score": 0.718,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"observedAt\":\"2026-07-26T00:18:20.138000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.050906000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "costScore": 0.0
+        },
+        "properties": {
+          "provider_risk_score": null,
+          "provider_risk_score_100": null,
+          "provider_risk_level": "unknown",
+          "provider_risk_status": "unavailable",
+          "provider_risk_data_completeness": 0.0,
+          "provider_risk_confidence": null,
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "provider_risk_providers": [],
+          "provider_risk_evidence": [],
+          "provider_risk_observed_at": null,
+          "provider_risk_expires_at": null,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "risk_explanation": "没有处于有效期内且带真实 Provider 的适用风险信号",
+          "risk_status": "unavailable",
+          "risk_data_completeness": 0.0,
+          "risk_scoring_version": "provider-risk-v1",
+          "risk_input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "risk_recalculated_at": "2026-07-26T03:21:12.216156+00:00",
+          "total_risk_score": null,
+          "dynamic_risk_score": null
+        },
+        "result": {
+          "score": null,
+          "score_100": null,
+          "level": "unknown",
+          "status": "unavailable",
+          "data_completeness": 0.0,
+          "confidence": null,
+          "missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "providers": [],
+          "evidence": [],
+          "factors": [
+            {
+              "key": "weather",
+              "label": "天气与自然条件",
+              "weight": 0.22,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "piracy",
+              "label": "海盗与海上安全",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "port_congestion",
+              "label": "港口拥堵",
+              "weight": 0.2,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "geopolitical",
+              "label": "地缘政治与冲突",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "sanctions",
+              "label": "制裁与禁运",
+              "weight": 0.12,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "schedule_reliability",
+              "label": "班期可靠性",
+              "weight": 0.1,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            }
+          ],
+          "observed_at": null,
+          "expires_at": null,
+          "input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "scoring_version": "provider-risk-v1"
+        },
+        "signals": {}
+      },
+      {
+        "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:127",
+        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:81_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33",
+        "mode": "sea",
+        "before": {
+          "risk_scored_at": "2026-07-05T09:09:41.326000000+00:00",
+          "totalCostUSD": 4720,
+          "provider_risk_evidence": [
+            "port-singapore",
+            "south-china-sea"
+          ],
+          "total_risk_score": 0.4882,
+          "source": "external_repos_reference_fields",
+          "provider_risk_status": "partial",
+          "provider_risk_data_completeness": 0.18,
+          "mode": "sea",
+          "fromNodeName": "Singapore Port",
+          "legacy_mode": "sea",
+          "risk_input_hash": "3865cdf129228a29672b128028e93c9cda013a4c952076a6fe24ef5e969ed4a3",
+          "data_status": "synthetic",
+          "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:81_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33",
+          "provider_risk_score_100": 48.82,
+          "canonical_mode": "sea",
+          "updatedAt": "2026-06-28T08:52:51.665000000+00:00",
+          "last_updated": "2026-07-04T09:53:22.938000000+00:00",
+          "distance_km": 9800,
+          "matrixCategory": "Low Cost - Low Risk",
+          "source_type": "fabricated_for_testing",
+          "estimatedTimeHours": 330,
+          "news_risk_score": 0.4882,
+          "collected_at": "2026-07-04T09:53:22.938000000+00:00",
+          "risk_data_completeness": 0.18,
+          "provider_risk_providers": [
+            "GDELT"
+          ],
+          "schema_migrated_at": "2026-07-26T02:28:04.260492000+00:00",
+          "provider_risk_level": "medium",
+          "news_risk_updated_at": "2026-07-26T00:18:20.850000000+00:00",
+          "confidence_score": 0.65,
+          "provider_risk_expires_at": "2026-07-26T03:18:20.763714000+00:00",
+          "estimated_cost_usd": 4720,
+          "timeScore": 0.0,
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":0.4882,\"score100\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"weight\":0.18,\"observedAt\":\"2026-07-26T00:18:20.850000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.763714000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "dynamic_risk_score": 0.4882,
+          "missing_risk_fields": [
+            "production_risk",
+            "inventory_risk",
+            "port_congestion_risk",
+            "transport_delay_risk",
+            "geopolitical_risk",
+            "trade_risk",
+            "sanction_risk",
+            "conflict_risk",
+            "weather_risk",
+            "security_risk"
+          ],
+          "risk_scoring_version": "provider-risk-v1",
+          "scoring_version": "legacy_unversioned",
+          "baseCostUSD": 3600,
+          "modelSource": "external_repos_reference_fields",
+          "update_method": "risk_calculation",
+          "news_risk_zones": [
+            "south-china-sea",
+            "port-singapore"
+          ],
+          "data_quality": "derived",
+          "provider_risk_score": 0.4882,
+          "distanceKm": 9800,
+          "toLabels": [
+            "TransitHub"
+          ],
+          "provider_risk_observed_at": "2026-07-26T00:18:20.850000000+00:00",
+          "source_file": "unknown",
+          "feasibility_status": "unreviewed",
+          "schema_version": "unified-transport-v1",
+          "fromLabels": [
+            "TransitHub"
+          ],
+          "news_risk_expires_at": "2026-07-26T03:18:20.763714000+00:00",
+          "segmentId": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:81_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33",
+          "relationshipType": "SEA_ROUTE",
+          "source_repo": "existing_neo4j_graph",
+          "confidence": 0.65,
+          "validity_status": "unavailable",
+          "capacity_score": 0.8,
+          "estimated_time_days": 13.75,
+          "risk_status": "partial",
+          "risk_recalculated_at": "2026-07-26T03:03:21.176457000+00:00",
+          "risk_explanation": "仅使用真实 Provider 的可用维度重算：地缘政治与冲突",
+          "toNodeName": "Rotterdam Port",
+          "routeMode": "sea",
+          "reliability_score": 0.597,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"observedAt\":\"2026-07-26T00:18:20.850000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.763714000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "costScore": 0.0
+        },
+        "properties": {
+          "provider_risk_score": null,
+          "provider_risk_score_100": null,
+          "provider_risk_level": "unknown",
+          "provider_risk_status": "unavailable",
+          "provider_risk_data_completeness": 0.0,
+          "provider_risk_confidence": null,
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "provider_risk_providers": [],
+          "provider_risk_evidence": [],
+          "provider_risk_observed_at": null,
+          "provider_risk_expires_at": null,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "risk_explanation": "没有处于有效期内且带真实 Provider 的适用风险信号",
+          "risk_status": "unavailable",
+          "risk_data_completeness": 0.0,
+          "risk_scoring_version": "provider-risk-v1",
+          "risk_input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "risk_recalculated_at": "2026-07-26T03:21:12.216156+00:00",
+          "total_risk_score": null,
+          "dynamic_risk_score": null
+        },
+        "result": {
+          "score": null,
+          "score_100": null,
+          "level": "unknown",
+          "status": "unavailable",
+          "data_completeness": 0.0,
+          "confidence": null,
+          "missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "providers": [],
+          "evidence": [],
+          "factors": [
+            {
+              "key": "weather",
+              "label": "天气与自然条件",
+              "weight": 0.22,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "piracy",
+              "label": "海盗与海上安全",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "port_congestion",
+              "label": "港口拥堵",
+              "weight": 0.2,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "geopolitical",
+              "label": "地缘政治与冲突",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "sanctions",
+              "label": "制裁与禁运",
+              "weight": 0.12,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "schedule_reliability",
+              "label": "班期可靠性",
+              "weight": 0.1,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            }
+          ],
+          "observed_at": null,
+          "expires_at": null,
+          "input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "scoring_version": "provider-risk-v1"
+        },
+        "signals": {}
+      },
+      {
+        "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:128",
+        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:82_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34",
+        "mode": "sea",
+        "before": {
+          "risk_scored_at": "2026-07-05T09:09:41.330000000+00:00",
+          "totalCostUSD": 4945,
+          "provider_risk_evidence": [
+            "port-singapore",
+            "south-china-sea"
+          ],
+          "total_risk_score": 0.4882,
+          "source": "external_repos_reference_fields",
+          "provider_risk_status": "partial",
+          "provider_risk_data_completeness": 0.18,
+          "mode": "sea",
+          "fromNodeName": "Singapore Port",
+          "legacy_mode": "sea",
+          "risk_input_hash": "f625be2fed21e8d4c81bd85fdc5ec38908207564fb0669edc54eb0f76e4f2d07",
+          "data_status": "synthetic",
+          "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:82_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34",
+          "provider_risk_score_100": 48.82,
+          "canonical_mode": "sea",
+          "updatedAt": "2026-06-28T08:52:51.665000000+00:00",
+          "last_updated": "2026-07-04T09:53:22.938000000+00:00",
+          "distance_km": 10100,
+          "matrixCategory": "Low Cost - High Risk",
+          "source_type": "fabricated_for_testing",
+          "estimatedTimeHours": 350,
+          "news_risk_score": 0.4882,
+          "collected_at": "2026-07-04T09:53:22.938000000+00:00",
+          "risk_data_completeness": 0.18,
+          "provider_risk_providers": [
+            "GDELT"
+          ],
+          "schema_migrated_at": "2026-07-26T02:28:04.260492000+00:00",
+          "provider_risk_level": "medium",
+          "news_risk_updated_at": "2026-07-26T00:18:21.028000000+00:00",
+          "confidence_score": 0.65,
+          "provider_risk_expires_at": "2026-07-26T03:18:20.941380000+00:00",
+          "estimated_cost_usd": 4945,
+          "timeScore": 0.0,
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":0.4882,\"score100\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"weight\":0.18,\"observedAt\":\"2026-07-26T00:18:21.028000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.941380000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "dynamic_risk_score": 0.4882,
+          "missing_risk_fields": [
+            "production_risk",
+            "inventory_risk",
+            "port_congestion_risk",
+            "transport_delay_risk",
+            "geopolitical_risk",
+            "trade_risk",
+            "sanction_risk",
+            "conflict_risk",
+            "weather_risk",
+            "security_risk"
+          ],
+          "risk_scoring_version": "provider-risk-v1",
+          "scoring_version": "legacy_unversioned",
+          "baseCostUSD": 3780,
+          "modelSource": "external_repos_reference_fields",
+          "update_method": "risk_calculation",
+          "news_risk_zones": [
+            "south-china-sea",
+            "port-singapore"
+          ],
+          "data_quality": "derived",
+          "provider_risk_score": 0.4882,
+          "distanceKm": 10100,
+          "toLabels": [
+            "TransitHub"
+          ],
+          "provider_risk_observed_at": "2026-07-26T00:18:21.028000000+00:00",
+          "source_file": "unknown",
+          "feasibility_status": "unreviewed",
+          "schema_version": "unified-transport-v1",
+          "fromLabels": [
+            "TransitHub"
+          ],
+          "news_risk_expires_at": "2026-07-26T03:18:20.941380000+00:00",
+          "segmentId": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:82_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34",
+          "relationshipType": "SEA_ROUTE",
+          "source_repo": "existing_neo4j_graph",
+          "confidence": 0.65,
+          "validity_status": "unavailable",
+          "capacity_score": 0.8,
+          "estimated_time_days": 14.58,
+          "risk_status": "partial",
+          "risk_recalculated_at": "2026-07-26T03:03:21.176457000+00:00",
+          "risk_explanation": "仅使用真实 Provider 的可用维度重算：地缘政治与冲突",
+          "toNodeName": "Hamburg Port",
+          "routeMode": "sea",
+          "reliability_score": 0.418,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":48.82,\"status\":\"available\",\"provider\":\"GDELT\",\"observedAt\":\"2026-07-26T00:18:21.028000000+00:00\",\"expiresAt\":\"2026-07-26T03:18:20.941380000+00:00\",\"confidence\":null,\"evidence\":[\"port-singapore\",\"south-china-sea\"]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "costScore": 0.0
+        },
+        "properties": {
+          "provider_risk_score": null,
+          "provider_risk_score_100": null,
+          "provider_risk_level": "unknown",
+          "provider_risk_status": "unavailable",
+          "provider_risk_data_completeness": 0.0,
+          "provider_risk_confidence": null,
+          "provider_risk_missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "provider_risk_providers": [],
+          "provider_risk_evidence": [],
+          "provider_risk_observed_at": null,
+          "provider_risk_expires_at": null,
+          "provider_risk_factors_json": "[{\"key\":\"weather\",\"label\":\"天气与自然条件\",\"weight\":0.22,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"piracy\",\"label\":\"海盗与海上安全\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"port_congestion\",\"label\":\"港口拥堵\",\"weight\":0.2,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"geopolitical\",\"label\":\"地缘政治与冲突\",\"weight\":0.18,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"sanctions\",\"label\":\"制裁与禁运\",\"weight\":0.12,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},{\"key\":\"schedule_reliability\",\"label\":\"班期可靠性\",\"weight\":0.1,\"score\":null,\"status\":\"unavailable\",\"provider\":null,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}]",
+          "risk_breakdown": "{\"weather\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.22,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"piracy\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"port_congestion\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.2,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"geopolitical\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.18,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"sanctions\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.12,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]},\"schedule_reliability\":{\"value\":null,\"score100\":null,\"status\":\"unavailable\",\"provider\":null,\"weight\":0.1,\"observedAt\":null,\"expiresAt\":null,\"confidence\":null,\"evidence\":[]}}",
+          "risk_explanation": "没有处于有效期内且带真实 Provider 的适用风险信号",
+          "risk_status": "unavailable",
+          "risk_data_completeness": 0.0,
+          "risk_scoring_version": "provider-risk-v1",
+          "risk_input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "risk_recalculated_at": "2026-07-26T03:21:12.216156+00:00",
+          "total_risk_score": null,
+          "dynamic_risk_score": null
+        },
+        "result": {
+          "score": null,
+          "score_100": null,
+          "level": "unknown",
+          "status": "unavailable",
+          "data_completeness": 0.0,
+          "confidence": null,
+          "missing_factors": [
+            "weather",
+            "piracy",
+            "port_congestion",
+            "geopolitical",
+            "sanctions",
+            "schedule_reliability"
+          ],
+          "providers": [],
+          "evidence": [],
+          "factors": [
+            {
+              "key": "weather",
+              "label": "天气与自然条件",
+              "weight": 0.22,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "piracy",
+              "label": "海盗与海上安全",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "port_congestion",
+              "label": "港口拥堵",
+              "weight": 0.2,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "geopolitical",
+              "label": "地缘政治与冲突",
+              "weight": 0.18,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "sanctions",
+              "label": "制裁与禁运",
+              "weight": 0.12,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            },
+            {
+              "key": "schedule_reliability",
+              "label": "班期可靠性",
+              "weight": 0.1,
+              "score": null,
+              "status": "unavailable",
+              "provider": null,
+              "observedAt": null,
+              "expiresAt": null,
+              "confidence": null,
+              "evidence": []
+            }
+          ],
+          "observed_at": null,
+          "expires_at": null,
+          "input_hash": "9a273a22e4262d18f4e2cf1a650d3548a377fadec5cec25ece9c658ffcdd4901",
+          "scoring_version": "provider-risk-v1"
+        },
+        "signals": {}
+      }
+    ],
+    "clear_rows": []
+  },
+  "execution": {
+    "status": "completed",
+    "deleted_nodes": 0,
+    "deleted_relationships": 0,
+    "segment_updates": 5,
+    "cleared_nodes": 0
+  },
+  "after": {
+    "totals": {
+      "nodes": 14624,
+      "relationships": 22497
+    },
+    "statistics": {
+      "summary": {
+        "risk_factor_nodes": 0,
+        "providerless_risk_factors": 0,
+        "route_segments": 613,
+        "risk_available": 0,
+        "risk_partial": 0,
+        "risk_unavailable": 613,
+        "legacy_risk_nodes": 0
+      },
+      "risk_observations_by_provider": [
+        {
+          "provider": "GDELT",
+          "count": 11946
+        },
+        {
+          "provider": "unattributed",
+          "count": 40
+        },
+        {
+          "provider": "Open-Meteo",
+          "count": 3
+        }
+      ],
+      "segment_coverage_by_mode": [
+        {
+          "mode": "air",
+          "status": "unavailable",
+          "count": 10
+        },
+        {
+          "mode": "delivery",
+          "status": "unavailable",
+          "count": 82
+        },
+        {
+          "mode": "multimodal",
+          "status": "unavailable",
+          "count": 390
+        },
+        {
+          "mode": "rail",
+          "status": "unavailable",
+          "count": 17
+        },
+        {
+          "mode": "road",
+          "status": "unavailable",
+          "count": 91
+        },
+        {
+          "mode": "sea",
+          "status": "unavailable",
+          "count": 23
+        }
+      ]
+    },
+    "protected_baseline": {
+      "NewsRiskEvent": 11946,
+      "NewsRiskZone": 10,
+      "PortTrafficSnapshot": 0,
+      "Shipment": 1,
+      "Vessel": 1,
+      "VesselObservation": 1,
+      "WeatherRiskSnapshot": 3
+    }
+  }
+}

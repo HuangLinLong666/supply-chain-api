@@ -10,8 +10,10 @@
 GitHub Actions
   -> 调用 GDELT DOC 2.0 新闻 API
   -> 分别搜索红海、马六甲、印度洋、太平洋、中东等区域新闻
-  -> 对战争、袭击、制裁、关税、罢工、拥堵、天气等新闻评分
-  -> 将 NewsRiskEvent 和 NewsRiskZone 写入 AuraDB
+  -> 规范 URL 和 UTC 时间，拒绝未来/无效时间
+  -> 对战争、袭击、制裁、关税、罢工、拥堵等事件分类
+  -> 在 48 小时窗口内按标题 Jaccard 相似度聚类，同一事件只计分一次
+  -> 将 NewsRiskEvent、NewsRiskCluster 和 NewsRiskZone 写入 AuraDB
   -> 找出经过风险区域的海运或空运 RouteSegment
   -> 生成三小时有效的动态风险
   -> FastAPI 推荐路线时自动避开 HIGH/CRITICAL 路段
@@ -28,11 +30,14 @@ GitHub Actions
 - 南海；
 - 上海港、新加坡港、鹿特丹港。
 
-基础风险不会被覆盖。动态风险公式为：
+系统不再混入无 Provider 的“基础风险”。GDELT 只作为海运/铁路的地缘政治或空运的空域冲突 Provider；其他缺失维度保持 `null`。区域分数公式为：
 
 ```text
-动态风险 = 1 - (1 - 基础风险) × (1 - 新闻风险)
+事件有效严重度 = 分类严重度 × 0.5 ^ (事件年龄小时 / 24)
+区域风险 = 70% × 最高事件簇 + 30% × 风险最高三个事件簇平均值
 ```
+
+完全相同 URL、近似标题和多家媒体转载不会被重复累计。域名多样性只用于置信度，不等于媒体可信度；未配置独立媒体评级 Provider 时，`sourceCredibilityStatus` 明确返回 `unavailable`。
 
 新闻风险低于 `0.60` 时参与普通风险排序；达到 `0.60` 后，系统优先排除该路段并寻找替代路线。如果排除后起终点不再连通，系统会回退到原网络，并在响应中返回 `fallbackUsed=true`。
 
@@ -178,7 +183,10 @@ ORDER BY z.current_risk_score DESC;
 
 ```cypher
 MATCH (e:NewsRiskEvent)-[:AFFECTS_ZONE]->(z:NewsRiskZone)
-RETURN z.name, e.title, e.severity, e.url, e.seen_at
+OPTIONAL MATCH (e)-[:MEMBER_OF_EVENT_CLUSTER]->(c:NewsRiskCluster)-[:AFFECTS_ZONE]->(z)
+RETURN z.name, e.title, e.event_category, e.severity,
+       c.cluster_id, c.article_count, c.distinct_domain_count,
+       e.url, e.seen_at
 ORDER BY e.seen_at DESC
 LIMIT 30;
 ```
@@ -206,6 +214,12 @@ https://你的Render域名/api/risk/news/zones
 
 ```text
 https://你的Render域名/api/risk/news
+```
+
+查看去重后的事件簇：
+
+```text
+https://你的Render域名/api/risk/news/clusters?active_only=true
 ```
 
 调用推荐路线：
@@ -293,7 +307,10 @@ GitHub cron 可能延迟几分钟。先用 `Run workflow` 验证配置是否正�
 
 ```bash
 python scripts/update_gdelt_risk.py --dry-run
+python scripts/update_gdelt_risk.py --dry-run --zone-id port-shanghai
 pytest -q
 ```
 
 真正的每小时更新由 GitHub Actions 完成，数据直接写入 AuraDB；Render API 下次查询时会读取 AuraDB 最新风险。
+
+如果本地出现 `_ssl.c ... handshake operation timed out`，通常是本机代理或 TLS 出口问题，不代表 AuraDB 或评分代码失败。使用 `--zone-id` 单区测试；部署后以 GitHub Actions 日志为准。工作流对每个区域输出开始、完成或失败日志，并限制单次请求超时与重试次数，避免任务无提示地耗尽 15 分钟。

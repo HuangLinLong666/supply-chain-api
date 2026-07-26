@@ -21,6 +21,7 @@ def gust_risk(value: float) -> float: return interpolate(value, [(0, 0), (30, 15
 def precipitation_risk(value: float) -> float: return interpolate(value, [(0, 0), (1, 10), (5, 35), (15, 70), (30, 100)])
 def visibility_risk(value: float) -> float: return interpolate(value, [(0, 100), (1000, 80), (2000, 60), (5000, 30), (10000, 10), (20000, 0)])
 def wave_risk(value: float) -> float: return interpolate(value, [(0, 0), (1, 15), (2, 35), (3, 60), (4, 80), (6, 100)])
+def snowfall_risk(value: float) -> float: return interpolate(value, [(0, 0), (0.2, 10), (1, 35), (3, 70), (7, 100)])
 def temperature_risk(value: float) -> float:
     if -10 <= value <= 40: return 5
     return min(100.0, 5 + (abs(value - (-10 if value < -10 else 40)) * 5))
@@ -51,6 +52,98 @@ def score_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
     confidence = completeness * (0.85 if values["wave_risk"] is None else 1.0)
     factors = sorted(({"factor": key.removesuffix("_risk"), "risk_score": round(value, 1)} for key, value in valid.items()), key=lambda item: item["risk_score"], reverse=True)
     return {"score": round(score, 1), "level": risk_level(score) if completeness >= 0.4 else "INSUFFICIENT_DATA", "confidence": round(confidence, 3), "data_completeness": round(completeness, 3), "components": values, "factors": factors}
+
+
+MODE_WEATHER_WEIGHTS: dict[str, dict[str, float]] = {
+    "sea": {
+        "wind_risk": 0.15,
+        "gust_risk": 0.15,
+        "precipitation_risk": 0.10,
+        "visibility_risk": 0.15,
+        "wave_risk": 0.40,
+        "weather_code_risk": 0.05,
+    },
+    "air": {
+        "wind_risk": 0.20,
+        "gust_risk": 0.25,
+        "precipitation_risk": 0.15,
+        "visibility_risk": 0.25,
+        "weather_code_risk": 0.15,
+    },
+    "road": {
+        "wind_risk": 0.05,
+        "precipitation_risk": 0.25,
+        "snowfall_risk": 0.20,
+        "visibility_risk": 0.20,
+        "temperature_risk": 0.15,
+        "weather_code_risk": 0.15,
+    },
+    "rail": {
+        "wind_risk": 0.15,
+        "gust_risk": 0.10,
+        "precipitation_risk": 0.15,
+        "snowfall_risk": 0.25,
+        "visibility_risk": 0.05,
+        "temperature_risk": 0.20,
+        "weather_code_risk": 0.10,
+    },
+}
+
+
+def metric_components(metrics: dict[str, Any]) -> dict[str, float | None]:
+    rules = load_rules()
+    return {
+        "wind_risk": None if metrics.get("wind_speed_10m") is None else wind_risk(float(metrics["wind_speed_10m"])),
+        "gust_risk": None if metrics.get("wind_gusts_10m") is None else gust_risk(float(metrics["wind_gusts_10m"])),
+        "precipitation_risk": None if metrics.get("precipitation") is None else precipitation_risk(float(metrics["precipitation"])),
+        "snowfall_risk": None if metrics.get("snowfall") is None else snowfall_risk(float(metrics["snowfall"])),
+        "visibility_risk": None if metrics.get("visibility") is None else visibility_risk(float(metrics["visibility"])),
+        "wave_risk": None if metrics.get("wave_height") is None else wave_risk(float(metrics["wave_height"])),
+        "temperature_risk": None if metrics.get("temperature_2m") is None else temperature_risk(float(metrics["temperature_2m"])),
+        "weather_code_risk": None if metrics.get("weather_code") is None else float(rules["weather_code_risk"].get(str(int(metrics["weather_code"])), 25)),
+    }
+
+
+def score_metrics_for_mode(metrics: dict[str, Any], mode: str) -> dict[str, Any]:
+    canonical_mode = str(mode or "").casefold()
+    weights = MODE_WEATHER_WEIGHTS.get(canonical_mode)
+    if not weights:
+        return {
+            "score": None,
+            "level": "INSUFFICIENT_DATA",
+            "confidence": 0.0,
+            "data_completeness": 0.0,
+            "components": {},
+            "factors": [],
+            "mode": canonical_mode,
+        }
+    components = metric_components(metrics)
+    available = {key: components[key] for key in weights if components.get(key) is not None}
+    total_weight = sum(weights.values())
+    available_weight = sum(weights[key] for key in available)
+    completeness = available_weight / total_weight if total_weight else 0.0
+    score = (
+        sum(float(value) * weights[key] for key, value in available.items()) / available_weight
+        if available_weight
+        else None
+    )
+    factors = sorted(
+        (
+            {"factor": key.removesuffix("_risk"), "risk_score": round(float(value), 1), "weight": weights[key]}
+            for key, value in available.items()
+        ),
+        key=lambda item: item["risk_score"],
+        reverse=True,
+    )
+    return {
+        "score": round(score, 1) if score is not None else None,
+        "level": risk_level(score) if score is not None and completeness >= 0.4 else "INSUFFICIENT_DATA",
+        "confidence": round(completeness, 3),
+        "data_completeness": round(completeness, 3),
+        "components": {key: components[key] for key in weights},
+        "factors": factors,
+        "mode": canonical_mode,
+    }
 
 
 def calculate_risk(current: dict[str, Any], hourly: list[dict[str, Any]]) -> dict[str, Any]:

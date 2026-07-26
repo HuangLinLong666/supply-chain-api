@@ -29,7 +29,7 @@ def estimate_cost(legs: list[Any], rates: dict[str, Any]) -> CostRange:
     )
 
 
-def calculate_risk(signals: dict[str, float], strategy: Any, evidence_refs: list[str] | None = None) -> RiskResult:
+def calculate_risk(signals: dict[str, float | None], strategy: Any, evidence_refs: list[str] | None = None) -> RiskResult:
     """按配置权重聚合新闻、天气、拥堵、制裁和时刻可靠性风险。"""
     aliases = {
         "news_weight": "news", "weather_weight": "weather", "congestion_weight": "congestion",
@@ -38,16 +38,39 @@ def calculate_risk(signals: dict[str, float], strategy: Any, evidence_refs: list
     weighted = 0.0
     used_weight = 0.0
     factors = []
+    missing = []
     labels = {"news": "新闻事件", "weather": "天气海况", "congestion": "拥堵", "sanctions": "制裁禁运", "schedule_reliability": "时刻可靠性"}
     for weight_key, signal_key in aliases.items():
-        value = float(signals.get(signal_key, 0))
         weight = float(strategy.risk_weights[weight_key])
+        raw_value = signals.get(signal_key)
+        if raw_value is None:
+            missing.append(labels[signal_key])
+            continue
+        value = float(raw_value)
         weighted += value * weight
         used_weight += weight
         factors.append(f"{labels[signal_key]}风险 {value:.0f}/100，权重 {weight:.0%}")
-    score = round(weighted / used_weight if used_weight else 0, 2)
+    total_weight = sum(float(value) for value in strategy.risk_weights.values()) or 1.0
+    completeness = round(used_weight / total_weight, 4)
+    if not used_weight:
+        return RiskResult(
+            risk_score=None,
+            risk_level="unknown",
+            risk_factors=[],
+            evidence_refs=evidence_refs or [],
+            data_completeness=0.0,
+            missing_factors=missing,
+        )
+    score = round(weighted / used_weight, 2)
     level = "critical" if score >= strategy.critical_risk_threshold else "high" if score >= strategy.high_risk_threshold else "medium" if score >= 30 else "low"
-    return RiskResult(risk_score=score, risk_level=level, risk_factors=factors, evidence_refs=evidence_refs or [], data_completeness=1.0)
+    return RiskResult(
+        risk_score=score,
+        risk_level=level,
+        risk_factors=factors,
+        evidence_refs=evidence_refs or [],
+        data_completeness=completeness,
+        missing_factors=missing,
+    )
 
 
 MODE_RISK_LABELS = {
@@ -99,8 +122,8 @@ def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) ->
     maximum_cost = max(route.estimated_cost.most_likely for route in routes if route.estimated_cost) or 1
     maximum_time = max(route.estimated_duration_h for route in routes) or 1
     for route in routes:
-        measured_risk = route.risk.risk_score if route.risk and route.risk.risk_score is not None else 50
-        inverse_risk = 1 - measured_risk / 100
+        measured_risk = route.risk.risk_score if route.risk and route.risk.risk_score is not None else None
+        inverse_risk = 1 - measured_risk / 100 if measured_risk is not None else 0.0
         inverse_cost = 1 - (route.estimated_cost.most_likely if route.estimated_cost else maximum_cost) / maximum_cost
         inverse_duration = 1 - route.estimated_duration_h / maximum_time
         if strategy_name == "min_risk":
@@ -112,6 +135,6 @@ def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) ->
         else:
             weights = strategy.ranking_weights
             route.score = round(weights["risk_weight"] * inverse_risk + weights["cost_weight"] * inverse_cost + weights["speed_weight"] * inverse_duration + weights["confidence_weight"] * route.confidence, 4)
-        risk_text = f"风险 {route.risk.risk_score:.1f}/100" if route.risk and route.risk.risk_score is not None else "风险数据不足，按中性值参与排序"
+        risk_text = f"风险 {route.risk.risk_score:.1f}/100" if route.risk and route.risk.risk_score is not None else "风险数据不足，应用缺失惩罚，不生成中性风险分"
         route.why_recommended = [f"综合排序得分 {route.score:.3f}", risk_text, f"预计费用 {route.estimated_cost.most_likely if route.estimated_cost else 0:.2f} {route.estimated_cost.currency if route.estimated_cost else 'USD'}"]
     return sorted(routes, key=lambda route: route.score, reverse=True)

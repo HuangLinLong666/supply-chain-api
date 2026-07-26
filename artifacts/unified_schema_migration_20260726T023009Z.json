@@ -1,0 +1,203 @@
+{
+  "metadata": {
+    "generated_at_utc": "2026-07-26T02:30:09.861036+00:00",
+    "schema_version": "unified-transport-v1",
+    "database": "94a63264",
+    "credentials_redacted": true,
+    "plan_sha256": "7a80703c8494ade430776e083bd5195428d016806181199d98b1949fc996ca90"
+  },
+  "mode": "dry-run",
+  "safety": {
+    "deletes_nodes": false,
+    "deletes_relationships": false,
+    "preserves_legacy_labels": true,
+    "preserves_legacy_relationships": true,
+    "uses_merge_for_compatibility_relationships": true
+  },
+  "before": {
+    "totals": {
+      "nodes": 15236,
+      "relationships": 23772
+    },
+    "label_counts": {
+      "Supplier": 29,
+      "Factory": 19,
+      "Warehouse": 42,
+      "TransportLocation": 102,
+      "Port": 20,
+      "Airport": 16,
+      "RailTerminal": 5,
+      "RoadTerminal": 0,
+      "RouteSegment": 613,
+      "Route": 26,
+      "GeoZone": 10,
+      "RiskObservation": 11989,
+      "CostObservation": 609,
+      "DelayObservation": 628,
+      "Evidence": 11957,
+      "Vessel": 1,
+      "PortTrafficSnapshot": 0,
+      "RecommendationSnapshot": 0,
+      "ArrivalWarehouse": 10,
+      "CostEstimate": 23,
+      "CountryRiskObservation": 17,
+      "DepartureWarehouse": 8,
+      "ExportWarehouse": 8,
+      "NewsRiskEvent": 11946,
+      "NewsRiskZone": 10,
+      "OverseasWarehouse": 10,
+      "RiskSnapshot": 23,
+      "RouteCostObservation": 586,
+      "RouteDelayObservation": 628,
+      "RouteLeg": 19,
+      "SourceEvidence": 11,
+      "VehicleRoute": 20,
+      "WeatherRiskSnapshot": 3
+    },
+    "constraint_count": 80,
+    "index_count": 106
+  },
+  "preflight": {
+    "identity_audit": [
+      {
+        "entity": "Supplier",
+        "projected_nodes": 29,
+        "with_identity": 29,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Factory",
+        "projected_nodes": 19,
+        "with_identity": 19,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RouteSegment",
+        "projected_nodes": 613,
+        "with_identity": 613,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Route",
+        "projected_nodes": 26,
+        "with_identity": 26,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "GeoZone",
+        "projected_nodes": 10,
+        "with_identity": 10,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RiskObservation",
+        "projected_nodes": 11989,
+        "with_identity": 11989,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "CostObservation",
+        "projected_nodes": 609,
+        "with_identity": 609,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "DelayObservation",
+        "projected_nodes": 628,
+        "with_identity": 628,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Evidence",
+        "projected_nodes": 11957,
+        "with_identity": 11957,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Vessel",
+        "projected_nodes": 1,
+        "with_identity": 1,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "PortTrafficSnapshot",
+        "projected_nodes": 0,
+        "with_identity": 0,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RecommendationSnapshot",
+        "projected_nodes": 0,
+        "with_identity": 0,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      }
+    ],
+    "blocking_conflicts": [],
+    "location_conflicts_resolved": []
+  },
+  "plan": {
+    "projected_node_updates": 0,
+    "projected_relationship_creates": 0,
+    "location_plan": {
+      "rows": [],
+      "conflicts_resolved": [],
+      "projected_location_count": 102,
+      "projected_unique_location_ids": 102,
+      "projected_warehouse_count": 42,
+      "projected_unique_warehouse_ids": 42
+    },
+    "operation_counts": {
+      "route_leg_to_segment": 0,
+      "vehicle_route_to_route": 0,
+      "news_zone_to_geo_zone": 0,
+      "route_risk_snapshot_to_observation": 0,
+      "weather_snapshot_to_observation": 0,
+      "country_risk_to_observation": 0,
+      "news_event_to_observation_and_evidence": 0,
+      "cost_estimate_to_observation": 0,
+      "route_cost_to_observation": 0,
+      "route_delay_to_observation": 0,
+      "source_evidence_to_evidence": 0,
+      "canonical_route_segments": 0,
+      "canonical_route_risk_observations": 0,
+      "canonical_route_cost_observations": 0,
+      "canonical_port_weather_observations": 0,
+      "normalize_provenance": 0,
+      "normalize_route_segments": 0,
+      "normalize_routes": 0
+    },
+    "missing_constraints": [],
+    "missing_indexes": []
+  },
+  "execution": {
+    "status": "dry_run",
+    "database_writes": 0,
+    "nodes_deleted": 0,
+    "relationships_deleted": 0
+  },
+  "after": {}
+}

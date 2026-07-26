@@ -1,0 +1,1511 @@
+{
+  "metadata": {
+    "generated_at_utc": "2026-07-26T02:29:11.702700+00:00",
+    "schema_version": "unified-transport-v1",
+    "database": "94a63264",
+    "credentials_redacted": true,
+    "plan_sha256": "28fc8c995ebad53f1d9f49c2dc19f31d96c1519e41281d5bdae8b1d11ef5e721"
+  },
+  "mode": "dry-run",
+  "safety": {
+    "deletes_nodes": false,
+    "deletes_relationships": false,
+    "preserves_legacy_labels": true,
+    "preserves_legacy_relationships": true,
+    "uses_merge_for_compatibility_relationships": true
+  },
+  "before": {
+    "totals": {
+      "nodes": 15236,
+      "relationships": 23772
+    },
+    "label_counts": {
+      "Supplier": 29,
+      "Factory": 19,
+      "Warehouse": 42,
+      "TransportLocation": 102,
+      "Port": 20,
+      "Airport": 16,
+      "RailTerminal": 5,
+      "RoadTerminal": 0,
+      "RouteSegment": 613,
+      "Route": 26,
+      "GeoZone": 10,
+      "RiskObservation": 11989,
+      "CostObservation": 609,
+      "DelayObservation": 628,
+      "Evidence": 11957,
+      "Vessel": 1,
+      "PortTrafficSnapshot": 0,
+      "RecommendationSnapshot": 0,
+      "ArrivalWarehouse": 10,
+      "CostEstimate": 23,
+      "CountryRiskObservation": 17,
+      "DepartureWarehouse": 8,
+      "ExportWarehouse": 8,
+      "NewsRiskEvent": 11946,
+      "NewsRiskZone": 10,
+      "OverseasWarehouse": 10,
+      "RiskSnapshot": 23,
+      "RouteCostObservation": 586,
+      "RouteDelayObservation": 628,
+      "RouteLeg": 19,
+      "SourceEvidence": 11,
+      "VehicleRoute": 20,
+      "WeatherRiskSnapshot": 3
+    },
+    "constraint_count": 80,
+    "index_count": 106
+  },
+  "preflight": {
+    "identity_audit": [
+      {
+        "entity": "Supplier",
+        "projected_nodes": 29,
+        "with_identity": 29,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Factory",
+        "projected_nodes": 19,
+        "with_identity": 19,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RouteSegment",
+        "projected_nodes": 613,
+        "with_identity": 613,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Route",
+        "projected_nodes": 26,
+        "with_identity": 26,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "GeoZone",
+        "projected_nodes": 10,
+        "with_identity": 10,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RiskObservation",
+        "projected_nodes": 11989,
+        "with_identity": 11989,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "CostObservation",
+        "projected_nodes": 609,
+        "with_identity": 609,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "DelayObservation",
+        "projected_nodes": 628,
+        "with_identity": 628,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Evidence",
+        "projected_nodes": 11957,
+        "with_identity": 11957,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "Vessel",
+        "projected_nodes": 1,
+        "with_identity": 1,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "PortTrafficSnapshot",
+        "projected_nodes": 0,
+        "with_identity": 0,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      },
+      {
+        "entity": "RecommendationSnapshot",
+        "projected_nodes": 0,
+        "with_identity": 0,
+        "missing_identity": 0,
+        "missing_samples": [],
+        "duplicate_identities": []
+      }
+    ],
+    "blocking_conflicts": [],
+    "location_conflicts_resolved": []
+  },
+  "plan": {
+    "projected_node_updates": 0,
+    "projected_relationship_creates": 0,
+    "location_plan": {
+      "rows": [
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1053",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNSZX",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1054",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNGGZ",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1055",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SGSIN",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1056",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "KRPUS",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1057",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "AEJEA",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1058",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "MYPKG",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1059",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "NLRTM",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1061",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "BEANR",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1063",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "GBFXT",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:11",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:50b1347046",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:12",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:f4148092fc",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:13",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:a273a31ba8",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:136",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "PEK",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:138",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CAN",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:139",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SZX",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:14",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:f92c0c431e",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:140",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "TFU",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:141",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CGO",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:142",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "HGH",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:143",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "XIY",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:144",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SIN",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:145",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "DXB",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:146",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "DOH",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:148",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "AMS",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:149",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "IST",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:15",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:3015ffa6a2",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:150",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "LAX",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:151",
+          "current_labels": [
+            "Airport",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "NRT",
+          "location_kind": "airport"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:16",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:36abcca8db",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:160",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "PEK~7da2cc48",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:161",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "PVG",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:162",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "CAN~b051f1df",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:163",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "SZX~4fb843a7",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:164",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "TFU~ae7f24ad",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:165",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "CGO~84fa5d28",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:166",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "HGH~43e20e1d",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:167",
+          "current_labels": [
+            "DepartureWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "XIY~7aa1f75d",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1689",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-CN-SHANGHAI",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1690",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-CN-NINGBO",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1691",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-CN-SHENZHEN",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1692",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-EU-DUISBURG",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1693",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-NA-LA",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1694",
+          "current_labels": [
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "WH-EU-HAMBURG",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:17",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:43befd21cc",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:18",
+          "current_labels": [
+            "ExportWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:0720d2bb98",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:184",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "DE-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:185",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "NL-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:186",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "US-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:187",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "GB-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:188",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "FR-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:189",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "SG-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:190",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "AE-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:191",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "JP-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:192",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "AU-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:193",
+          "current_labels": [
+            "ArrivalWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "BR-AWH",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:20",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNNGB",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:21",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNYTN",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:22",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNNAN",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:23",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNQDG",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:24",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CNTXG",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:25",
+          "current_labels": [
+            "RailTerminal",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "XI'AN_INTERNATIONAL_PORT",
+          "location_kind": "rail_terminal"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:26",
+          "current_labels": [
+            "RailTerminal",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "ZHENGZHOU_RAILWAY_CONTAINER_CENTER",
+          "location_kind": "rail_terminal"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:27",
+          "current_labels": [
+            "RailTerminal",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "CHONGQING_TUANJIECUN_RAILWAY_STATION",
+          "location_kind": "rail_terminal"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:28",
+          "current_labels": [
+            "RailTerminal",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "ALASHANKOU_RAILWAY_PORT",
+          "location_kind": "rail_terminal"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:29",
+          "current_labels": [
+            "RailTerminal",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "KHORGOS_RAILWAY_PORT",
+          "location_kind": "rail_terminal"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2988",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-GIGAFACTORY-TEXAS",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2990",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-FREMONT",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2992",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-GIGAFACTORY-NEVADA",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2994",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-GIGAFACTORY-BERLIN",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2997",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-MEGAFACTORY-SHANGHAI",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2999",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-GIGAFACTORY-NEW-YORK",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3001",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "SEC-TSLA-MEGAFACTORY-LATHROP",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3058",
+          "current_labels": [
+            "Port",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "JPYOK",
+          "location_kind": "port"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:443",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-BYD-SZ",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:444",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-TSLA-SH",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:445",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-TYT-JP",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:446",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-TYT-MX",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:447",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-VW-DE",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:448",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-VW-US",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:449",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-BMW-CN",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:450",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-BMW-HU",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:51",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:65aa7aa833",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:52",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:3101a34fad",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:53",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:2d053e4cb7",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:54",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:117c05747f",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:55",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:82c16e6873",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:56",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:e05bb6dd33",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:57",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:4d3b310e82",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:58",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:deac8dbf58",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:59",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:d859b83a8d",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:60",
+          "current_labels": [
+            "OverseasWarehouse",
+            "Warehouse",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id",
+            "warehouse_identity_source": "warehouse_id"
+          },
+          "location_id": "loc:warehouse:7793773812",
+          "location_kind": "warehouse"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:662",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-SAIC-LG",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:663",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-GEELY-NB",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:664",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-CATL-ND",
+          "location_kind": "factory"
+        },
+        {
+          "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:665",
+          "current_labels": [
+            "Factory",
+            "TransportLocation"
+          ],
+          "labels_to_add": [],
+          "properties": {
+            "canonical_identity_source": "location_id"
+          },
+          "location_id": "FAC-BOSCH-SZ",
+          "location_kind": "factory"
+        }
+      ],
+      "conflicts_resolved": [],
+      "projected_location_count": 102,
+      "projected_unique_location_ids": 102,
+      "projected_warehouse_count": 42,
+      "projected_unique_warehouse_ids": 42
+    },
+    "operation_counts": {
+      "route_leg_to_segment": 0,
+      "vehicle_route_to_route": 0,
+      "news_zone_to_geo_zone": 0,
+      "route_risk_snapshot_to_observation": 0,
+      "weather_snapshot_to_observation": 0,
+      "country_risk_to_observation": 0,
+      "news_event_to_observation_and_evidence": 0,
+      "cost_estimate_to_observation": 0,
+      "route_cost_to_observation": 0,
+      "route_delay_to_observation": 0,
+      "source_evidence_to_evidence": 0,
+      "canonical_route_segments": 0,
+      "canonical_route_risk_observations": 0,
+      "canonical_route_cost_observations": 0,
+      "canonical_port_weather_observations": 0,
+      "normalize_provenance": 0,
+      "normalize_route_segments": 0,
+      "normalize_routes": 0
+    },
+    "missing_constraints": [],
+    "missing_indexes": []
+  },
+  "execution": {
+    "status": "dry_run",
+    "database_writes": 0,
+    "nodes_deleted": 0,
+    "relationships_deleted": 0
+  },
+  "after": {}
+}

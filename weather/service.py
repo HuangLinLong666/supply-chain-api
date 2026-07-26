@@ -6,7 +6,7 @@ import json
 import logging
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from weather.client import OpenMeteoClient
@@ -48,8 +48,8 @@ def update_ports(port_ids: list[str] | None=None, force: bool=False, dry_run: bo
             for port,payload,marine in zip(batch,weather_payloads,marine_payloads):
                 try:
                     current=dict(payload.get("current",{})); current.update(marine.get("current",{})); hourly=hourly_rows(payload,marine); risk=calculate_risk(current,hourly)
-                    observed=str(payload.get("current",{}).get("time") or started.isoformat()); fetched=datetime.now(timezone.utc).isoformat(); version=load_rules()["version"]
-                    values={"snapshot_id":f"{port['port_id']}|{observed}|{version}","observed_at":observed,"fetched_at":fetched,"risk_score":risk["score"],"risk_level":risk["level"],"confidence":risk["confidence"],"completeness":risk["data_completeness"],"trend":risk["trend"],"summary":risk["summary"],"max6":risk["max_risk_6h"],"max24":risk["max_risk_24h"],"avg24":risk["average_risk_24h"],"temperature":current.get("temperature_2m"),"humidity":current.get("relative_humidity_2m"),"precipitation":current.get("precipitation"),"visibility":hourly[0].get("visibility") if hourly else None,"wind_speed":current.get("wind_speed_10m"),"wind_gusts":current.get("wind_gusts_10m"),"wind_direction":current.get("wind_direction_10m"),"wave_height":current.get("wave_height"),"wave_period":current.get("wave_period"),"weather_code":current.get("weather_code"),"marine_source":"Open-Meteo Marine API" if marine else "unavailable","scoring_version":version,"factors_json":json.dumps(risk["factors"],ensure_ascii=False)}
+                    observed=str(payload.get("current",{}).get("time") or started.isoformat()); fetched_at=datetime.now(timezone.utc); fetched=fetched_at.isoformat(); version=load_rules()["version"]
+                    values={"snapshot_id":f"{port['port_id']}|{observed}|{version}","observed_at":observed,"fetched_at":fetched,"expires_at":(fetched_at+timedelta(hours=settings.route_risk_ttl_hours)).isoformat(),"risk_score":risk["score"],"risk_level":risk["level"],"confidence":risk["confidence"],"completeness":risk["data_completeness"],"trend":risk["trend"],"summary":risk["summary"],"max6":risk["max_risk_6h"],"max24":risk["max_risk_24h"],"avg24":risk["average_risk_24h"],"temperature":current.get("temperature_2m"),"humidity":current.get("relative_humidity_2m"),"precipitation":current.get("precipitation"),"visibility":hourly[0].get("visibility") if hourly else None,"wind_speed":current.get("wind_speed_10m"),"wind_gusts":current.get("wind_gusts_10m"),"wind_direction":current.get("wind_direction_10m"),"wave_height":current.get("wave_height"),"wave_period":current.get("wave_period"),"weather_code":current.get("weather_code"),"marine_source":"Open-Meteo Marine API" if marine else "unavailable","scoring_version":version,"factors_json":json.dumps(risk["factors"],ensure_ascii=False)}
                     summary["routes_updated"]+=write_weather(port,values,dry_run); summary["neo4j_records_written"]+=0 if dry_run else 1; summary["successful_ports"]+=1
                 except Exception as exc:
                     summary["failed_ports"]+=1; summary["errors"].append({"port_id":port["port_id"],"port_name":port["name"],"stage":"process","error_type":type(exc).__name__,"error_message":str(exc),"retry_count":settings.max_retries})

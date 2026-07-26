@@ -1,0 +1,272 @@
+{
+  "scoring_version": "gdelt-event-cluster-v3",
+  "generated_at": "2026-07-26T04:08:57.243622+00:00",
+  "plan_hash": "361f14fa7222d5df409c3fb5baa9927cbba837d672aecbc32dbae2bb0542aeb7",
+  "events_scanned": 11946,
+  "category_counts": {
+    "conflict": 2170,
+    "other": 9588,
+    "transport_accident": 76,
+    "tariff": 73,
+    "sanction": 35,
+    "natural_disaster": 2,
+    "strike": 1,
+    "port_disruption": 1
+  },
+  "rejected_counts": {},
+  "planned_event_updates": 11946,
+  "planned_cluster_creates": 8975,
+  "planned_membership_creates": 15062,
+  "mode": "execute",
+  "execution_results": {
+    "event_updates": 11946,
+    "cluster_creates": 8975,
+    "membership_creates": 15062
+  },
+  "sample_event_updates": [
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:8366",
+      "properties": {
+        "canonical_url": "https://www.capitalgazette.com/2026/07/18/17-us-service-members-have-died-in-the-iran-war-reflecting-a-conflict-fought-largely-in-the-air",
+        "canonical_url_hash": "8de8d5c96c1016b172427c53",
+        "normalized_title": "17 us service members have died in the iran war reflecting a conflict fought largely in the air",
+        "content_hash": "3ccadafb84da1a79c822fde4",
+        "event_category": "conflict",
+        "matched_categories": [
+          "conflict"
+        ],
+        "matched_terms": [
+          "conflict",
+          "war"
+        ],
+        "severity": 0.92,
+        "classification_status": "classified",
+        "time_status": "valid_utc",
+        "source_credibility_status": null,
+        "scoring_version": null
+      }
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3437",
+      "properties": {
+        "canonical_url": "https://www.elmundo.es/internacional/2026/07/15/6a571c5b21efa0076c8b456f.html",
+        "canonical_url_hash": "000865e730c50a0eccf01df8",
+        "normalized_title": "irán dice que ormuz permanecerá cerrado hasta que cesen los ataques de eeuu",
+        "content_hash": "0bc0ab8603bebab228faae55",
+        "event_category": "other",
+        "matched_categories": [],
+        "matched_terms": [],
+        "severity": 0.25,
+        "classification_status": "unclassified",
+        "time_status": "valid_utc",
+        "source_credibility_status": null,
+        "scoring_version": null
+      }
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:14816",
+      "properties": {
+        "canonical_url": "http://www.theuknews.com/news/279208944/houthis-claim-missile-strike-on-saudi-arabia",
+        "canonical_url_hash": "000c41194713cb68a6f93bc0",
+        "normalized_title": "houthis claim missile strike on saudi arabia",
+        "content_hash": "84a78a95afc0472901ff8c54",
+        "event_category": "conflict",
+        "matched_categories": [
+          "conflict"
+        ],
+        "matched_terms": [
+          "missile",
+          "strike"
+        ],
+        "severity": 0.95,
+        "classification_status": "classified",
+        "time_status": "valid_utc",
+        "source_credibility_status": null,
+        "scoring_version": null
+      }
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:14745",
+      "properties": {
+        "canonical_url": "https://www.freemalaysiatoday.com/category/world/2026/07/25/iran-s-araghchi-says-no-military-solution-to-yemen-conflict",
+        "canonical_url_hash": "000cee41ff181cd9cc144535",
+        "normalized_title": "iran araghchi says no military solution to yemen conflict",
+        "content_hash": "2fadb8c9d8d638ef96ac79d4",
+        "event_category": "conflict",
+        "matched_categories": [
+          "conflict"
+        ],
+        "matched_terms": [
+          "conflict"
+        ],
+        "severity": 0.82,
+        "classification_status": "classified",
+        "time_status": "valid_utc",
+        "source_credibility_status": null,
+        "scoring_version": null
+      }
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:4966",
+      "properties": {
+        "canonical_url": "https://www.vecernji.ba/svijet/foto-objavljena-ljestvica-najmocnijih-vojski-svijeta-1978605",
+        "canonical_url_hash": "00101e26c8cc93b0a46ae67e",
+        "normalized_title": "foto pogledajte ljestvicu najmoćnijih vojski svijeta",
+        "content_hash": "48dc8d7cd5168a406f11cf01",
+        "event_category": "other",
+        "matched_categories": [],
+        "matched_terms": [],
+        "severity": 0.25,
+        "classification_status": "unclassified",
+        "time_status": "valid_utc",
+        "source_credibility_status": null,
+        "scoring_version": null
+      }
+    }
+  ],
+  "sample_clusters": [
+    {
+      "cluster_id": "gdelt-cluster-hormuz strait-19b1753b7da82b3a8ae81033",
+      "event_category": "conflict",
+      "representative_title": "Iran FM urges EU to take decisive action against Ukraine attack on Iranian ship - Xinhua",
+      "representative_article_id": "2b21678153a35f1bdb71aea9",
+      "first_seen": "2026-07-25T23:00:00+00:00",
+      "last_seen": "2026-07-25T23:00:00+00:00",
+      "severity": 0.92,
+      "article_count": 1,
+      "distinct_domain_count": 1,
+      "domains": [
+        "english.news.cn"
+      ],
+      "article_ids": [
+        "2b21678153a35f1bdb71aea9"
+      ],
+      "source_credibility_status": "unavailable",
+      "confidence_basis": "source_diversity_not_domain_credibility",
+      "freshness_weight": 0.8618,
+      "effective_severity": 0.7929,
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "cluster_id": "gdelt-cluster-hormuz strait-010d85d9ca43e0e07681ccd1",
+      "event_category": "conflict",
+      "representative_title": "Ships Brave Houthi Blockade in Red Sea Despite Attacks",
+      "representative_article_id": "25578a68866a7731170b3ade",
+      "first_seen": "2026-07-25T23:00:00+00:00",
+      "last_seen": "2026-07-25T23:00:00+00:00",
+      "severity": 0.86,
+      "article_count": 1,
+      "distinct_domain_count": 1,
+      "domains": [
+        "newkerala.com"
+      ],
+      "article_ids": [
+        "25578a68866a7731170b3ade"
+      ],
+      "source_credibility_status": "unavailable",
+      "confidence_basis": "source_diversity_not_domain_credibility",
+      "freshness_weight": 0.8618,
+      "effective_severity": 0.7411,
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "cluster_id": "gdelt-cluster-hormuz strait-ca1b26fbb318087847ba2534",
+      "event_category": "conflict",
+      "representative_title": "Idaho gas prices skyrocketing with no relief in sight as Middle East conflict spirals",
+      "representative_article_id": "b24fd2e5314d53a7b7fc851d",
+      "first_seen": "2026-07-25T23:00:00+00:00",
+      "last_seen": "2026-07-25T23:00:00+00:00",
+      "severity": 0.82,
+      "article_count": 1,
+      "distinct_domain_count": 1,
+      "domains": [
+        "idahostatejournal.com"
+      ],
+      "article_ids": [
+        "b24fd2e5314d53a7b7fc851d"
+      ],
+      "source_credibility_status": "unavailable",
+      "confidence_basis": "source_diversity_not_domain_credibility",
+      "freshness_weight": 0.8618,
+      "effective_severity": 0.7067,
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "cluster_id": "gdelt-cluster-hormuz strait-1f037df16f1d8448154715d7",
+      "event_category": "conflict",
+      "representative_title": "Houthis fire on Saudi oil sites ; no US strike on Iran for first time in two weeks",
+      "representative_article_id": "9dd44a4e1b70321f0028023e",
+      "first_seen": "2026-07-25T22:00:00+00:00",
+      "last_seen": "2026-07-25T23:00:00+00:00",
+      "severity": 0.72,
+      "article_count": 2,
+      "distinct_domain_count": 2,
+      "domains": [
+        "straitstimes.com",
+        "thefrontierpost.com"
+      ],
+      "article_ids": [
+        "901a32d73e3702864c1b5a8f",
+        "9dd44a4e1b70321f0028023e"
+      ],
+      "source_credibility_status": "unavailable",
+      "confidence_basis": "source_diversity_not_domain_credibility",
+      "freshness_weight": 0.8618,
+      "effective_severity": 0.6205,
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "cluster_id": "gdelt-cluster-hormuz strait-6c22d0b59c6eb26954079fd3",
+      "event_category": "transport_accident",
+      "representative_title": "Iran - backed Houthis fire missiles at Saudi Arabia in response to airstrikes in Yemen",
+      "representative_article_id": "78e8ce7d7c0bf53aa6f63a0e",
+      "first_seen": "2026-07-25T19:00:00+00:00",
+      "last_seen": "2026-07-25T23:00:00+00:00",
+      "severity": 0.68,
+      "article_count": 3,
+      "distinct_domain_count": 3,
+      "domains": [
+        "economictimes.indiatimes.com",
+        "rockymounttelegram.com",
+        "yakimaherald.com"
+      ],
+      "article_ids": [
+        "78e8ce7d7c0bf53aa6f63a0e",
+        "80eac738e9dcbb8c2d5367e0",
+        "e734c68182fbc99aa81ba652"
+      ],
+      "source_credibility_status": "unavailable",
+      "confidence_basis": "source_diversity_not_domain_credibility",
+      "freshness_weight": 0.8618,
+      "effective_severity": 0.586,
+      "zone_id": "hormuz-strait"
+    }
+  ],
+  "sample_memberships": [
+    {
+      "article_id": "2b21678153a35f1bdb71aea9",
+      "cluster_id": "gdelt-cluster-hormuz strait-19b1753b7da82b3a8ae81033",
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "article_id": "25578a68866a7731170b3ade",
+      "cluster_id": "gdelt-cluster-hormuz strait-010d85d9ca43e0e07681ccd1",
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "article_id": "b24fd2e5314d53a7b7fc851d",
+      "cluster_id": "gdelt-cluster-hormuz strait-ca1b26fbb318087847ba2534",
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "article_id": "901a32d73e3702864c1b5a8f",
+      "cluster_id": "gdelt-cluster-hormuz strait-1f037df16f1d8448154715d7",
+      "zone_id": "hormuz-strait"
+    },
+    {
+      "article_id": "9dd44a4e1b70321f0028023e",
+      "cluster_id": "gdelt-cluster-hormuz strait-1f037df16f1d8448154715d7",
+      "zone_id": "hormuz-strait"
+    }
+  ]
+}

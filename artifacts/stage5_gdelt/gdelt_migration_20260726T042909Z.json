@@ -1,0 +1,112 @@
+{
+  "scoring_version": "gdelt-event-cluster-v3",
+  "generated_at": "2026-07-26T04:26:33.348708+00:00",
+  "plan_hash": "6c535e1005a318a1a4949e34598990ca8dedc5225e358e9c003414177934c252",
+  "events_scanned": 11946,
+  "category_counts": {
+    "conflict": 2170,
+    "other": 9588,
+    "transport_accident": 76,
+    "tariff": 73,
+    "sanction": 35,
+    "natural_disaster": 2,
+    "strike": 1,
+    "port_disruption": 1
+  },
+  "rejected_counts": {},
+  "planned_event_updates": 0,
+  "planned_cluster_creates": 0,
+  "planned_membership_creates": 0,
+  "mode": "execute",
+  "execution_results": {
+    "event_updates": 0,
+    "cluster_creates": 0,
+    "membership_creates": 0,
+    "zone_metadata_updates": 10
+  },
+  "sample_event_updates": [],
+  "sample_clusters": [],
+  "sample_memberships": [],
+  "zone_metadata": [
+    {
+      "zone_id": "hormuz-strait",
+      "raw_article_count": 4580,
+      "valid_article_count": 4580,
+      "cluster_count": 2773,
+      "category_counts_json": "{\"conflict\": 806, \"natural_disaster\": 1, \"other\": 3693, \"sanction\": 19, \"strike\": 1, \"tariff\": 8, \"transport_accident\": 52}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "indian-ocean",
+      "raw_article_count": 822,
+      "valid_article_count": 822,
+      "cluster_count": 479,
+      "category_counts_json": "{\"conflict\": 123, \"other\": 695, \"sanction\": 4}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "malacca-strait",
+      "raw_article_count": 161,
+      "valid_article_count": 161,
+      "cluster_count": 86,
+      "category_counts_json": "{\"conflict\": 10, \"other\": 151}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "middle-east",
+      "raw_article_count": 5468,
+      "valid_article_count": 5468,
+      "cluster_count": 3139,
+      "category_counts_json": "{\"conflict\": 1174, \"natural_disaster\": 1, \"other\": 4170, \"sanction\": 9, \"tariff\": 67, \"transport_accident\": 47}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "pacific-ocean",
+      "raw_article_count": 64,
+      "valid_article_count": 64,
+      "cluster_count": 56,
+      "category_counts_json": "{\"conflict\": 6, \"other\": 57, \"tariff\": 1}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "port-rotterdam",
+      "raw_article_count": 4,
+      "valid_article_count": 4,
+      "cluster_count": 4,
+      "category_counts_json": "{\"other\": 4}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "port-shanghai",
+      "raw_article_count": 6,
+      "valid_article_count": 6,
+      "cluster_count": 5,
+      "category_counts_json": "{\"other\": 6}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "port-singapore",
+      "raw_article_count": 9,
+      "valid_article_count": 9,
+      "cluster_count": 8,
+      "category_counts_json": "{\"conflict\": 2, \"other\": 7}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "red-sea",
+      "raw_article_count": 3146,
+      "valid_article_count": 3146,
+      "cluster_count": 2002,
+      "category_counts_json": "{\"conflict\": 673, \"other\": 2428, \"port_disruption\": 1, \"sanction\": 10, \"tariff\": 4, \"transport_accident\": 30}",
+      "rejected_counts_json": "{}"
+    },
+    {
+      "zone_id": "south-china-sea",
+      "raw_article_count": 802,
+      "valid_article_count": 802,
+      "cluster_count": 423,
+      "category_counts_json": "{\"conflict\": 180, \"other\": 618, \"sanction\": 1, \"transport_accident\": 3}",
+      "rejected_counts_json": "{}"
+    }
+  ]
+}

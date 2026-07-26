@@ -26,6 +26,8 @@ jobs:
           AURA_NEO4J_USERNAME: ${{ secrets.AURA_NEO4J_USERNAME }}
           AURA_NEO4J_PASSWORD: ${{ secrets.AURA_NEO4J_PASSWORD }}
           AURA_NEO4J_DATABASE: ${{ secrets.AURA_NEO4J_DATABASE }}
-          GDELT_TIMESPAN: 24h
+          GDELT_TIMESPAN: 48h
+          GDELT_REQUEST_TIMEOUT_SECONDS: "20"
+          GDELT_MAX_RETRIES: "2"
           GDELT_RISK_TTL_HOURS: "3"
         run: python scripts/update_gdelt_risk.py
