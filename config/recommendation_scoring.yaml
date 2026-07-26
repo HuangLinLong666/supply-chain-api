@@ -1,0 +1,72 @@
+scoring_version: route-recommendation-v1.2
+
+strategy_weights:
+  min_risk: {risk: 1.0, cost: 0.0, duration: 0.0}
+  min_cost: {risk: 0.0, cost: 1.0, duration: 0.0}
+  fastest: {risk: 0.0, cost: 0.0, duration: 1.0}
+  balanced: {risk: 0.4, cost: 0.3, duration: 0.3}
+
+normalization:
+  method: fixed_bounds_clipped_v1
+  risk_score: {best: 0.0, worst: 100.0}
+  cost_per_vehicle_usd: {best: 0.0, worst: 50000.0}
+  duration_days: {best: 0.0, worst: 120.0}
+
+uncertainty:
+  penalty_weight: 0.20
+
+cost_model:
+  basis: per_vehicle_distance_fallback
+  mode_capacity:
+    road: 8
+    rail: 10
+    sea: 2
+    air: 1
+  sea_capacity_by_shipment_method:
+    container: 2
+    roro: 10
+  container_capacity:
+    20ft: 1
+    40ft: 2
+    40hc: 2
+  shipment_method_rate_multiplier:
+    container: 1.0
+    roro: 0.92
+  container_type_rate_multiplier:
+    20ft: 0.90
+    40ft: 1.0
+    40hc: 1.08
+  reference_vehicle_weight_kg: 2000.0
+  reference_vehicle_volume_m3: 10.0
+  weight_multiplier_exponent: 0.35
+  volume_multiplier_exponent: 0.25
+  electric_vehicle_surcharge_ratio: 0.08
+  estimated_confidence: 0.35
+  synthetic_confidence: 0.20
+
+duration_model:
+  speed_kmh:
+    road: 65.0
+    rail: 55.0
+    sea: 32.0
+    air: 760.0
+  terminal_handling_hours:
+    road: 2.0
+    rail: 12.0
+    sea: 36.0
+    air: 8.0
+  p90_multiplier:
+    road: 1.35
+    rail: 1.45
+    sea: 1.50
+    air: 1.30
+  estimated_confidence: 0.35
+  synthetic_confidence: 0.20
+
+candidate_generation:
+  per_objective_limit: 30
+  maximum_pool_size: 120
+  high_news_risk_threshold: 0.60
+
+snapshot:
+  retention_days: 30

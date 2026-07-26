@@ -35,6 +35,7 @@ def list_route_segments(segment_ids: list[str] | None = None) -> list[dict[str, 
              properties(segment) AS segment_properties,
              [item IN collect(DISTINCT route) WHERE item.deleted_at IS NULL] AS active_routes
         WHERE mode IN ['sea','air','rail','road']
+          AND coalesce(segment.feasibility_status,'') <> 'invalid_cross_ocean'
           AND ($segment_ids IS NULL OR segment_id IN $segment_ids)
         RETURN elementId(segment) AS element_id,segment_id,mode,
                origin.latitude AS from_lat,origin.longitude AS from_lng,
@@ -45,7 +46,11 @@ def list_route_segments(segment_ids: list[str] | None = None) -> list[dict[str, 
                labels(destination) AS to_labels,
                segment.data_status AS data_status,segment.source_type AS source_type,
                coalesce(segment.is_inferred,false) AS is_inferred,size(active_routes) AS active_route_count,
-               coalesce(segment_properties.geometry_json,segment_properties.route_geometry_json,segment_properties.geojson) AS geometry,
+               coalesce(segment_properties.geometry_geojson,segment_properties.geometry_json,segment_properties.route_geometry_json,segment_properties.geojson) AS geometry,
+               segment.geometry_source AS geometry_source,
+               segment.geometry_status AS geometry_status,
+               segment.geometry_confidence AS geometry_confidence,
+               segment.feasibility_status AS feasibility_status,
                coalesce(
                  segment_properties.estimated_time_days * 24.0,
                  segment_properties.estimatedTimeHours,
@@ -118,6 +123,15 @@ def recalculate_segment_risk(segment_ids: list[str]) -> int:
             else is_fresh(properties.get("route_weather_updated_at"), now=now, max_age_hours=6)
         )
         weather_observed_at = parse_datetime(properties.get("route_weather_updated_at"))
+        congestion_expires_at = parse_datetime(properties.get("ais_congestion_expires_at"))
+        congestion_evidence = properties.get("ais_congestion_snapshot_ids") or []
+        congestion_active = (
+            str(properties.get("ais_congestion_provider") or "").casefold() in {"aisstream", "aisstream.io"}
+            and properties.get("ais_congestion_status") == "available"
+            and congestion_expires_at is not None
+            and congestion_expires_at > now
+            and bool(congestion_evidence)
+        )
         mode = properties.get("canonical_mode") or properties.get("mode") or properties.get("routeMode")
         signals = build_segment_signals(
             mode,
@@ -139,6 +153,12 @@ def recalculate_segment_risk(segment_ids: list[str]) -> int:
             ),
             weather_confidence=properties.get("route_weather_confidence") if weather_active else None,
             weather_evidence=properties.get("route_weather_evidence") or [],
+            congestion_score=properties.get("ais_congestion_score") if congestion_active else None,
+            congestion_provider="AISStream.io" if congestion_active else None,
+            congestion_observed_at=properties.get("ais_congestion_observed_at") if congestion_active else None,
+            congestion_expires_at=properties.get("ais_congestion_expires_at") if congestion_active else None,
+            congestion_confidence=properties.get("ais_congestion_confidence") if congestion_active else None,
+            congestion_evidence=congestion_evidence,
         )
         risk = calculate_provider_risk(mode, signals, strategy)
         rows.append({"element_id": segment["element_id"], "properties": database_risk_properties(risk, now)})

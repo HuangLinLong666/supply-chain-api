@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.recommendation.config import load_recommendation_settings
 from app.vehicle_network.models import CostRange, RiskResult, RouteRecord
 
 
@@ -119,13 +120,22 @@ def rank_routes(routes: list[RouteRecord], strategy_name: str, strategy: Any) ->
     """支持最低风险、最低成本、最快到达和混合评分。"""
     if not routes:
         return routes
-    maximum_cost = max(route.estimated_cost.most_likely for route in routes if route.estimated_cost) or 1
-    maximum_time = max(route.estimated_duration_h for route in routes) or 1
+    normalization = load_recommendation_settings()["normalization"]
+
+    def utility(value: float | None, key: str) -> float:
+        if value is None:
+            return 0.0
+        bounds = normalization[key]
+        best = float(bounds["best"])
+        worst = float(bounds["worst"])
+        clipped = min(max(float(value), best), worst)
+        return (worst - clipped) / (worst - best)
+
     for route in routes:
         measured_risk = route.risk.risk_score if route.risk and route.risk.risk_score is not None else None
-        inverse_risk = 1 - measured_risk / 100 if measured_risk is not None else 0.0
-        inverse_cost = 1 - (route.estimated_cost.most_likely if route.estimated_cost else maximum_cost) / maximum_cost
-        inverse_duration = 1 - route.estimated_duration_h / maximum_time
+        inverse_risk = utility(measured_risk, "risk_score")
+        inverse_cost = utility(route.estimated_cost.most_likely if route.estimated_cost else None, "cost_per_vehicle_usd")
+        inverse_duration = utility(route.estimated_duration_h / 24.0, "duration_days")
         if strategy_name == "min_risk":
             route.score = inverse_risk
         elif strategy_name == "min_cost":

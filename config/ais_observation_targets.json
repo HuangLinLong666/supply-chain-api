@@ -1,0 +1,47 @@
+{
+  "schema_version": "ais-port-traffic-v1",
+  "coordinate_order": "latitude_longitude",
+  "notes": "subscription_bbox 用于接收港区外围消息；aggregation_bbox 用于计算港区内到离港与拥堵。边界为项目监测范围，不是法定港界。",
+  "targets": [
+    {
+      "id": "port-shanghai",
+      "name": "上海港附近海域",
+      "type": "port",
+      "port_ids": ["CN-SHA", "CNSHA", "CNSHG"],
+      "aggregation_bbox": [[30.75, 121.2], [31.55, 122.35]],
+      "subscription_bbox": [[30.55, 120.95], [31.8, 122.55]],
+      "congestion_reference_vessel_count": 80,
+      "slow_speed_knots": 1.0
+    },
+    {
+      "id": "port-singapore",
+      "name": "新加坡港附近海域",
+      "type": "port",
+      "port_ids": ["SG-SIN", "SGSIN"],
+      "aggregation_bbox": [[0.95, 103.45], [1.55, 104.15]],
+      "subscription_bbox": [[0.75, 103.25], [1.75, 104.35]],
+      "congestion_reference_vessel_count": 140,
+      "slow_speed_knots": 1.0
+    },
+    {
+      "id": "port-rotterdam",
+      "name": "鹿特丹港附近海域",
+      "type": "port",
+      "port_ids": ["NL-RTM", "NLRTM"],
+      "aggregation_bbox": [[51.72, 3.65], [52.15, 4.65]],
+      "subscription_bbox": [[51.5, 3.4], [52.35, 5.0]],
+      "congestion_reference_vessel_count": 100,
+      "slow_speed_knots": 1.0
+    },
+    {
+      "id": "suez-canal",
+      "name": "苏伊士运河附近海域",
+      "type": "corridor",
+      "zone_id": "red-sea",
+      "aggregation_bbox": [[29.75, 32.15], [31.4, 32.75]],
+      "subscription_bbox": [[29.5, 31.95], [31.6, 32.95]],
+      "congestion_reference_vessel_count": 60,
+      "slow_speed_knots": 1.0
+    }
+  ]
+}

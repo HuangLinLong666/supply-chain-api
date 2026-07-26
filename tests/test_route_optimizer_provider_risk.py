@@ -28,7 +28,12 @@ def test_missing_risk_uses_explicit_worst_case_ranking_penalty():
 
 
 def test_partial_risk_adds_completeness_penalty_without_changing_reported_score():
-    segment = route_segment(risk_score=0.4, risk_status="partial", risk_data_completeness=0.2)
+    segment = route_segment(
+        risk_score=0.4,
+        risk_status="partial",
+        risk_data_completeness=0.2,
+        risk_providers=["Open-Meteo"],
+    )
     assert risk_optimization_value(segment) == 0.6
     route = format_route([segment], 1)
     assert route["riskScore"] == 40

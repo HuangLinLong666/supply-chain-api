@@ -54,6 +54,18 @@ def inferred_exposure(zone_id: str, segment: dict[str, Any]) -> bool:
 
 
 def exposed_zone_ids(segment: dict[str, Any], zones: list[dict[str, Any]]) -> list[str]:
+    spatial_exposures = segment.get("spatial_exposures")
+    if spatial_exposures:
+        return sorted(
+            {
+                str(item.get("zone_id") or item.get("zoneId"))
+                for item in spatial_exposures
+                if (item.get("zone_id") or item.get("zoneId"))
+                and item.get("active", True)
+            }
+        )
+    if "spatial_exposures" in segment and segment.get("geospatial_version"):
+        return []
     exposed: list[str] = []
     text = node_text(segment)
     for zone in zones:

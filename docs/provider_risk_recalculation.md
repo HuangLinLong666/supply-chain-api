@@ -15,7 +15,7 @@
 1. 备份并删除明确无 Provider、无 Evidence、未审核且带合成来源标记的 `RiskFactor`。
 2. 清空供应商、地点、路线和旧风险快照中的无来源通用风险字段。
 3. 按海运、铁路、公路、空运分别选择适用风险维度。
-4. 只使用处于有效期内且带真实 Provider 的 GDELT、Open-Meteo 信号。
+4. 阶段 4 只使用处于有效期内且带真实 Provider 的 GDELT、Open-Meteo 信号；阶段 7 已为海运增加同样受 TTL 与 Evidence 约束的 AISStream.io 港口拥堵信号。
 5. 增加风险状态、数据完整度、缺失维度、Provider 和 Evidence 字段。
 6. 风险缺失时返回 `null/unavailable`，排序时施加显式不确定性惩罚，不再伪造中等风险。
 

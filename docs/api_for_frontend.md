@@ -2,17 +2,46 @@
 
 本文档说明如何使用你已经创建的 GitHub 专用仓库 `supply-chain-api` 部署公网后端 API，让前端同事通过 HTTP 接口读取 Neo4j AuraDB 中的供应链图谱数据。
 
-目标交付物不是 `localhost`，而是一个 Render 提供的公网地址，例如：
+目标交付物不是 `localhost`，而是一个 Render 提供的公网地址，例如当前项目：
 
 ```text
-https://supply-chain-api.onrender.com
+https://supply-chain-api-kyiy.onrender.com
 ```
 
 前端同事最终调用：
 
 ```text
-https://supply-chain-api.onrender.com/api/graph/summary
+https://supply-chain-api-kyiy.onrender.com/api/graph/summary
 ```
+
+## 0. 阶段 10 前端交付结论
+
+新前端的主业务流程只有四步：
+
+```text
+GET  /api/suppliers
+GET  /api/suppliers/{supplier_id}/origins
+GET  /api/cities
+POST /api/routes/recommend
+```
+
+推荐成功后，从响应直接取得：
+
+```text
+snapshotId = 整次推荐结果的审计 ID
+routes[].id = 某条候选路线的 routeId
+```
+
+需要回读时调用：
+
+```text
+GET /api/recommendations/{snapshotId}
+GET /api/routes/{routeId}
+```
+
+`GET /api/supply-chain/routes`、`GET /api/routes/optimize`、`GET /api/routes/recommendations` 和旧 `GET /api/routes/recommend` 是兼容或诊断接口，不应作为新推荐页面的主链路。`/api/v1/*` 主要用于采集、生成、审核和配置管理，也不是普通用户页面的首选接口。
+
+前端还应调用 `GET /api/providers/status` 展示数据新鲜度。任何 `null`、`unavailable` 或 `stale` 都表示当前没有可用 Provider 证据，不得转换成 `0` 或 `50`。
 
 ## 1. 总体架构
 
@@ -22,6 +51,11 @@ https://supply-chain-api.onrender.com/api/graph/summary
   -> Render 上运行的 FastAPI 服务
   -> Neo4j Python Driver
   -> Neo4j AuraDB
+
+AISStream.io WebSocket
+  -> 独立后端 Background Worker
+  -> Neo4j AuraDB
+  -> FastAPI 把聚合结果返回前端
 ```
 
 关键原则：
@@ -30,6 +64,7 @@ https://supply-chain-api.onrender.com/api/graph/summary
 - AuraDB URI、用户名、密码只放在 Render 环境变量中。
 - GitHub 仓库只放代码和 `.env.example`，不能放真实 `.env`。
 - 前端同事只需要公网 API 地址和接口文档。
+- `AISSTREAM_API_KEY` 只能放在后端 worker，不能放在前端或浏览器请求中。
 
 ## 2. GitHub 仓库 `supply-chain-api` 应该怎么配置
 
@@ -68,6 +103,8 @@ docs/api_for_frontend.md
 .env.example
 .gitignore
 requirements.txt
+ais/
+config/ais_observation_targets.json
 ```
 
 不应该复制：
@@ -106,10 +143,8 @@ venv/
 AURA_NEO4J_URI=neo4j+s://your-aura-instance.databases.neo4j.io
 AURA_NEO4J_USERNAME=neo4j
 AURA_NEO4J_PASSWORD=your_aura_database_password
-AURA_NEO4J_DATABASE=neo4j
+AURA_NEO4J_DATABASE=
 
-API_HOST=0.0.0.0
-API_PORT=8000
 API_CORS_ORIGINS=http://localhost:3000,http://localhost:5173,https://your-frontend-domain.com
 ```
 
@@ -128,6 +163,7 @@ neo4j>=5.15,<7
 python-dotenv>=1.0
 fastapi>=0.115
 uvicorn>=0.30
+websockets>=12,<16
 ```
 
 如果 API 后续需要数据处理，再添加 `pandas` 等依赖。部署仓库越轻越好。
@@ -165,10 +201,10 @@ http://localhost:8000/docs
 在 `supply-chain-api` 仓库本地创建 `.env`：
 
 ```bash
-AURA_NEO4J_URI=neo4j+s://94a63264.databases.neo4j.io
+AURA_NEO4J_URI=neo4j+s://your-aura-instance.databases.neo4j.io
 AURA_NEO4J_USERNAME=neo4j
 AURA_NEO4J_PASSWORD=your_aura_database_password
-AURA_NEO4J_DATABASE=neo4j
+AURA_NEO4J_DATABASE=
 API_CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
@@ -221,32 +257,114 @@ GET /api/cost/segments
 GET /api/routes/recommendations
 GET /api/routes/nodes
 GET /api/routes/optimize
-GET /api/routes/recommend
+POST /api/routes/recommend
+GET /api/recommendations/{snapshot_id}
+GET /api/routes/{route_id}
 GET /api/suppliers
+GET /api/suppliers/{supplier_id}/origins
 GET /api/cities
+GET /api/providers/status
+GET /api/ports/{port_id}/traffic
+GET /api/ais/targets/{target_id}/traffic
+GET /api/vessels/{mmsi}
 ```
 
-前端路径规划主接口：
+前端路径规划主接口已经改为 POST：
 
 ```bash
-curl "http://localhost:8000/api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg&limit=5&risk_weight=0.5"
+curl -X POST "http://localhost:8000/api/routes/recommend" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "supplierId":"SUP-CATL",
+    "origin":"Shanghai",
+    "destination":"Hamburg",
+    "cargo":{"type":"finished_vehicle","vehicleType":"electric_vehicle","quantity":1},
+    "strategy":"balanced",
+    "weights":{"risk":0.5,"cost":0.3,"duration":0.2},
+    "constraints":{
+      "maxRiskScore":70,
+      "maxCostUsd":30000,
+      "maxDurationDays":50,
+      "allowedModes":["road","rail","sea"],
+      "maxHops":12
+    },
+    "limit":5,
+    "autoReroute":true
+  }'
 ```
 
-参数均支持名称；起点和终点也支持 `/api/cities` 返回的 ID。响应中的每条路线直接包含：
+推荐前先调用：
+
+```http
+GET /api/suppliers?search=CATL
+GET /api/suppliers/SUP-CATL/origins
+GET /api/cities?search=Shanghai
+GET /api/cities?search=Hamburg
+```
+
+新接口会验证供应商的 `SHIPS_FROM` 起点。供应商存在但起点不属于它时返回 `422`，不会猜测映射。
+
+权重规则：
+
+- 支持 `min_risk`、`min_cost`、`fastest`、`balanced`、`custom`；
+- `risk + cost + duration` 必须等于 `1`；
+- 先应用 `maxRiskScore`、`maxCostUsd`、`maxDurationDays`、运输方式、风险区和最大分段数等硬约束，再排序；
+- `maxDurationDays` 使用 P90 时效判断，避免低估；
+- 风险未知且设置 `maxRiskScore` 时，候选因无法验证而被拒绝。
+
+响应顶层包含：
+
+- `snapshotId`：本次推荐快照 ID；
+- `scoringVersion`：评分版本；
+- `resolvedWeights`：实际权重；
+- `normalization`：固定归一化边界；
+- `candidateCount`、`eligibleCount`、`count`；
+- `rejectedCandidates`：未通过硬约束的路线和原因；
+- `dynamicRouting`：是否避开有效期内的高新闻风险区域。
+
+每条路线直接包含：
 
 - `riskScore`：0-100 综合风险。
-- `cost`：路线总成本 USD。
-- `durationDays`：总时效。
+- `cost`：本次货物数量的预计总成本 USD。
+- `durationDays`：P50 预计总时效。
 - `distanceKm`：总距离。
 - `tags`：成本最优、风险最优、时效最优及运输方式。
 - `riskFactors`：前端风险进度条数据。
-- `legs`：地图分段及端点坐标。
+- `legs`：地图分段、GeoJSON、端点坐标、坐标来源、可行性和风险区交叉证据。
+- `rank`、`finalScore`、`scoreBreakdown`：排名、子分、加权贡献和不确定性扣分。
+- `costEstimate`：`min/mostLikely/max`、状态、置信度、公式和成本组成。
+- `durationEstimate`：移动、等待、海关、中转、延误、P50/P90 和数据状态。
+- `whyRecommended`、`comparisonToNext`：推荐解释和与下一名的差异。
+- `missingData`、`estimatedFields`：缺失项与估算项。
 
-坐标的 `coordinateSource` 有三种取值：
+风险缺失时 `riskScore=null`、`scoreBreakdown.subScores.risk=null`。后端不会填 50；不确定性通过 `uncertaintyPenalty` 单独显示。前端也不得把 `null` 转成 0 或 50。
 
-- `database`：AuraDB 原始坐标。
-- `city_estimate`：同城市已有节点坐标。
-- `graph_neighbor_estimate`：根据相邻运输节点估算，仅用于地图展示。
+成本 fallback 会使用数量、距离、模式费率、装载方式、箱型、单车重量、单车尺寸、燃油、装卸和电动车估算附加项，但 `dataStatus=estimated`、`provider=null` 表示内部估算，不是实时报价。等待、海关和中转没有 Provider 时为 `null`。
+
+回读本次结果：
+
+```http
+GET /api/recommendations/{snapshotId}
+GET /api/routes/{routeId}
+```
+
+完整请求、字段和错误处理见 `docs/route_recommendation.md`。旧的 GET `/api/routes/recommend?...` 仍可用，但 Swagger 已标记 deprecated，新页面不要继续接入。
+
+阶段 6 后，不要再按固定枚举判断 `coordinateSource`。它会返回真实来源名称，例如：
+
+- `UN/LOCODE 2025-1`
+- `OurAirports airports.csv`
+- `GeoNames cities15000 city centroid`
+- `city centroid from sourced graph nodes`
+
+前端应主要检查：
+
+- `coordinateStatus=reference`：注册表/机场参考坐标。
+- `coordinateStatus=estimated`：城市中心点，只适合低精度展示。
+- `coordinateStatus=unavailable`：不应画成真实地点。
+- `coordinateConfidence`：`0-1` 置信度。
+
+图邻居坐标估算已经删除，不会再把相邻节点的位置冒充当前节点位置。
 
 Render 的 `API_CORS_ORIGINS` 应加入实际 Vercel 域名，例如：
 
@@ -325,10 +443,10 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 在 Render 的 `Environment` 页面添加：
 
 ```text
-AURA_NEO4J_URI=neo4j+s://94a63264.databases.neo4j.io
+AURA_NEO4J_URI=neo4j+s://your-aura-instance.databases.neo4j.io
 AURA_NEO4J_USERNAME=neo4j
 AURA_NEO4J_PASSWORD=<你的 AuraDB 数据库密码>
-AURA_NEO4J_DATABASE=neo4j
+AURA_NEO4J_DATABASE=
 API_CORS_ORIGINS=https://你的前端域名,http://localhost:3000,http://localhost:5173
 ```
 
@@ -351,7 +469,7 @@ https://frontend-domain.com
 部署完成后 Render 会给你一个公网域名，例如：
 
 ```text
-https://supply-chain-api.onrender.com
+https://supply-chain-api-kyiy.onrender.com
 ```
 
 ## 9. Render 部署方式二：`render.yaml`
@@ -388,33 +506,33 @@ services:
 假设 Render 地址是：
 
 ```text
-https://supply-chain-api.onrender.com
+https://supply-chain-api-kyiy.onrender.com
 ```
 
 先测 API 服务：
 
 ```bash
-curl https://supply-chain-api.onrender.com/health
+curl https://supply-chain-api-kyiy.onrender.com/health
 ```
 
 再测 AuraDB 连接：
 
 ```bash
-curl https://supply-chain-api.onrender.com/health/aura
+curl https://supply-chain-api-kyiy.onrender.com/health/aura
 ```
 
 再测图谱接口：
 
 ```bash
-curl https://supply-chain-api.onrender.com/api/graph/summary
-curl "https://supply-chain-api.onrender.com/api/supply-chain/routes?limit=20"
-curl "https://supply-chain-api.onrender.com/api/risk/overview?limit=20"
+curl https://supply-chain-api-kyiy.onrender.com/api/graph/summary
+curl "https://supply-chain-api-kyiy.onrender.com/api/suppliers?search=CATL"
+curl "https://supply-chain-api-kyiy.onrender.com/api/providers/status"
 ```
 
 也可以打开 Swagger 页面：
 
 ```text
-https://supply-chain-api.onrender.com/docs
+https://supply-chain-api-kyiy.onrender.com/docs
 ```
 
 这个地址可以发给前端同事和项目成员，用于查看接口结构和在线测试。
@@ -424,7 +542,7 @@ https://supply-chain-api.onrender.com/docs
 你最终应该给前端同事一个公网基础地址：
 
 ```text
-API_BASE_URL=https://supply-chain-api.onrender.com
+API_BASE_URL=https://supply-chain-api-kyiy.onrender.com
 ```
 
 前端同事不要使用：
@@ -435,7 +553,9 @@ http://localhost:8000
 
 `localhost` 只代表他自己的电脑，不代表你的 Render 服务。
 
-## 12. 当前可用接口
+## 12. 通用与兼容查询接口
+
+路径推荐页面优先使用第 0 节的四步主链路。下面的图谱、路段列表和概览接口适合仪表盘、调试或兼容旧页面。
 
 ### 12.1 健康检查
 
@@ -451,7 +571,7 @@ GET /health
 {
   "status": "ok",
   "database": "neo4j",
-  "uri_host": "94a63264.databases.neo4j.io"
+  "uri_host": "your-aura-instance.databases.neo4j.io"
 }
 ```
 
@@ -497,7 +617,7 @@ GET /api/graph/summary
 }
 ```
 
-### 12.4 供应链路线样例
+### 12.4 供应链路段兼容列表
 
 ```http
 GET /api/supply-chain/routes
@@ -555,12 +675,100 @@ GET /api/risk/overview?limit=30
 | `ports` | 港口拥堵和等待时间属性。 |
 | `route_segments` | 路线分段成本、时效和风险属性。 |
 
+### 12.6 坐标、路线几何与风险区
+
+```http
+GET /api/geography/locations
+GET /api/geography/zones
+GET /api/geography/segments/{segment_id}
+```
+
+常用示例：
+
+```bash
+curl "$API_BASE_URL/api/geography/locations?status=reference&limit=200"
+curl "$API_BASE_URL/api/geography/zones?include_geometry=true"
+curl "$API_BASE_URL/api/geography/segments/leg_cn_sha_de_ham_sea_1"
+```
+
+单路段接口返回：
+
+| 字段 | 说明 |
+|---|---|
+| `geometry` | GeoJSON `LineString`；没有可信几何时为 `null`。 |
+| `geometrySource` | OSRM/OSM、searoute-py 或计算来源。 |
+| `geometryStatus` | 真实状态，例如 `estimated_open_sea_network`、`estimated_endpoint_fallback`。 |
+| `geometryConfidence` | 几何置信度。 |
+| `feasibilityStatus` | `invalid_cross_ocean` 的公路/铁路不会进入路径推荐。 |
+| `exposures` | 路线经过的风险区、交叉距离、暴露比例、方法和置信度。 |
+
+风险区的 `geometry` 来自小比例尺公共数据，只用于风险归属和地图展示，不用于航海、飞行或车辆导航。
+
+### 12.7 AIS 港口流量与船舶状态
+
+```http
+GET /health/ais
+GET /api/providers/status
+GET /api/ais/targets
+GET /api/ais/targets/{target_id}/traffic
+GET /api/ports/{port_id}/traffic
+GET /api/vessels/{mmsi}
+```
+
+常用示例：
+
+```bash
+curl "$API_BASE_URL/health/ais"
+curl "$API_BASE_URL/api/ports/CN-SHA/traffic"
+curl "$API_BASE_URL/api/ports/SGSIN/traffic"
+curl "$API_BASE_URL/api/ais/targets/suez-canal/traffic"
+curl "$API_BASE_URL/api/vessels/259000420"
+```
+
+港口返回示例：
+
+```json
+{
+  "port": {
+    "id": "CN-SHA",
+    "name": "上海港",
+    "city": "Shanghai",
+    "country": "China",
+    "lat": 30.6333,
+    "lng": 122.0667
+  },
+  "targetId": "port-shanghai",
+  "targetName": "上海港附近海域",
+  "traffic": {
+    "status": "available",
+    "active": true,
+    "vesselCount": 38,
+    "anchoredCount": 11,
+    "averageSpeedKnots": 3.4,
+    "arrivalCount": 4,
+    "departureCount": 2,
+    "congestionScore": 46.2,
+    "confidence": 0.73,
+    "dataCompleteness": 0.81,
+    "provider": "AISStream.io",
+    "observedAt": "2026-07-26T08:22:32Z",
+    "expiresAt": "2026-07-26T09:52:32Z"
+  }
+}
+```
+
+上面的数字只用于解释响应结构，不是数据库当前实测值。真实 AIS 快照不存在时，接口返回 `traffic: null`；快照过期时返回 `status: stale` 且 `congestionScore: null`。前端必须展示“暂无数据/数据已过期”，不得自行填 `0` 或 `50`。
+
+船舶响应中的 IMO、船名、船型、速度、目的地、吃水和导航状态都可能为 `null`，因为 AIS 位置报文不一定同时携带静态资料。
+
+前端不需要、也不应获得 `AISSTREAM_API_KEY`。AIS worker 的部署步骤见 `docs/aisstream_port_traffic.md`。
+
 ## 13. 前端调用示例
 
 ### 13.1 fetch
 
 ```js
-const API_BASE_URL = "https://supply-chain-api.onrender.com";
+const API_BASE_URL = "https://supply-chain-api-kyiy.onrender.com";
 
 export async function fetchGraphSummary() {
   const response = await fetch(`${API_BASE_URL}/api/graph/summary`);
@@ -577,7 +785,7 @@ export async function fetchGraphSummary() {
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://supply-chain-api.onrender.com",
+  baseURL: "https://supply-chain-api-kyiy.onrender.com",
   timeout: 15000,
 });
 
@@ -594,7 +802,7 @@ export async function getRiskOverview() {
 如果前端是 Next.js，前端仓库可以配置：
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=https://supply-chain-api.onrender.com
+NEXT_PUBLIC_API_BASE_URL=https://supply-chain-api-kyiy.onrender.com
 ```
 
 前端代码：
@@ -637,9 +845,15 @@ https://supply-chain-frontend.vercel.app
 - 调 `/api/graph/summary` 显示节点数量、关系数量、标签分布。
 - 调 `/api/risk/overview` 显示国家风险、港口拥堵、路线风险排行。
 
-路线页面：
+路线推荐页面：
 
-- 调 `/api/supply-chain/routes` 显示起点、终点、运输方式、估算成本、估算时效、风险分数。
+- 调 `/api/suppliers` 填供应商下拉框。
+- 调 `/api/suppliers/{supplier_id}/origins` 限定该供应商可用起点。
+- 调 `/api/cities` 填起终点下拉框。
+- 调 `POST /api/routes/recommend` 返回多条完整候选路线。
+- 使用 `routes[].legs[].from/to.lat/lng` 和 `geometry` 画地图。
+- 使用 `riskStatus`、`riskDataCompleteness`、`riskProviders`、`estimatedFields` 和 `missingData` 标明真实性。
+- 使用 `GET /api/providers/status` 显示 GDELT、Open-Meteo 和 AIS 的最后更新时间。
 
 图谱可视化页面：
 
@@ -670,7 +884,7 @@ GET /api/graph/neighborhood?label=Supplier&id=CATL
 - `AURA_NEO4J_URI` 是否是 `neo4j+s://...databases.neo4j.io`。
 - `AURA_NEO4J_USERNAME` 是否是 `neo4j` 或 AuraDB 指定用户名。
 - `AURA_NEO4J_PASSWORD` 是否是 AuraDB 数据库密码。
-- `AURA_NEO4J_DATABASE` 是否是 `neo4j`。
+- `AURA_NEO4J_DATABASE` 是否与实例中的真实数据库一致；不确定时先留空使用默认数据库。
 - AuraDB 实例是否处于 Running。
 
 ### 16.2 前端能打开 API 地址，但浏览器请求失败
@@ -688,7 +902,7 @@ API_CORS_ORIGINS=https://前端域名
 Render 免费实例可能会休眠。第一次请求需要等待服务唤醒。项目演示前建议先访问：
 
 ```text
-https://supply-chain-api.onrender.com/health
+https://supply-chain-api-kyiy.onrender.com/health
 ```
 
 ### 16.4 `/docs` 可以打开，但业务接口 503
@@ -696,21 +910,23 @@ https://supply-chain-api.onrender.com/health
 说明 FastAPI 服务正常，AuraDB 查询失败。先测：
 
 ```text
-https://supply-chain-api.onrender.com/health/aura
+https://supply-chain-api-kyiy.onrender.com/health/aura
 ```
 
 再检查 Render 环境变量和 AuraDB 密码。
 
 ### 16.5 前端同事应该拿什么
 
-给前端同事这几项就够：
+给前端同事这些内容：
 
 ```text
-API_BASE_URL=https://supply-chain-api.onrender.com
-Swagger 文档=https://supply-chain-api.onrender.com/docs
-图谱总览=GET /api/graph/summary
-路线样例=GET /api/supply-chain/routes?limit=20
-风险概览=GET /api/risk/overview?limit=20
+API_BASE_URL=https://supply-chain-api-kyiy.onrender.com
+Swagger 文档=https://supply-chain-api-kyiy.onrender.com/docs
+供应商=GET /api/suppliers
+供应商起点=GET /api/suppliers/{supplier_id}/origins
+地点=GET /api/cities
+路径推荐=POST /api/routes/recommend
+Provider状态=GET /api/providers/status
 ```
 
 不要给前端同事：
@@ -732,7 +948,18 @@ Neo4j Browser 登录密码
 | `/health` | 返回 `status: ok` |
 | `/health/aura` | 返回 `aura: connected` |
 | `/api/graph/summary` | 返回节点和关系统计 |
+| `POST /api/routes/recommend` | 返回多条带风险、成本、时效和地图分段的候选路线 |
+| `/api/providers/status` | 返回 Provider 配置、新鲜度和可用状态 |
 | `/docs` | 能打开 Swagger 文档 |
 | Render 环境变量 | 已配置 AuraDB 和 CORS |
 | GitHub 仓库 | 没有 `.env`、dump、真实密码 |
 | 前端调用地址 | 使用 Render 公网域名，不使用 `localhost` |
+
+## 18. 配套文档
+
+- 推荐请求与响应：`docs/route_recommendation.md`
+- 评分公式与缺失数据：`docs/risk_scoring.md`
+- 数据来源与真实性：`docs/data_sources.md`
+- Render 和定时任务：`docs/deployment_and_scheduling.md`
+- 当前数据库审计：`docs/current_backend_audit.md`
+- 十阶段总览：`docs/十阶段项目更新总结.md`

@@ -47,6 +47,39 @@ def test_signal_without_provider_is_ignored():
     assert "weather" in result["missing_factors"]
 
 
+def test_missing_ais_does_not_create_fake_port_congestion_risk():
+    signals = build_segment_signals("sea")
+    result = calculate_provider_risk("sea", signals, load_strategy())
+    congestion = next(factor for factor in result["factors"] if factor["key"] == "port_congestion")
+    assert congestion["score"] is None
+    assert congestion["status"] == "unavailable"
+    assert congestion["provider"] is None
+
+
+def test_real_ais_congestion_affects_sea_only():
+    sea_signals = build_segment_signals(
+        "sea",
+        congestion_score=72,
+        congestion_provider="AISStream.io",
+        congestion_observed_at="2026-07-26T12:00:00+00:00",
+        congestion_expires_at="2026-07-26T13:30:00+00:00",
+        congestion_confidence=0.8,
+        congestion_evidence=["aisstream:port-shanghai:20260726T1200Z"],
+    )
+    sea_result = calculate_provider_risk("sea", sea_signals, load_strategy())
+    assert sea_result["score_100"] == 72
+    assert sea_result["data_completeness"] == 0.2
+    assert sea_result["providers"] == ["AISStream.io"]
+    assert sea_result["evidence"] == ["aisstream:port-shanghai:20260726T1200Z"]
+
+    rail_signals = build_segment_signals(
+        "rail",
+        congestion_score=72,
+        congestion_provider="AISStream.io",
+    )
+    assert "port_congestion" not in rail_signals
+
+
 def test_news_is_not_mapped_to_road_without_a_supported_dimension():
     signals = build_segment_signals("road", news_score=90, news_provider="GDELT")
     assert signals == {}

@@ -222,11 +222,24 @@ https://你的Render域名/api/risk/news
 https://你的Render域名/api/risk/news/clusters?active_only=true
 ```
 
-调用推荐路线：
+调用统一推荐路线接口：
 
-```text
-https://你的Render域名/api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg&auto_reroute=true
+```bash
+curl -X POST "https://你的Render域名/api/routes/recommend" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "supplierId":"SUP-CATL",
+    "origin":"Shanghai",
+    "destination":"Hamburg",
+    "cargo":{"type":"finished_vehicle","quantity":1},
+    "strategy":"balanced",
+    "constraints":{"allowedModes":["road","rail","sea"]},
+    "limit":5,
+    "autoReroute":true
+  }'
 ```
+
+旧 GET 接口仍兼容，但新前端应使用 POST，才能返回评分版本、硬约束、成本/时效区间和推荐快照。
 
 响应中的动态改道信息：
 

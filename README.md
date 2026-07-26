@@ -1,12 +1,13 @@
 # 全球整车运输路径网络 API
 
-本项目使用 FastAPI、Neo4j AuraDB、GDELT、Open-Meteo 和可插拔 Provider，完成整车运输地点采集、候选路径生成、费用与风险评分、幂等入库、查询推荐和审计。现有天气、新闻、AIS 及供应链接口保持兼容；新增接口统一位于 `/api/v1`。
+本项目使用 FastAPI、Neo4j AuraDB、GDELT、Open-Meteo、AISStream.io 和可插拔 Provider，完成整车运输地点采集、候选路径生成、费用与风险评分、幂等入库、查询推荐和审计。天气、新闻和 AIS 数据都带 Provider、观测时间、失效时间与数据状态；缺失数据不会使用中性假分。
 
 ## 1. 你需要准备什么
 
 - Python 3.12 或更高版本；
 - 一个可用的 Neo4j AuraDB，或者本机 Docker；
 - Git 与 VS Code；
+- 可选的 AISStream.io API Key（只用于后端常驻 worker）；
 - 可选的 GDELT、OpenSky、MarineTraffic、商业航班 API 凭证；
 - 可选的中国民航机场 CSV。
 
@@ -41,10 +42,10 @@ cp .env.example .env
 AURA_NEO4J_URI=neo4j+s://你的实例.databases.neo4j.io
 AURA_NEO4J_USERNAME=neo4j
 AURA_NEO4J_PASSWORD=你的密码
-AURA_NEO4J_DATABASE=实际数据库名
+AURA_NEO4J_DATABASE=
 ```
 
-不要把 `.env` 提交到 GitHub。若出现 `DatabaseNotFound`，不要默认填写 `neo4j`，应使用已经通过 `scripts/verify_aura_connection.py` 验证的数据库名。
+不要把 `.env` 提交到 GitHub。数据库名不确定时先留空使用实例默认库；若出现 `DatabaseNotFound`，不要默认填写 `neo4j`，应使用已经通过 `scripts/verify_aura_connection.py` 验证的数据库名。
 
 可选 Provider 开关：
 
@@ -57,6 +58,14 @@ ENABLE_PROVIDER_CIRIUM=false
 ```
 
 只有在配置对应 API Key 后再改为 `true`。未启用 Provider 会返回 `disabled`，不会导致整个任务失败。
+
+AISStream.io 只在后端 worker 配置：
+
+```dotenv
+AISSTREAM_API_KEY=你的真实AISStream密钥
+```
+
+不要把该变量放进前端 `NEXT_PUBLIC_*` 或 `VITE_*` 环境变量。
 
 ## 4. 验证数据库连接
 
@@ -77,6 +86,7 @@ uvicorn app.main:app --reload
 - API 文档：`http://127.0.0.1:8000/docs`
 - 整车网络健康检查：`http://127.0.0.1:8000/api/v1/health`
 - 原有服务健康检查：`http://127.0.0.1:8000/health`
+- 路径推荐主接口：`POST http://127.0.0.1:8000/api/routes/recommend`
 
 ## 6. 使用 Docker 启动 Neo4j 和 API
 
@@ -156,14 +166,30 @@ review_status=pending
 
 ## 9. 查询推荐路径
 
+前端主接口：
+
 ```bash
-curl "http://127.0.0.1:8000/api/v1/routes/search?origin=CN-LYG&destination=US-LGB&ranking_strategy=hybrid"
+curl -X POST "http://127.0.0.1:8000/api/routes/recommend" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "supplierId":"SUP-CATL",
+    "origin":"Shanghai",
+    "destination":"Hamburg",
+    "cargo":{"type":"finished_vehicle","vehicleType":"electric_vehicle","quantity":1},
+    "strategy":"balanced",
+    "weights":{"risk":0.5,"cost":0.3,"duration":0.2},
+    "constraints":{"allowedModes":["road","rail","sea"],"maxHops":12},
+    "limit":5,
+    "autoReroute":true
+  }'
 ```
 
-查询单条路线：
+先用以下接口取得供应商、供应商允许的发货起点和城市：
 
 ```bash
-curl http://127.0.0.1:8000/api/v1/routes/vehicle_route_cn_lyg_us_lgb_sea_1
+curl "http://127.0.0.1:8000/api/suppliers?search=CATL"
+curl "http://127.0.0.1:8000/api/suppliers/SUP-CATL/origins"
+curl "http://127.0.0.1:8000/api/cities?search=Shanghai"
 ```
 
 支持的排序策略：
@@ -171,17 +197,19 @@ curl http://127.0.0.1:8000/api/v1/routes/vehicle_route_cn_lyg_us_lgb_sea_1
 - `min_risk`：最低风险；
 - `min_cost`：最低费用；
 - `fastest`：最快到达；
-- `hybrid`：风险、费用、时效与置信度混合评分。
+- `balanced`：使用默认风险、费用、时效权重；
+- `custom`：必须提供自定义三目标权重。
 
-混合评分配置位于 `config/vehicle_strategy.yaml`：
+三项权重之和必须等于 `1`。归一化使用 `config/recommendation_scoring.yaml` 中的固定锚点，不依赖本次候选最大值。缺失风险保持 `null`，不填 50；缺失和低置信度通过 `uncertaintyPenalty` 单独扣分。
 
-```text
-final_score =
-  risk_weight × normalized_inverse_risk +
-  cost_weight × normalized_inverse_cost +
-  speed_weight × normalized_inverse_duration +
-  confidence_weight × confidence
+响应中的 `snapshotId` 和 `routes[].id` 可用于回读：
+
+```bash
+curl "http://127.0.0.1:8000/api/recommendations/推荐快照ID"
+curl "http://127.0.0.1:8000/api/routes/路线ID"
 ```
+
+旧 `GET /api/routes/recommend` 仍可用，但已标记 deprecated。原 `/api/v1/routes/search` 和 `/api/v1/routes/{route_id}` 继续用于查询持久化的旧 `VehicleRoute`。新接口完整说明见 `docs/route_recommendation.md`。
 
 ## 10. 修改风险权重和排序策略
 
@@ -339,7 +367,22 @@ GDELT 全球航运新闻风险：
 python scripts/update_gdelt_risk.py
 ```
 
-GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml` 和 `.github/workflows/update-weather-risk.yml`。任务直接更新 AuraDB，本地 FastAPI 不需要持续开启。详细教程见 `docs/gdelt_dynamic_route_risk.md` 和 `docs/stage5_gdelt_weather_mapping.md`。
+GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml` 和 `.github/workflows/update-weather-risk.yml`。任务直接更新 AuraDB，本地 FastAPI 不需要持续开启。完整的新手配置见 `docs/deployment_and_scheduling.md`。
+
+AIS 是持续 WebSocket，不是每小时 HTTP 拉取。准备与迁移：
+
+```bash
+python scripts/run_ais_consumer.py --check-config
+python scripts/migrate_ais_stage7.py --execute --confirm APPLY_AIS_STAGE7
+```
+
+常驻 worker：
+
+```bash
+python scripts/run_ais_consumer.py
+```
+
+FastAPI 与 AIS worker 可以部署在不同服务，只要连接同一个 AuraDB；具体 Render 配置见 `docs/aisstream_port_traffic.md`。
 
 ## 17. 简化调度与生产调度
 
@@ -350,10 +393,10 @@ GitHub 每小时任务位于 `.github/workflows/update-gdelt-risk.yml` 和 `.git
 ## 18. 运行测试
 
 ```bash
-pytest -q
+python -m pytest -q
 ```
 
-当前完整测试为 `98 passed`，覆盖距离计算、费用区间、风险权重、混合排序、GDELT 聚类、天气沿线采样、TTL 和 API 返回。
+测试覆盖距离计算、费用区间、风险权重、混合排序、GDELT 聚类、天气沿线采样、AIS 解析与聚合、地理交叉、跨洋路线拦截、迁移幂等性、TTL 和 API 返回。以当前 `pytest -q` 输出数量为准。
 
 ## 19. 常见报错
 
@@ -385,6 +428,10 @@ AuraDB 密码错误。重置密码后需要同时更新本地 `.env`、Render �
 
 Provider 已读取 `Retry-After`；没有该响应头时采用指数退避和随机抖动。不要高频手动重复调用。
 
+### `Missing AISSTREAM_API_KEY`
+
+只有 AIS worker 需要该变量。把 Key 配置在实际运行 `scripts/run_ais_consumer.py` 的本地终端、服务器或 Render Background Worker 中；不要发送给前端。
+
 ## 20. 目录说明
 
 ```text
@@ -397,9 +444,12 @@ app/vehicle_network/
   scoring.py          风险、费用和排序
   services.py         采集与路径生成编排
   jobs.py             APScheduler 简化任务
-config/               风险权重、费率与 GDELT 区域
+app/recommendation/   阶段 8 请求模型、成本时效 fallback、固定归一化、约束与推荐快照
+ais/                  AISStream 解析、去重、聚合、Neo4j 持久化与查询 API
+config/               风险权重、费率、GDELT 区域与地理参考快照
 data/                 示例地点数据
 cypher/               查询、审核、软删除示例
+geography/            坐标、GeoJSON、空间交叉与 Neo4j 地理持久化
 scripts/              命令行入口
 tests/                单元测试
 ```
@@ -424,7 +474,7 @@ python scripts/migrate_unified_schema.py \
 
 ## 22. 阶段 4 Provider 风险清理与重算
 
-阶段 4 删除无 Provider、无 Evidence 且明确来自合成/派生来源的旧 `RiskFactor`，并按运输方式只使用有效期内的 GDELT 与 Open-Meteo 信号重算：
+阶段 4 删除无 Provider、无 Evidence 且明确来自合成/派生来源的旧 `RiskFactor`，当时先按运输方式使用有效期内的 GDELT 与 Open-Meteo 信号重算；阶段 7 又为海运增加了同样受 TTL 与证据约束的 AISStream.io 港口拥堵因子：
 
 ```bash
 python scripts/recalculate_provider_risk.py --dry-run
@@ -451,7 +501,7 @@ python scripts/migrate_gdelt_events.py \
   --confirm MIGRATE_GDELT_EVENTS_V3
 ```
 
-Open-Meteo 路线天气优先按 `geometry_json` 采样；没有几何时只使用起终点并标记低置信度。估算几何不会伪装成已验证航线，合成、失效和地理不可行路线不会写入真实天气风险。
+Open-Meteo 路线天气优先按 `geometry_geojson` 采样；没有几何时只使用起终点并标记低置信度。估算几何不会伪装成已验证航线，合成、失效和地理不可行路线不会写入真实天气风险。
 
 新增前端查询：
 
@@ -460,3 +510,107 @@ Open-Meteo 路线天气优先按 `geometry_json` 采样；没有几何时只使�
 - `GET /api/routes/weather-risks/{segment_id}`
 
 推荐接口会在读取时再次检查 Provider TTL；过期分数立即按 `unavailable` 处理，不等待下一次重算。算法、数据库实测结果和 GitHub Secrets 配置见 `docs/stage5_gdelt_weather_mapping.md`。
+
+## 24. 阶段 6 坐标、路线几何与风险区
+
+阶段 6 为 102 个 `TransportLocation` 保存可追溯坐标状态，为 10 个 `GeoZone` 建立 GeoJSON，并创建 69 条幂等 `PASSES_THROUGH` 记录；其中 65 条有效，4 条属于无效跨洋路线并已软停用：
+
+```bash
+python scripts/migrate_geospatial_data.py --dry-run
+python scripts/migrate_geospatial_data.py \
+  --execute \
+  --confirm APPLY_GEOSPATIAL_STAGE6 \
+  --enable-osrm
+```
+
+当前 89 个地点有来源坐标；5 条海运和 5 条公路有估算网络几何；4 条不合理跨洋公路/铁路标记为 `invalid_cross_ocean` 并从推荐图过滤。没有可信铁路 Provider 的路线只保留低置信度端点回退，不伪造铁路折线。
+
+新增前端查询：
+
+- `GET /api/geography/locations`
+- `GET /api/geography/zones`
+- `GET /api/geography/segments/{segment_id}`
+
+数据源、许可证、UN/LOCODE 兼容修正、实际 AuraDB 统计、执行步骤和验证 Cypher 见 `docs/stage6_geospatial_risk_zones.md`。
+
+## 25. 阶段 7 AIS 港口拥堵风险
+
+阶段 7 新增独立后端消费者，并把订阅范围固定为上海港、新加坡港、鹿特丹港和苏伊士运河附近海域。无需提前提供 MMSI：worker 会按边界框接收位置和静态资料消息。
+
+Neo4j 不长期保存全部高频坐标。每个 MMSI 只保留最新 `Vessel` 与一条覆盖更新的 `VesselObservation`，并按 60 分钟窗口生成幂等 `PortTrafficSnapshot`。只有真实、未过期 AIS 快照会进入海运 `port_congestion`；铁路、公路和空运不会使用该因子。
+
+新增前端查询：
+
+- `GET /health/ais`
+- `GET /api/providers/status`
+- `GET /api/ais/targets`
+- `GET /api/ais/targets/{target_id}/traffic`
+- `GET /api/ports/{port_id}/traffic`
+- `GET /api/vessels/{mmsi}`
+
+当前 AuraDB 已创建 4 个监测目标；旧 `DEMO CONTAINER` 观测保留审计但标记为 `synthetic + excluded`。未运行真实 worker 前，`PortTrafficSnapshot=0` 和 `traffic=null` 是正确状态，不会生成假拥堵分数。完整的新手部署、Render Background Worker、字段、算法和排错说明见 `docs/aisstream_port_traffic.md`。
+
+## 26. 阶段 8 统一成本、时效与推荐
+
+阶段 8 新增 `POST /api/routes/recommend`。阶段 9 加固后的当前评分版本为 `route-recommendation-v1.2`；接口支持货物数量、五种策略、三目标权重、风险/成本/P90 时效/运输方式/风险区等硬约束，并在约束筛选后稳定排序。
+
+成本优先读取数量匹配且带 Provider 的 `CostObservation`；否则运行明确标为 `estimated` 的每车公里费率 fallback。时效优先读取可验证观测；否则返回估算 P50/P90，等待、海关和中转没有 Provider 时保持 `null`。
+
+每次请求使用 `MERGE` 写入 `RecommendationSnapshot`，并建立：
+
+```text
+(RouteSegment)-[:INCLUDED_IN]->(RecommendationSnapshot)
+```
+
+新增查询：
+
+- `GET /api/suppliers/{supplier_id}/origins`
+- `GET /api/recommendations/{snapshot_id}`
+- `GET /api/routes/{route_id}`
+
+旧 `GET /api/routes/recommend` 保留并在 OpenAPI 标记 deprecated。算法、请求示例、约束语义、响应字段和当前 AuraDB 验证结果见 `docs/route_recommendation.md`；评分公式见 `docs/risk_scoring.md`。
+
+## 27. 阶段 9 测试与真实数据验证
+
+阶段 9 新增与 15 条验收标准一一对应的测试，覆盖跨洋铁路/公路过滤、Provider 风险、天气排序、GDELT 绕行、AIS 可用与缺失语义、四种策略、供应商起点、节点元数据、风险来源、清理/导入幂等性和新旧 OpenAPI。
+
+```bash
+.venv/bin/python -m pytest -q
+.venv/bin/python scripts/validate_stage9_data.py
+# 或使用当前激活环境
+make validate-stage9
+```
+
+阶段 9 当时全量结果为 `152 passed`；阶段 10 新增 OpenAPI 审计回归测试后，以当前 `pytest -q` 输出为准。AuraDB 只读验证为 6 项通过、3 项警告、0 项失败；警告分别是 4 个供应商尚无 `SHIPS_FROM`、当前 GDELT 路线风险已过期、AIS 尚无真实快照。系统会把这些数据标成 unavailable，不会生成默认风险。完整矩阵和排错方法见 `docs/stage9_test_validation.md`。
+
+## 28. 阶段 10 文档与交付
+
+阶段 10 不执行数据库删除或业务数据写入，重点是把十个阶段形成可复现的新手交付包：
+
+- 修复只读审计脚本的 OpenAPI 枚举方式，使延迟挂载的 v1 与 AIS 路由也进入接口清单；
+- 刷新 `docs/current_backend_audit.md` 和 `artifacts/database_inventory.json`；
+- 新增真实 Provider、参考数据、估算结果和许可证边界说明；
+- 新增安全清理、Render、GitHub Actions、AIS worker 和全部环境变量教程；
+- 把新前端主链路统一为供应商、起点、地点和 `POST /api/routes/recommend`；
+- 生成十阶段更新、API、前端影响、剩余问题和路线图总览。
+
+阶段 10 最终全量测试结果：`153 passed in 1.51s`。
+
+核心文档：
+
+| 文档 | 用途 |
+|---|---|
+| `docs/十阶段项目更新总结.md` | 十阶段总体交付、接口、影响和未来路线图 |
+| `docs/current_backend_audit.md` | 当前 AuraDB 与 50 个 OpenAPI 操作的只读审计 |
+| `docs/data_sources.md` | 真实 API、静态参考、估算数据和许可证边界 |
+| `docs/risk_scoring.md` | 风险、成本、时效、完整度和推荐分公式 |
+| `docs/route_recommendation.md` | 前端推荐请求、响应、routeId 和 snapshotId |
+| `docs/database_cleanup.md` | dry-run、备份、限定删除和恢复注意事项 |
+| `docs/api_for_frontend.md` | 前端公网 API 交付契约 |
+| `docs/deployment_and_scheduling.md` | Render、GitHub 每小时任务和 AIS worker 配置 |
+
+当前数据库数量会随每小时任务变化。重新生成实时快照：
+
+```bash
+python scripts/audit_current_backend.py
+```

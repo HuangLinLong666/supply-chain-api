@@ -85,6 +85,12 @@ def build_segment_signals(
     weather_expires_at: Any = None,
     weather_confidence: Any = None,
     weather_evidence: list[str] | None = None,
+    congestion_score: Any = None,
+    congestion_provider: str | None = None,
+    congestion_observed_at: Any = None,
+    congestion_expires_at: Any = None,
+    congestion_confidence: Any = None,
+    congestion_evidence: list[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     canonical_mode = str(mode or "").casefold()
     signals: dict[str, dict[str, Any]] = {}
@@ -109,6 +115,17 @@ def build_segment_signals(
             "expires_at": str(weather_expires_at) if weather_expires_at is not None else None,
             "confidence": normalize_score_100(weather_confidence),
             "evidence": list(weather_evidence or []),
+            "status": "available",
+        }
+    normalized_congestion = normalize_score_100(congestion_score)
+    if canonical_mode == "sea" and normalized_congestion is not None and congestion_provider:
+        signals["port_congestion"] = {
+            "score": normalized_congestion,
+            "provider": congestion_provider,
+            "observed_at": str(congestion_observed_at) if congestion_observed_at is not None else None,
+            "expires_at": str(congestion_expires_at) if congestion_expires_at is not None else None,
+            "confidence": normalize_score_100(congestion_confidence),
+            "evidence": list(congestion_evidence or []),
             "status": "available",
         }
     return signals

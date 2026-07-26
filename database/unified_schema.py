@@ -48,7 +48,10 @@ IDENTITY_CONSTRAINTS = (
     SchemaRule("unified_delay_observation_id_unique", "DelayObservation", "observation_id"),
     SchemaRule("unified_evidence_id_unique", "Evidence", "evidence_id"),
     SchemaRule("unified_vessel_mmsi_unique", "Vessel", "mmsi"),
+    SchemaRule("unified_vessel_observation_id_unique", "VesselObservation", "observation_id"),
     SchemaRule("unified_port_traffic_snapshot_id_unique", "PortTrafficSnapshot", "snapshot_id"),
+    SchemaRule("unified_ais_target_id_unique", "AisObservationTarget", "target_id"),
+    SchemaRule("unified_ais_provider_state_id_unique", "AisProviderState", "provider_id"),
     SchemaRule("unified_recommendation_snapshot_id_unique", "RecommendationSnapshot", "snapshot_id"),
 )
 
@@ -68,7 +71,10 @@ QUERY_INDEXES = (
     IndexRule("unified_delay_observation_observed", "DelayObservation", "observed_at"),
     IndexRule("unified_evidence_collected", "Evidence", "collected_at"),
     IndexRule("unified_vessel_last_observed", "Vessel", "last_ais_observed_at"),
+    IndexRule("unified_vessel_observation_observed", "VesselObservation", "position_observed_at"),
     IndexRule("unified_port_traffic_observed", "PortTrafficSnapshot", "observed_at"),
+    IndexRule("unified_port_traffic_expires", "PortTrafficSnapshot", "expires_at"),
+    IndexRule("unified_ais_target_type", "AisObservationTarget", "target_type"),
     IndexRule("unified_recommendation_created", "RecommendationSnapshot", "created_at"),
 )
 
@@ -90,7 +96,10 @@ TARGET_LABELS = (
     "DelayObservation",
     "Evidence",
     "Vessel",
+    "VesselObservation",
     "PortTrafficSnapshot",
+    "AisObservationTarget",
+    "AisProviderState",
     "RecommendationSnapshot",
 )
 

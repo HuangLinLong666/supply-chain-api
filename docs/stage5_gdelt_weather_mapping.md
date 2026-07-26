@@ -198,5 +198,5 @@ https://你的Render域名/api/routes/weather-risks?active_only=true
 ## 10. 当前已知限制
 
 - 本机对 GDELT 的 TLS 握手超时，属于当前代理/出口问题；Open-Meteo 与 AuraDB 已真实验证成功。推送后应在 GitHub Actions 再验证 GDELT 在线刷新。
-- 当前路线几何是图估算结果，阶段 6 仍需补充坐标来源、真实 geometry 和 `PASSES_THROUGH` 空间关系。
+- 阶段 6 已补充坐标来源、GeoJSON 和 69 条 `PASSES_THROUGH` 记录（65 条有效、4 条无效线路软停用）。但海运、OSRM 公路和大圆线仍是估算几何，不可用于导航；铁路仍缺可信网络 Provider。
 - 新闻来源可信度没有独立 Provider，因此只报告来源多样性，不报告媒体可信度分。

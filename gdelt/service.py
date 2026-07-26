@@ -49,10 +49,15 @@ def update_news_risk(
         inferred = exposed_zone_ids(segment, zones)
         exposed = [zone_id for zone_id in inferred if zone_id in zone_results]
         if exposed:
+            spatial_by_zone = {
+                str(item.get("zone_id") or item.get("zoneId")): item
+                for item in segment.get("spatial_exposures") or []
+            }
             overlays.append(
                 {
                     "segmentId": segment["segment_id"],
                     "zones": exposed,
+                    "exposureEvidence": [spatial_by_zone[zone_id] for zone_id in exposed if zone_id in spatial_by_zone],
                     "activeZones": [zone_id for zone_id in exposed if zone_results[zone_id]["status"] == "available"],
                     "skippedBecauseFetchFailed": bool(set(inferred) & failed_zone_ids),
                 }

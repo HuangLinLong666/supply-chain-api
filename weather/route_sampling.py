@@ -108,16 +108,34 @@ def point_along_line(points: list[tuple[float, float]], fraction: float) -> tupl
 
 
 def build_route_samples(segment: dict[str, Any], sample_count: int = 5) -> dict[str, Any]:
+    if str(segment.get("feasibility_status") or "").casefold() == "invalid_cross_ocean":
+        return {
+            "segment_id": str(segment.get("segment_id") or segment.get("element_id") or "unknown"),
+            "samples": [],
+            "sampling_method": "unavailable_invalid_route",
+            "sampling_confidence": 0.0,
+            "geometry_status": "invalid_cross_ocean",
+        }
     geometry = parse_linestring(segment.get("geometry") or segment.get("geometry_json"))
     segment_id = str(segment.get("segment_id") or segment.get("element_id") or "unknown")
     if geometry:
         count = max(2, sample_count)
         fractions = [index / (count - 1) for index in range(count)]
         points = [point_along_line(geometry, fraction) for fraction in fractions]
-        inferred_geometry = bool(segment.get("is_inferred")) or str(segment.get("source_type") or "").casefold() == "estimated_by_graph"
+        explicit_status = str(segment.get("geometry_status") or "").casefold()
+        explicit_confidence = segment.get("geometry_confidence")
+        inferred_geometry = (
+            explicit_status.startswith("estimated")
+            or bool(segment.get("is_inferred"))
+            or str(segment.get("source_type") or "").casefold() == "estimated_by_graph"
+        )
         method = "estimated_geometry_linestring" if inferred_geometry else "geometry_linestring"
-        confidence = 0.55 if inferred_geometry else 1.0
-        geometry_status = "estimated" if inferred_geometry else "available"
+        confidence = (
+            float(explicit_confidence)
+            if explicit_confidence is not None
+            else 0.55 if inferred_geometry else 1.0
+        )
+        geometry_status = explicit_status or ("estimated" if inferred_geometry else "available")
     else:
         origin = coordinate(segment.get("from_lat"), segment.get("from_lng"))
         destination = coordinate(segment.get("to_lat"), segment.get("to_lng"))

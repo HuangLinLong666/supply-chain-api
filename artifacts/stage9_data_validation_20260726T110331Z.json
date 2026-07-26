@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "validation_version": "stage9-data-validation-v1",
+    "scoring_version": "route-recommendation-v1.2",
+    "generated_at_utc": "2026-07-26T11:03:31.811490+00:00",
+    "database": "94a63264",
+    "read_only": true,
+    "credentials_redacted": true
+  },
+  "summary": {
+    "status": "pass_with_warnings",
+    "checks": 9,
+    "passed": 6,
+    "warnings": 3,
+    "failed": 0,
+    "database_counts": {
+      "nodes": 24135,
+      "relationships": 47866
+    }
+  },
+  "checks": [
+    {
+      "code": "UNIQUE_ROUTE_SEGMENT_IDS",
+      "status": "pass",
+      "message": "RouteSegment 业务标识没有重复",
+      "metrics": {
+        "duplicate_ids": 0
+      }
+    },
+    {
+      "code": "PROVIDER_BACKED_RISK",
+      "status": "pass",
+      "message": "数据库风险分均带 Provider",
+      "metrics": {
+        "scored_segments": 18,
+        "missing_provider": 0
+      }
+    },
+    {
+      "code": "LOCATION_METADATA",
+      "status": "pass",
+      "message": "TransportLocation 均有名称和坐标状态",
+      "metrics": {
+        "total": 102,
+        "named": 102,
+        "with_coordinate_status": 102,
+        "with_coordinates": 89
+      }
+    },
+    {
+      "code": "SUPPLIER_ORIGIN_MAPPING",
+      "status": "warn",
+      "message": "部分供应商暂不可推荐，接口会拒绝猜测起点",
+      "metrics": {
+        "total": 29,
+        "with_origins": 25,
+        "without_origins": 4
+      }
+    },
+    {
+      "code": "ACTIVE_GDELT",
+      "status": "warn",
+      "message": "GDELT 当前没有未过期路线数据，不会伪造风险",
+      "metrics": {
+        "active_segments": 0
+      }
+    },
+    {
+      "code": "ACTIVE_WEATHER",
+      "status": "pass",
+      "message": "Open-Meteo 当前有有效路线数据",
+      "metrics": {
+        "active_segments": 18
+      }
+    },
+    {
+      "code": "ACTIVE_AIS",
+      "status": "warn",
+      "message": "AISStream.io 当前没有未过期路线数据，不会伪造风险",
+      "metrics": {
+        "active_segments": 0
+      }
+    },
+    {
+      "code": "AIS_SNAPSHOT_INTEGRITY",
+      "status": "pass",
+      "message": "AIS 快照为空或均具备 Provider、分数和时效字段",
+      "metrics": {
+        "snapshots": 0,
+        "invalid_snapshots": 0
+      }
+    },
+    {
+      "code": "READ_ONLY_RECOMMENDATION_SMOKE",
+      "status": "pass",
+      "message": "只读推荐成功，节点、模式、风险来源和 AIS 证据契约有效",
+      "metrics": {
+        "supplier_id": "SUP-CATL",
+        "origin": "Shanghai",
+        "destination": "Hamburg",
+        "route_graph_segments": 588,
+        "returned_routes": 5,
+        "quality": {},
+        "dynamic_routing": {
+          "rerouted": false,
+          "avoidedZones": [],
+          "fallbackUsed": false
+        }
+      }
+    }
+  ]
+}

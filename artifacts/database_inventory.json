@@ -1,31 +1,47 @@
 {
   "metadata": {
     "audit_version": "backend-audit-v1",
-    "generated_at_utc": "2026-07-25T10:23:43.119275+00:00",
+    "generated_at_utc": "2026-07-26T11:40:05.786692+00:00",
     "database": "94a63264",
     "read_only": true,
     "credentials_redacted": true
   },
   "totals": {
-    "nodes": 14729,
-    "relationships": 22997
+    "nodes": 24164,
+    "relationships": 47924
   },
   "labels": [
     {
+      "label": "RiskObservation",
+      "count": 21475
+    },
+    {
       "label": "NewsRiskEvent",
-      "count": 11439
+      "count": 12202
+    },
+    {
+      "label": "Evidence",
+      "count": 12181
+    },
+    {
+      "label": "NewsRiskCluster",
+      "count": 9166
+    },
+    {
+      "label": "DelayObservation",
+      "count": 628
     },
     {
       "label": "RouteDelayObservation",
       "count": 628
     },
     {
-      "label": "RiskFactor",
-      "count": 612
+      "label": "RouteSegment",
+      "count": 613
     },
     {
-      "label": "RouteSegment",
-      "count": 594
+      "label": "CostObservation",
+      "count": 609
     },
     {
       "label": "RouteCostObservation",
@@ -36,8 +52,24 @@
       "count": 107
     },
     {
+      "label": "TransportLocation",
+      "count": 102
+    },
+    {
+      "label": "WeatherRiskSnapshot",
+      "count": 63
+    },
+    {
       "label": "InventoryRecord",
       "count": 48
+    },
+    {
+      "label": "IngestionJob",
+      "count": 43
+    },
+    {
+      "label": "Warehouse",
+      "count": 42
     },
     {
       "label": "AutoPart",
@@ -45,10 +77,6 @@
     },
     {
       "label": "Component",
-      "count": 41
-    },
-    {
-      "label": "IngestionJob",
       "count": 41
     },
     {
@@ -61,6 +89,10 @@
     },
     {
       "label": "ProductionPlan",
+      "count": 36
+    },
+    {
+      "label": "RouteWeatherRiskSnapshot",
       "count": 36
     },
     {
@@ -77,34 +109,30 @@
     },
     {
       "label": "Route",
-      "count": 26
+      "count": 28
     },
     {
       "label": "CostEstimate",
-      "count": 23
+      "count": 27
     },
     {
       "label": "RiskSnapshot",
-      "count": 23
+      "count": 27
+    },
+    {
+      "label": "VehicleRoute",
+      "count": 22
+    },
+    {
+      "label": "RouteLeg",
+      "count": 21
     },
     {
       "label": "Port",
       "count": 20
     },
     {
-      "label": "RiskEvent",
-      "count": 20
-    },
-    {
-      "label": "VehicleRoute",
-      "count": 20
-    },
-    {
       "label": "Factory",
-      "count": 19
-    },
-    {
-      "label": "RouteLeg",
       "count": 19
     },
     {
@@ -176,6 +204,10 @@
       "count": 10
     },
     {
+      "label": "GeoZone",
+      "count": 10
+    },
+    {
       "label": "NewsRiskZone",
       "count": 10
     },
@@ -208,19 +240,11 @@
       "count": 8
     },
     {
-      "label": "TransportLocation",
-      "count": 7
-    },
-    {
       "label": "TransportMode",
       "count": 7
     },
     {
       "label": "Market",
-      "count": 6
-    },
-    {
-      "label": "Warehouse",
       "count": 6
     },
     {
@@ -232,6 +256,10 @@
       "count": 5
     },
     {
+      "label": "AisObservationTarget",
+      "count": 4
+    },
+    {
       "label": "RiskMatrixCategory",
       "count": 4
     },
@@ -240,11 +268,11 @@
       "count": 3
     },
     {
-      "label": "SupplierRelationshipCandidate",
+      "label": "RecommendationSnapshot",
       "count": 3
     },
     {
-      "label": "WeatherRiskSnapshot",
+      "label": "SupplierRelationshipCandidate",
       "count": 3
     },
     {
@@ -258,6 +286,10 @@
     {
       "label": "IntegratedRiskAssessment",
       "count": 2
+    },
+    {
+      "label": "AisProviderState",
+      "count": 1
     },
     {
       "label": "Company",
@@ -283,27 +315,27 @@
   "relationship_types": [
     {
       "type": "AFFECTS_ZONE",
-      "count": 14301
+      "count": 24628
     },
     {
-      "type": "HAS_RISK",
-      "count": 650
+      "type": "MEMBER_OF_EVENT_CLUSTER",
+      "count": 15381
     },
     {
       "type": "HAS_DELAY_OBSERVATION",
       "count": 628
     },
     {
-      "type": "AFFECTS",
-      "count": 625
+      "type": "HAS_COST_OBSERVATION",
+      "count": 609
     },
     {
       "type": "FROM_NODE",
-      "count": 592
+      "count": 594
     },
     {
       "type": "TO_NODE",
-      "count": 592
+      "count": 594
     },
     {
       "type": "FROM",
@@ -312,10 +344,6 @@
     {
       "type": "TO",
       "count": 590
-    },
-    {
-      "type": "HAS_COST_OBSERVATION",
-      "count": 586
     },
     {
       "type": "USES_MODE",
@@ -338,12 +366,20 @@
       "count": 175
     },
     {
+      "type": "HAS_RISK_OBSERVATION",
+      "count": 139
+    },
+    {
       "type": "IN_PERIOD",
       "count": 132
     },
     {
       "type": "CAN_BE_TRANSPORTED_BY",
       "count": 120
+    },
+    {
+      "type": "EXPOSED_TO_NEWS_CLUSTER",
+      "count": 112
     },
     {
       "type": "HAS_OBSERVATION",
@@ -354,6 +390,10 @@
       "count": 107
     },
     {
+      "type": "EXPOSED_TO_NEWS_RISK",
+      "count": 80
+    },
+    {
       "type": "HAS_SYSTEM",
       "count": 78
     },
@@ -362,8 +402,12 @@
       "count": 78
     },
     {
-      "type": "EXPOSED_TO_NEWS_RISK",
-      "count": 66
+      "type": "PASSES_THROUGH",
+      "count": 69
+    },
+    {
+      "type": "HAS_WEATHER_SNAPSHOT",
+      "count": 63
     },
     {
       "type": "LOCATED_IN",
@@ -372,6 +416,10 @@
     {
       "type": "SUPPLIES",
       "count": 53
+    },
+    {
+      "type": "HAS_SEGMENT",
+      "count": 49
     },
     {
       "type": "FOR_PART",
@@ -406,6 +454,10 @@
       "count": 38
     },
     {
+      "type": "GENERATED",
+      "count": 37
+    },
+    {
       "type": "DELIVERED_TO",
       "count": 36
     },
@@ -426,6 +478,10 @@
       "count": 36
     },
     {
+      "type": "HAS_ROUTE_WEATHER_SNAPSHOT",
+      "count": 36
+    },
+    {
       "type": "PLACES_ORDER",
       "count": 36
     },
@@ -442,10 +498,6 @@
       "count": 33
     },
     {
-      "type": "GENERATED",
-      "count": 33
-    },
-    {
       "type": "LOCATED_AT",
       "count": 32
     },
@@ -458,20 +510,16 @@
       "count": 30
     },
     {
-      "type": "HAS_SEGMENT",
-      "count": 29
-    },
-    {
       "type": "SHIPS_FROM",
       "count": 29
     },
     {
       "type": "HAS_COST_ESTIMATE",
-      "count": 23
+      "count": 27
     },
     {
       "type": "HAS_RISK_SNAPSHOT",
-      "count": 23
+      "count": 27
     },
     {
       "type": "INGESTED",
@@ -479,23 +527,19 @@
     },
     {
       "type": "DESTINATION",
-      "count": 20
+      "count": 22
     },
     {
       "type": "HAS_LEG",
-      "count": 20
+      "count": 22
     },
     {
       "type": "ORIGIN",
-      "count": 20
+      "count": 22
     },
     {
       "type": "TRUCK_ROUTE",
       "count": 19
-    },
-    {
-      "type": "HAS_RISK_OBSERVATION",
-      "count": 17
     },
     {
       "type": "CONNECTS_TO",
@@ -515,6 +559,10 @@
     },
     {
       "type": "AFFECTS_PLAN",
+      "count": 12
+    },
+    {
+      "type": "INCLUDED_IN",
       "count": 12
     },
     {
@@ -638,7 +686,7 @@
       "count": 3
     },
     {
-      "type": "HAS_WEATHER_SNAPSHOT",
+      "type": "REPRESENTS_PORT",
       "count": 3
     },
     {
@@ -690,6 +738,10 @@
       "count": 1
     },
     {
+      "type": "REPRESENTS_ZONE",
+      "count": 1
+    },
+    {
       "type": "TRACKS_VESSEL",
       "count": 1
     },
@@ -708,8 +760,24 @@
       "count": 16
     },
     {
+      "label": "CostObservation",
+      "count": 609
+    },
+    {
+      "label": "DelayObservation",
+      "count": 628
+    },
+    {
+      "label": "Evidence",
+      "count": 12181
+    },
+    {
       "label": "Factory",
       "count": 19
+    },
+    {
+      "label": "GeoZone",
+      "count": 10
     },
     {
       "label": "NewsRiskZone",
@@ -724,12 +792,20 @@
       "count": 5
     },
     {
+      "label": "RecommendationSnapshot",
+      "count": 3
+    },
+    {
+      "label": "RiskObservation",
+      "count": 21475
+    },
+    {
       "label": "RiskSnapshot",
-      "count": 23
+      "count": 27
     },
     {
       "label": "Route",
-      "count": 26
+      "count": 28
     },
     {
       "label": "RouteCostObservation",
@@ -741,7 +817,7 @@
     },
     {
       "label": "RouteLeg",
-      "count": 19
+      "count": 21
     },
     {
       "label": "RouteRecommendation",
@@ -749,7 +825,7 @@
     },
     {
       "label": "RouteSegment",
-      "count": 594
+      "count": 613
     },
     {
       "label": "SourceEvidence",
@@ -761,11 +837,11 @@
     },
     {
       "label": "TransportLocation",
-      "count": 7
+      "count": 102
     },
     {
       "label": "VehicleRoute",
-      "count": 20
+      "count": 22
     },
     {
       "label": "Vessel",
@@ -777,12 +853,12 @@
     },
     {
       "label": "Warehouse",
-      "count": 6
+      "count": 42
     }
   ],
   "schema": {
-    "constraint_count": 72,
-    "index_count": 82,
+    "constraint_count": 84,
+    "index_count": 121,
     "constraints": [
       {
         "name": "airport_arrival_unique",
@@ -1269,6 +1345,17 @@
         ]
       },
       {
+        "name": "news_risk_cluster_id",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskCluster"
+        ],
+        "properties": [
+          "cluster_id"
+        ]
+      },
+      {
         "name": "news_risk_event_id",
         "type": "NODE_PROPERTY_UNIQUENESS",
         "entityType": "NODE",
@@ -1423,6 +1510,17 @@
         ]
       },
       {
+        "name": "route_weather_snapshot_id",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteWeatherRiskSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ]
+      },
+      {
         "name": "sales_order_id",
         "type": "NODE_PROPERTY_UNIQUENESS",
         "entityType": "NODE",
@@ -1530,6 +1628,116 @@
         ],
         "properties": [
           "mode"
+        ]
+      },
+      {
+        "name": "unified_ais_provider_state_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "AisProviderState"
+        ],
+        "properties": [
+          "provider_id"
+        ]
+      },
+      {
+        "name": "unified_ais_target_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "AisObservationTarget"
+        ],
+        "properties": [
+          "target_id"
+        ]
+      },
+      {
+        "name": "unified_cost_observation_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "CostObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ]
+      },
+      {
+        "name": "unified_delay_observation_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "DelayObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ]
+      },
+      {
+        "name": "unified_geo_zone_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "GeoZone"
+        ],
+        "properties": [
+          "zone_id"
+        ]
+      },
+      {
+        "name": "unified_port_traffic_snapshot_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "PortTrafficSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ]
+      },
+      {
+        "name": "unified_recommendation_snapshot_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RecommendationSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ]
+      },
+      {
+        "name": "unified_risk_observation_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RiskObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ]
+      },
+      {
+        "name": "unified_vessel_mmsi_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Vessel"
+        ],
+        "properties": [
+          "mmsi"
+        ]
+      },
+      {
+        "name": "unified_warehouse_id_unique",
+        "type": "NODE_PROPERTY_UNIQUENESS",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Warehouse"
+        ],
+        "properties": [
+          "warehouse_id"
         ]
       },
       {
@@ -2107,6 +2315,18 @@
         "state": "ONLINE"
       },
       {
+        "name": "geo_zone_geometry_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "GeoZone"
+        ],
+        "properties": [
+          "geometry_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
         "name": "index_1b9dcc97",
         "type": "LOOKUP",
         "entityType": "RELATIONSHIP",
@@ -2167,6 +2387,66 @@
         ],
         "properties": [
           "marketId"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "news_risk_cluster_category",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskCluster"
+        ],
+        "properties": [
+          "event_category"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "news_risk_cluster_id",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskCluster"
+        ],
+        "properties": [
+          "cluster_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "news_risk_cluster_last_seen",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskCluster"
+        ],
+        "properties": [
+          "last_seen"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "news_risk_event_canonical_url",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskEvent"
+        ],
+        "properties": [
+          "canonical_url_hash"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "news_risk_event_category",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "NewsRiskEvent"
+        ],
+        "properties": [
+          "event_category"
         ],
         "state": "ONLINE"
       },
@@ -2363,6 +2643,18 @@
         "state": "ONLINE"
       },
       {
+        "name": "route_segment_geometry_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteSegment"
+        ],
+        "properties": [
+          "geometry_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
         "name": "route_segment_segment_id_unique",
         "type": "RANGE",
         "entityType": "NODE",
@@ -2371,6 +2663,30 @@
         ],
         "properties": [
           "segment_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "route_weather_snapshot_id",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteWeatherRiskSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "route_weather_snapshot_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteWeatherRiskSnapshot"
+        ],
+        "properties": [
+          "observed_at"
         ],
         "state": "ONLINE"
       },
@@ -2483,6 +2799,18 @@
         "state": "ONLINE"
       },
       {
+        "name": "transport_location_coordinate_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "TransportLocation"
+        ],
+        "properties": [
+          "coordinate_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
         "name": "transport_location_id",
         "type": "RANGE",
         "entityType": "NODE",
@@ -2503,6 +2831,354 @@
         ],
         "properties": [
           "mode"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_ais_provider_state_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "AisProviderState"
+        ],
+        "properties": [
+          "provider_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_ais_target_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "AisObservationTarget"
+        ],
+        "properties": [
+          "target_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_ais_target_type",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "AisObservationTarget"
+        ],
+        "properties": [
+          "target_type"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_cost_observation_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "CostObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_cost_observation_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "CostObservation"
+        ],
+        "properties": [
+          "observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_delay_observation_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "DelayObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_delay_observation_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "DelayObservation"
+        ],
+        "properties": [
+          "observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_evidence_collected",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Evidence"
+        ],
+        "properties": [
+          "collected_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_geo_zone_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "GeoZone"
+        ],
+        "properties": [
+          "zone_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_geo_zone_type",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "GeoZone"
+        ],
+        "properties": [
+          "zone_type"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_geo_zone_updated",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "GeoZone"
+        ],
+        "properties": [
+          "updated_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_port_traffic_expires",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "PortTrafficSnapshot"
+        ],
+        "properties": [
+          "expires_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_port_traffic_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "PortTrafficSnapshot"
+        ],
+        "properties": [
+          "observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_port_traffic_snapshot_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "PortTrafficSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_recommendation_created",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RecommendationSnapshot"
+        ],
+        "properties": [
+          "created_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_recommendation_snapshot_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RecommendationSnapshot"
+        ],
+        "properties": [
+          "snapshot_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_risk_observation_expires",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RiskObservation"
+        ],
+        "properties": [
+          "expires_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_risk_observation_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RiskObservation"
+        ],
+        "properties": [
+          "observation_id"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_risk_observation_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RiskObservation"
+        ],
+        "properties": [
+          "observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_route_segment_mode",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteSegment"
+        ],
+        "properties": [
+          "canonical_mode"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_route_segment_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "RouteSegment"
+        ],
+        "properties": [
+          "data_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_route_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Route"
+        ],
+        "properties": [
+          "data_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_transport_location_country",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "TransportLocation"
+        ],
+        "properties": [
+          "country_code"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_transport_location_kind",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "TransportLocation"
+        ],
+        "properties": [
+          "location_kind"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_transport_location_status",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "TransportLocation"
+        ],
+        "properties": [
+          "data_status"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_vessel_last_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Vessel"
+        ],
+        "properties": [
+          "last_ais_observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_vessel_mmsi_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Vessel"
+        ],
+        "properties": [
+          "mmsi"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_vessel_observation_observed",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "VesselObservation"
+        ],
+        "properties": [
+          "position_observed_at"
+        ],
+        "state": "ONLINE"
+      },
+      {
+        "name": "unified_warehouse_id_unique",
+        "type": "RANGE",
+        "entityType": "NODE",
+        "labelsOrTypes": [
+          "Warehouse"
+        ],
+        "properties": [
+          "warehouse_id"
         ],
         "state": "ONLINE"
       },
@@ -2558,17 +3234,17 @@
   },
   "locations": {
     "summary": {
-      "total": 111,
-      "with_coordinates": 21,
-      "with_name": 111,
-      "coordinates_with_source": 21,
-      "estimated_coordinates": 0
+      "total": 147,
+      "with_coordinates": 89,
+      "with_name": 147,
+      "coordinates_with_source": 89,
+      "estimated_coordinates": 56
     },
     "by_label": [
       {
         "label": "Airport",
         "total": 16,
-        "with_coordinates": 2,
+        "with_coordinates": 16,
         "with_name": 16
       },
       {
@@ -2592,19 +3268,19 @@
       {
         "label": "Factory",
         "total": 19,
-        "with_coordinates": 0,
+        "with_coordinates": 17,
         "with_name": 19
       },
       {
         "label": "Port",
         "total": 20,
-        "with_coordinates": 19,
+        "with_coordinates": 20,
         "with_name": 20
       },
       {
         "label": "RailTerminal",
         "total": 5,
-        "with_coordinates": 0,
+        "with_coordinates": 4,
         "with_name": 5
       },
       {
@@ -2621,20 +3297,20 @@
       },
       {
         "label": "TransportLocation",
-        "total": 7,
-        "with_coordinates": 7,
-        "with_name": 7
+        "total": 102,
+        "with_coordinates": 89,
+        "with_name": 102
       },
       {
         "label": "Warehouse",
-        "total": 6,
-        "with_coordinates": 0,
-        "with_name": 6
+        "total": 42,
+        "with_coordinates": 32,
+        "with_name": 42
       }
     ]
   },
   "route_segments": {
-    "total": 594,
+    "total": 613,
     "mode_distribution": [
       {
         "mode": "multimodal",
@@ -2650,15 +3326,15 @@
       },
       {
         "mode": "road",
-        "count": 21
+        "count": 28
       },
       {
         "mode": "sea",
-        "count": 18
+        "count": 23
       },
       {
         "mode": "rail",
-        "count": 10
+        "count": 17
       },
       {
         "mode": "air",
@@ -2675,6 +3351,10 @@
         "count": 21
       },
       {
+        "source": "图路径距离估算器",
+        "count": 19
+      },
+      {
         "source": "Tesla SEC route skeleton",
         "count": 8
       }
@@ -2683,28 +3363,35 @@
       {
         "status": "synthetic_or_reference",
         "count": 594
+      },
+      {
+        "status": "attributed",
+        "count": 19
       }
     ],
     "data_status_distribution": [
       {
-        "data_status": "unclassified",
+        "data_status": "synthetic",
         "count": 594
+      },
+      {
+        "data_status": "estimated",
+        "count": 19
       }
     ],
     "field_completeness": {
-      "neutral_05_factor_count": 5477,
-      "with_active_news_risk": 573,
-      "with_base_risk": 594,
-      "with_confidence": 586,
+      "with_base_risk": 25,
+      "with_confidence": 605,
       "with_cost": 594,
-      "with_distance": 594,
+      "with_distance": 613,
       "with_duration": 594,
-      "with_dynamic_risk": 573,
-      "with_endpoint_coordinates": 2,
-      "with_neutral_05_factors": 594,
-      "with_news_risk": 573,
-      "with_risk_breakdown": 594,
-      "with_weather_risk": 1
+      "with_dynamic_risk": 30,
+      "with_endpoint_coordinates": 57,
+      "with_geometry": 10,
+      "with_news_risk": 22,
+      "with_risk_breakdown": 613,
+      "with_timestamp": 613,
+      "with_weather_risk": 18
     },
     "disconnected_or_ambiguous_count": 21,
     "disconnected_or_ambiguous_samples": [
@@ -3231,690 +3918,23 @@
         "mode": "multimodal"
       }
     ],
-    "neutral_default_risk_samples": [
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:11_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:46_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:11_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:47_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:12_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:48_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:12_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:49_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:22",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:13_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:50_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:22",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:13_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:51_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:14_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:52_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:15_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:53_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:16_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:54_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:23",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:16_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:55_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:24",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:17_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:56_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:18_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:57_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:24",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:14_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:58_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:137",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:12_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:59_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:139",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:13_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:60_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:138",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:16_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:61_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:141",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:17_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:62_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:140",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:11_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:63_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:137",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:18_TRUCK_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:64_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:136",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:18_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:65_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:25",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:16_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:66_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:26",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:17_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:67_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:27",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:11_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:68_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:25",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:14_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:69_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:26",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:25_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:70_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:28",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:25_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:71_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:29",
-        "factors": [
-          "conflict_risk",
-          "geopolitical_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:28_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:72_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:39",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:29_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:73_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:39",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:39_RAIL_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:74_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:40",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:19_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:75_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:20_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:76_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:21_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:77_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:22_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:78_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:31",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:23_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:79_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:35",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:24_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:80_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:35",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:81_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:82_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:31_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:83_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:32",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:32_SEA_ROUTE_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:84_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:30_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:85_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:46",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:40_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:86_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:41",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:40_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:87_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:42",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:88_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:41",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:33_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:89_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:42",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:90_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:41",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:34_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:91_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:45",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:35_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:92_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:43",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:35_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:93_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:49",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:32_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:94_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:47",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      },
-      {
-        "segment_id": "4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:32_CONNECTS_TO_5:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:95_4:ebf40b73-e2e1-4a8f-a9a3-b63be29de65a:50",
-        "factors": [
-          "conflict_risk",
-          "inventory_risk",
-          "production_risk",
-          "sanction_risk",
-          "security_risk",
-          "trade_risk",
-          "transport_delay_risk",
-          "weather_risk"
-        ]
-      }
-    ]
+    "neutral_default_risk_samples": []
   },
   "source_distribution": [
     {
       "label": "Airport",
       "attribution": "existing_neo4j_graph",
       "count": 16
+    },
+    {
+      "label": "AisObservationTarget",
+      "attribution": "AISStream.io",
+      "count": 4
+    },
+    {
+      "label": "AisProviderState",
+      "attribution": "AISStream.io",
+      "count": 1
     },
     {
       "label": "ArrivalWarehouse",
@@ -3984,7 +4004,22 @@
     {
       "label": "CostEstimate",
       "attribution": "unattributed",
+      "count": 27
+    },
+    {
+      "label": "CostObservation",
+      "attribution": "external_repos_reference_fields",
+      "count": 565
+    },
+    {
+      "label": "CostObservation",
+      "attribution": "unattributed",
       "count": 23
+    },
+    {
+      "label": "CostObservation",
+      "attribution": "standard_skeleton_reference",
+      "count": 21
     },
     {
       "label": "Country",
@@ -4010,6 +4045,21 @@
       "label": "Customer",
       "attribution": "standard_skeleton_reference",
       "count": 3
+    },
+    {
+      "label": "DelayObservation",
+      "attribution": "external_repos_reference_fields",
+      "count": 565
+    },
+    {
+      "label": "DelayObservation",
+      "attribution": "Public Risk Crawler",
+      "count": 42
+    },
+    {
+      "label": "DelayObservation",
+      "attribution": "standard_skeleton_reference",
+      "count": 21
     },
     {
       "label": "DeliveryRecord",
@@ -4047,6 +4097,16 @@
       "count": 8
     },
     {
+      "label": "Evidence",
+      "attribution": "GDELT",
+      "count": 12170
+    },
+    {
+      "label": "Evidence",
+      "attribution": "SEC EDGAR",
+      "count": 11
+    },
+    {
       "label": "ExportWarehouse",
       "attribution": "synthetic_cross_border_transport_risk",
       "count": 8
@@ -4082,9 +4142,14 @@
       "count": 8
     },
     {
+      "label": "GeoZone",
+      "attribution": "GDELT",
+      "count": 10
+    },
+    {
       "label": "IngestionJob",
       "attribution": "unattributed",
-      "count": 41
+      "count": 43
     },
     {
       "label": "IntegratedCostAssessment",
@@ -4107,13 +4172,23 @@
       "count": 6
     },
     {
+      "label": "NewsRiskCluster",
+      "attribution": "GDELT",
+      "count": 9166
+    },
+    {
+      "label": "NewsRiskEvent",
+      "attribution": "GDELT",
+      "count": 12170
+    },
+    {
       "label": "NewsRiskEvent",
       "attribution": "GDELT DOC 2.0 API",
-      "count": 11439
+      "count": 32
     },
     {
       "label": "NewsRiskZone",
-      "attribution": "GDELT DOC 2.0 API",
+      "attribution": "GDELT",
       "count": 10
     },
     {
@@ -4138,7 +4213,7 @@
     },
     {
       "label": "Port",
-      "attribution": "Open-Meteo Forecast API",
+      "attribution": "Open-Meteo",
       "count": 8
     },
     {
@@ -4197,39 +4272,9 @@
       "count": 5
     },
     {
-      "label": "RiskEvent",
-      "attribution": "synthetic_cross_border_transport_risk",
-      "count": 12
-    },
-    {
-      "label": "RiskEvent",
-      "attribution": "synthetic_experiment",
-      "count": 8
-    },
-    {
-      "label": "RiskFactor",
-      "attribution": "derived_from_route_segment",
-      "count": 565
-    },
-    {
-      "label": "RiskFactor",
-      "attribution": "port_risk_standardization",
-      "count": 17
-    },
-    {
-      "label": "RiskFactor",
-      "attribution": "synthetic_cross_border_transport_risk",
-      "count": 12
-    },
-    {
-      "label": "RiskFactor",
-      "attribution": "country_risk_standardization",
-      "count": 10
-    },
-    {
-      "label": "RiskFactor",
-      "attribution": "synthetic_experiment",
-      "count": 8
+      "label": "RecommendationSnapshot",
+      "attribution": "unattributed",
+      "count": 3
     },
     {
       "label": "RiskMatrixCategory",
@@ -4237,14 +4282,39 @@
       "count": 4
     },
     {
-      "label": "RiskSnapshot",
+      "label": "RiskObservation",
+      "attribution": "GDELT",
+      "count": 21336
+    },
+    {
+      "label": "RiskObservation",
+      "attribution": "Open-Meteo",
+      "count": 99
+    },
+    {
+      "label": "RiskObservation",
       "attribution": "unattributed",
       "count": 23
     },
     {
+      "label": "RiskObservation",
+      "attribution": "standard_skeleton_reference",
+      "count": 10
+    },
+    {
+      "label": "RiskObservation",
+      "attribution": "synthetic_experiment",
+      "count": 7
+    },
+    {
+      "label": "RiskSnapshot",
+      "attribution": "unattributed",
+      "count": 27
+    },
+    {
       "label": "Route",
       "attribution": "图路径距离估算器",
-      "count": 20
+      "count": 22
     },
     {
       "label": "Route",
@@ -4284,7 +4354,7 @@
     {
       "label": "RouteLeg",
       "attribution": "图路径距离估算器",
-      "count": 19
+      "count": 21
     },
     {
       "label": "RouteRecommendation",
@@ -4303,8 +4373,18 @@
     },
     {
       "label": "RouteSegment",
+      "attribution": "图路径距离估算器",
+      "count": 19
+    },
+    {
+      "label": "RouteSegment",
       "attribution": "Tesla SEC route skeleton",
       "count": 8
+    },
+    {
+      "label": "RouteWeatherRiskSnapshot",
+      "attribution": "Open-Meteo",
+      "count": 36
     },
     {
       "label": "SECDisclosure",
@@ -4368,13 +4448,43 @@
     },
     {
       "label": "TransportLocation",
-      "attribution": "Open-Meteo Forecast API",
-      "count": 3
+      "attribution": "synthetic_cross_border_transport_risk",
+      "count": 28
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "unattributed",
+      "count": 18
     },
     {
       "label": "TransportLocation",
       "attribution": "existing_neo4j_graph",
-      "count": 2
+      "count": 16
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "standard_skeleton_reference",
+      "count": 11
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "Open-Meteo",
+      "count": 8
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "SEC EDGAR",
+      "count": 8
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "synthetic_experiment",
+      "count": 7
+    },
+    {
+      "label": "TransportLocation",
+      "attribution": "synthetic_supplygraph_style",
+      "count": 4
     },
     {
       "label": "TransportLocation",
@@ -4404,7 +4514,7 @@
     {
       "label": "VehicleRoute",
       "attribution": "图路径距离估算器",
-      "count": 20
+      "count": 22
     },
     {
       "label": "VehicleSystem",
@@ -4418,7 +4528,7 @@
     },
     {
       "label": "Vessel",
-      "attribution": "AISStream",
+      "attribution": "AISStream.io",
       "count": 1
     },
     {
@@ -4428,38 +4538,49 @@
     },
     {
       "label": "Warehouse",
+      "attribution": "synthetic_cross_border_transport_risk",
+      "count": 18
+    },
+    {
+      "label": "Warehouse",
+      "attribution": "unattributed",
+      "count": 18
+    },
+    {
+      "label": "Warehouse",
       "attribution": "standard_skeleton_reference",
       "count": 6
     },
     {
       "label": "WeatherRiskSnapshot",
-      "attribution": "Open-Meteo Forecast API",
-      "count": 3
+      "attribution": "Open-Meteo",
+      "count": 63
     }
   ],
   "realtime_data": [
     {
       "label": "NewsRiskEvent",
-      "count": 11439,
-      "latest_at": "2026-07-25T09:30:00.000000000+00:00",
+      "count": 12202,
+      "latest_at": "2026-07-26T10:14:13.518927000+00:00",
       "sources": [
+        "GDELT",
         "GDELT DOC 2.0 API"
       ]
     },
     {
       "label": "NewsRiskZone",
       "count": 10,
-      "latest_at": "2026-07-25T10:05:50.578478000+00:00",
+      "latest_at": "2026-07-26T10:14:13.518927000+00:00",
       "sources": [
-        "GDELT DOC 2.0 API"
+        "GDELT"
       ]
     },
     {
       "label": "WeatherRiskSnapshot",
-      "count": 3,
-      "latest_at": "2026-07-12T14:45:00.000000000+00:00",
+      "count": 63,
+      "latest_at": "2026-07-26T11:39:30.124897000+00:00",
       "sources": [
-        "Open-Meteo Forecast API"
+        "Open-Meteo"
       ]
     },
     {
@@ -4518,24 +4639,25 @@
   ],
   "protected_realtime_baseline": {
     "NewsRiskEvent": {
-      "count": 11439,
-      "latest_at": "2026-07-25T09:30:00.000000000+00:00",
+      "count": 12202,
+      "latest_at": "2026-07-26T10:14:13.518927000+00:00",
       "sources": [
+        "GDELT",
         "GDELT DOC 2.0 API"
       ]
     },
     "NewsRiskZone": {
       "count": 10,
-      "latest_at": "2026-07-25T10:05:50.578478000+00:00",
+      "latest_at": "2026-07-26T10:14:13.518927000+00:00",
       "sources": [
-        "GDELT DOC 2.0 API"
+        "GDELT"
       ]
     },
     "WeatherRiskSnapshot": {
-      "count": 3,
-      "latest_at": "2026-07-12T14:45:00.000000000+00:00",
+      "count": 63,
+      "latest_at": "2026-07-26T11:39:30.124897000+00:00",
       "sources": [
-        "Open-Meteo Forecast API"
+        "Open-Meteo"
       ]
     },
     "VesselObservation": {
@@ -4560,7 +4682,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:138",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Guangzhou Baiyun International Airport"
           },
@@ -4587,7 +4710,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:141",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Zhengzhou Xinzheng International Airport"
           },
@@ -4614,7 +4738,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:142",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Hangzhou Xiaoshan International Airport"
           },
@@ -4641,7 +4766,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:136",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Beijing Capital International Airport"
           },
@@ -4662,13 +4788,43 @@
         ]
       },
       {
+        "identifier": "pvg",
+        "count": 3,
+        "nodes": [
+          {
+            "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:153",
+            "labels": [
+              "EntryPoint"
+            ],
+            "name": "Shanghai Pudong International Airport Entry"
+          },
+          {
+            "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:161",
+            "labels": [
+              "DepartureWarehouse",
+              "Warehouse",
+              "TransportLocation"
+            ],
+            "name": "Shanghai Pudong International Airport Departure Warehouse"
+          },
+          {
+            "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:169",
+            "labels": [
+              "DeparturePoint"
+            ],
+            "name": "Shanghai Pudong International Airport Departure Point"
+          }
+        ]
+      },
+      {
         "identifier": "szx",
         "count": 3,
         "nodes": [
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:139",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Shenzhen Bao'an International Airport"
           },
@@ -4695,7 +4851,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:140",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Chengdu Tianfu International Airport"
           },
@@ -4722,7 +4879,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:143",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Xi'an Xianyang International Airport"
           },
@@ -4749,7 +4907,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:148",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Amsterdam Schiphol Airport"
           },
@@ -4769,7 +4928,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:146",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Doha Hamad International Airport"
           },
@@ -4789,7 +4949,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:145",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Dubai International Airport"
           },
@@ -4809,7 +4970,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:149",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Istanbul Airport"
           },
@@ -4829,7 +4991,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:150",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Los Angeles International Airport"
           },
@@ -4849,7 +5012,8 @@
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:151",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Tokyo Narita Airport"
           },
@@ -4863,33 +5027,14 @@
         ]
       },
       {
-        "identifier": "pvg",
-        "count": 2,
-        "nodes": [
-          {
-            "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:153",
-            "labels": [
-              "EntryPoint"
-            ],
-            "name": "Shanghai Pudong International Airport Entry"
-          },
-          {
-            "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:169",
-            "labels": [
-              "DeparturePoint"
-            ],
-            "name": "Shanghai Pudong International Airport Departure Point"
-          }
-        ]
-      },
-      {
         "identifier": "sin",
         "count": 2,
         "nodes": [
           {
             "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:144",
             "labels": [
-              "Airport"
+              "Airport",
+              "TransportLocation"
             ],
             "name": "Singapore Changi Airport"
           },
@@ -4934,6 +5079,13 @@
       ]
     },
     {
+      "label": "AisProviderState",
+      "count": 1,
+      "sample_element_ids": [
+        "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:24091"
+      ]
+    },
+    {
       "label": "AutoPart",
       "count": 1,
       "sample_element_ids": [
@@ -4956,13 +5108,12 @@
     }
   ],
   "connectivity": {
-    "directed_edges": 573,
-    "weak_component_count": 2,
+    "directed_edges": 592,
+    "weak_component_count": 1,
     "weak_component_sizes": [
-      275,
-      7
+      283
     ],
-    "largest_component_nodes": 275
+    "largest_component_nodes": 283
   },
   "supplier_origins": {
     "summary": {
@@ -4989,7 +5140,7 @@
       "methods": [
         "GET"
       ],
-      "name": "root",
+      "name": "root__get",
       "deprecated": false,
       "tags": [
         "Service"
@@ -5000,10 +5151,21 @@
       "methods": [
         "POST"
       ],
-      "name": "trigger_gdelt_update",
+      "name": "trigger_gdelt_update_api_admin_gdelt_update_post",
       "deprecated": false,
       "tags": [
         "Dynamic News Risk Admin"
+      ]
+    },
+    {
+      "path": "/api/admin/weather/routes/update",
+      "methods": [
+        "POST"
+      ],
+      "name": "trigger_route_weather_update_api_admin_weather_routes_update_post",
+      "deprecated": false,
+      "tags": [
+        "Route Weather Admin"
       ]
     },
     {
@@ -5011,10 +5173,32 @@
       "methods": [
         "POST"
       ],
-      "name": "trigger_weather_update",
+      "name": "trigger_weather_update_api_admin_weather_update_post",
       "deprecated": false,
       "tags": [
         "Port Weather Admin"
+      ]
+    },
+    {
+      "path": "/api/ais/targets",
+      "methods": [
+        "GET"
+      ],
+      "name": "ais_targets_api_ais_targets_get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
+      ]
+    },
+    {
+      "path": "/api/ais/targets/{target_id}/traffic",
+      "methods": [
+        "GET"
+      ],
+      "name": "target_traffic_api_ais_targets__target_id__traffic_get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
       ]
     },
     {
@@ -5022,7 +5206,7 @@
       "methods": [
         "GET"
       ],
-      "name": "cities",
+      "name": "cities_api_cities_get",
       "deprecated": false,
       "tags": [
         "Route Planning"
@@ -5033,10 +5217,43 @@
       "methods": [
         "GET"
       ],
-      "name": "ranked_cost_segments",
+      "name": "ranked_cost_segments_api_cost_segments_get",
       "deprecated": false,
       "tags": [
         "Risk & Cost"
+      ]
+    },
+    {
+      "path": "/api/geography/locations",
+      "methods": [
+        "GET"
+      ],
+      "name": "geography_locations_api_geography_locations_get",
+      "deprecated": false,
+      "tags": [
+        "Geospatial"
+      ]
+    },
+    {
+      "path": "/api/geography/segments/{segment_id}",
+      "methods": [
+        "GET"
+      ],
+      "name": "geography_segment_api_geography_segments__segment_id__get",
+      "deprecated": false,
+      "tags": [
+        "Geospatial"
+      ]
+    },
+    {
+      "path": "/api/geography/zones",
+      "methods": [
+        "GET"
+      ],
+      "name": "geography_zones_api_geography_zones_get",
+      "deprecated": false,
+      "tags": [
+        "Geospatial"
       ]
     },
     {
@@ -5044,7 +5261,7 @@
       "methods": [
         "GET"
       ],
-      "name": "graph_summary",
+      "name": "graph_summary_api_graph_summary_get",
       "deprecated": false,
       "tags": []
     },
@@ -5053,7 +5270,7 @@
       "methods": [
         "GET"
       ],
-      "name": "port_weather_risks",
+      "name": "port_weather_risks_api_ports_weather_risks_get",
       "deprecated": false,
       "tags": [
         "Port Weather"
@@ -5064,10 +5281,21 @@
       "methods": [
         "GET"
       ],
-      "name": "high_risk_ports",
+      "name": "high_risk_ports_api_ports_weather_risks_high_get",
       "deprecated": false,
       "tags": [
         "Port Weather"
+      ]
+    },
+    {
+      "path": "/api/ports/{port_id}/traffic",
+      "methods": [
+        "GET"
+      ],
+      "name": "port_traffic_api_ports__port_id__traffic_get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
       ]
     },
     {
@@ -5075,7 +5303,7 @@
       "methods": [
         "GET"
       ],
-      "name": "port_weather",
+      "name": "port_weather_api_ports__port_id__weather_get",
       "deprecated": false,
       "tags": [
         "Port Weather"
@@ -5086,10 +5314,32 @@
       "methods": [
         "GET"
       ],
-      "name": "port_weather_history",
+      "name": "port_weather_history_api_ports__port_id__weather_history_get",
       "deprecated": false,
       "tags": [
         "Port Weather"
+      ]
+    },
+    {
+      "path": "/api/providers/status",
+      "methods": [
+        "GET"
+      ],
+      "name": "provider_statuses_api_providers_status_get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
+      ]
+    },
+    {
+      "path": "/api/recommendations/{snapshot_id}",
+      "methods": [
+        "GET"
+      ],
+      "name": "recommendation_snapshot_api_recommendations__snapshot_id__get",
+      "deprecated": false,
+      "tags": [
+        "Route Planning"
       ]
     },
     {
@@ -5097,7 +5347,18 @@
       "methods": [
         "GET"
       ],
-      "name": "news_risk_events",
+      "name": "news_risk_events_api_risk_news_get",
+      "deprecated": false,
+      "tags": [
+        "Dynamic News Risk"
+      ]
+    },
+    {
+      "path": "/api/risk/news/clusters",
+      "methods": [
+        "GET"
+      ],
+      "name": "news_risk_clusters_api_risk_news_clusters_get",
       "deprecated": false,
       "tags": [
         "Dynamic News Risk"
@@ -5108,7 +5369,7 @@
       "methods": [
         "GET"
       ],
-      "name": "news_risk_zones",
+      "name": "news_risk_zones_api_risk_news_zones_get",
       "deprecated": false,
       "tags": [
         "Dynamic News Risk"
@@ -5119,7 +5380,7 @@
       "methods": [
         "GET"
       ],
-      "name": "risk_overview",
+      "name": "risk_overview_api_risk_overview_get",
       "deprecated": false,
       "tags": []
     },
@@ -5128,7 +5389,7 @@
       "methods": [
         "GET"
       ],
-      "name": "ranked_risk_segments",
+      "name": "ranked_risk_segments_api_risk_segments_get",
       "deprecated": false,
       "tags": [
         "Risk & Cost"
@@ -5139,7 +5400,7 @@
       "methods": [
         "GET"
       ],
-      "name": "route_nodes",
+      "name": "route_nodes_api_routes_nodes_get",
       "deprecated": false,
       "tags": [
         "Route Optimization"
@@ -5150,7 +5411,7 @@
       "methods": [
         "GET"
       ],
-      "name": "optimize_route",
+      "name": "optimize_route_api_routes_optimize_get",
       "deprecated": false,
       "tags": [
         "Route Optimization"
@@ -5161,7 +5422,18 @@
       "methods": [
         "GET"
       ],
-      "name": "recommend_routes",
+      "name": "recommend_routes_api_routes_recommend_get",
+      "deprecated": true,
+      "tags": [
+        "Route Planning"
+      ]
+    },
+    {
+      "path": "/api/routes/recommend",
+      "methods": [
+        "POST"
+      ],
+      "name": "recommend_routes_post_api_routes_recommend_post",
       "deprecated": false,
       "tags": [
         "Route Planning"
@@ -5172,10 +5444,43 @@
       "methods": [
         "GET"
       ],
-      "name": "route_recommendations",
+      "name": "route_recommendations_api_routes_recommendations_get",
       "deprecated": false,
       "tags": [
         "Route Optimization"
+      ]
+    },
+    {
+      "path": "/api/routes/weather-risks",
+      "methods": [
+        "GET"
+      ],
+      "name": "route_weather_risks_api_routes_weather_risks_get",
+      "deprecated": false,
+      "tags": [
+        "Route Weather"
+      ]
+    },
+    {
+      "path": "/api/routes/weather-risks/{segment_id}",
+      "methods": [
+        "GET"
+      ],
+      "name": "route_weather_risk_detail_api_routes_weather_risks__segment_id__get",
+      "deprecated": false,
+      "tags": [
+        "Route Weather"
+      ]
+    },
+    {
+      "path": "/api/routes/{route_id}",
+      "methods": [
+        "GET"
+      ],
+      "name": "recommended_route_detail_api_routes__route_id__get",
+      "deprecated": false,
+      "tags": [
+        "Route Planning"
       ]
     },
     {
@@ -5183,7 +5488,18 @@
       "methods": [
         "GET"
       ],
-      "name": "suppliers",
+      "name": "suppliers_api_suppliers_get",
+      "deprecated": false,
+      "tags": [
+        "Route Planning"
+      ]
+    },
+    {
+      "path": "/api/suppliers/{supplier_id}/origins",
+      "methods": [
+        "GET"
+      ],
+      "name": "supplier_origins_api_suppliers__supplier_id__origins_get",
       "deprecated": false,
       "tags": [
         "Route Planning"
@@ -5194,74 +5510,168 @@
       "methods": [
         "GET"
       ],
-      "name": "supply_chain_routes",
+      "name": "supply_chain_routes_api_supply_chain_routes_get",
       "deprecated": false,
       "tags": []
     },
     {
-      "path": "/docs",
+      "path": "/api/v1/audit/source",
       "methods": [
-        "GET",
-        "HEAD"
+        "POST"
       ],
-      "name": "swagger_ui_html",
+      "name": "audit_source_api_v1_audit_source_post",
       "deprecated": false,
-      "tags": []
+      "tags": [
+        "整车运输路径网络"
+      ]
     },
     {
-      "path": "/docs/oauth2-redirect",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "name": "swagger_ui_redirect",
-      "deprecated": false,
-      "tags": []
-    },
-    {
-      "path": "/favicon.ico",
+      "path": "/api/v1/config/strategy",
       "methods": [
         "GET"
       ],
-      "name": "favicon",
+      "name": "get_strategy_api_v1_config_strategy_get",
       "deprecated": false,
-      "tags": []
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/config/strategy",
+      "methods": [
+        "PUT"
+      ],
+      "name": "update_strategy_api_v1_config_strategy_put",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/health",
+      "methods": [
+        "GET"
+      ],
+      "name": "vehicle_network_health_api_v1_health_get",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/locations/ingest",
+      "methods": [
+        "POST"
+      ],
+      "name": "ingest_locations_api_v1_locations_ingest_post",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/generate",
+      "methods": [
+        "POST"
+      ],
+      "name": "generate_routes_api_v1_routes_generate_post",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/search",
+      "methods": [
+        "GET"
+      ],
+      "name": "search_routes_api_v1_routes_search_get",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/{route_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "name": "delete_route_api_v1_routes__route_id__delete",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/{route_id}",
+      "methods": [
+        "GET"
+      ],
+      "name": "route_detail_api_v1_routes__route_id__get",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/{route_id}/review",
+      "methods": [
+        "POST"
+      ],
+      "name": "review_route_api_v1_routes__route_id__review_post",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/v1/routes/{route_id}/score/recompute",
+      "methods": [
+        "POST"
+      ],
+      "name": "recompute_route_score_api_v1_routes__route_id__score_recompute_post",
+      "deprecated": false,
+      "tags": [
+        "整车运输路径网络"
+      ]
+    },
+    {
+      "path": "/api/vessels/{mmsi}",
+      "methods": [
+        "GET"
+      ],
+      "name": "vessel_api_vessels__mmsi__get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
+      ]
     },
     {
       "path": "/health",
       "methods": [
         "GET"
       ],
-      "name": "health",
+      "name": "health_health_get",
       "deprecated": false,
       "tags": []
+    },
+    {
+      "path": "/health/ais",
+      "methods": [
+        "GET"
+      ],
+      "name": "ais_health_health_ais_get",
+      "deprecated": false,
+      "tags": [
+        "AIS Port Traffic"
+      ]
     },
     {
       "path": "/health/aura",
       "methods": [
         "GET"
       ],
-      "name": "aura_health",
-      "deprecated": false,
-      "tags": []
-    },
-    {
-      "path": "/openapi.json",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "name": "openapi",
-      "deprecated": false,
-      "tags": []
-    },
-    {
-      "path": "/redoc",
-      "methods": [
-        "GET",
-        "HEAD"
-      ],
-      "name": "redoc_html",
+      "name": "aura_health_health_aura_get",
       "deprecated": false,
       "tags": []
     }
@@ -5288,8 +5698,15 @@
     },
     {
       "provider": "AISStream.io",
-      "implementation_status": "missing",
-      "files": [],
+      "implementation_status": "implemented",
+      "files": [
+        "config/ais_observation_targets.json",
+        "scripts/migrate_ais_stage7.py",
+        "scripts/run_ais_consumer.py",
+        "tests/test_ais_aggregation.py",
+        "tests/test_ais_parser.py",
+        "tests/test_ais_service.py"
+      ],
       "credential_configured": false
     },
     {
@@ -5347,33 +5764,28 @@
     },
     {
       "severity": "high",
-      "code": "NEUTRAL_DEFAULT_RISK",
-      "message": "594 个分段风险明细包含 0.5/50 默认值，需要在后续迁移中核验 Provider。"
-    },
-    {
-      "severity": "high",
       "code": "MISSING_SEGMENT_PROVIDER",
-      "message": "仅 0/594 个分段具有 provider 字段。"
+      "message": "仅 0/613 个分段具有 provider 字段。"
     },
     {
       "severity": "medium",
       "code": "LOW_ROUTE_WEATHER_COVERAGE",
-      "message": "仅 1/594 个分段具有 route_weather_risk。"
+      "message": "仅 18/613 个分段具有 route_weather_risk。"
     },
     {
       "severity": "high",
       "code": "MISSING_ROUTE_GEOMETRY",
-      "message": "仅 0/594 个分段具有可审计的路线 geometry。"
+      "message": "仅 10/613 个分段具有可审计的路线 geometry。"
     },
     {
       "severity": "high",
       "code": "REFERENCE_ROUTE_DATA",
-      "message": "594/594 个分段来源属于合成、骨架或外部参考字段，不能视为已验证运输服务。"
+      "message": "594/613 个分段来源属于合成、骨架或外部参考字段，不能视为已验证运输服务。"
     },
     {
       "severity": "high",
       "code": "MISSING_LOCATION_COORDINATES",
-      "message": "地点坐标覆盖率为 21/111。"
+      "message": "地点坐标覆盖率为 89/147。"
     },
     {
       "severity": "high",

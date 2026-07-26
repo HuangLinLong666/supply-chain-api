@@ -34,6 +34,15 @@ def route_segments() -> list[dict[str, Any]]:
     return run_query("""
         MATCH (s:RouteSegment)-[:FROM_NODE]->(a)
         MATCH (s)-[:TO_NODE]->(b)
+        WHERE coalesce(s.feasibility_status,'') <> 'invalid_cross_ocean'
+        OPTIONAL MATCH (s)-[spatial:PASSES_THROUGH]->(spatial_zone:GeoZone)
+        WHERE coalesce(spatial.active,true)=true
+        WITH s,a,b,
+          [item IN collect(DISTINCT CASE WHEN spatial_zone IS NULL THEN null ELSE {
+            zone_id:spatial_zone.zone_id,zone_name:spatial_zone.name,
+            exposure_method:spatial.exposure_method,confidence:spatial.confidence,
+            exposure_ratio:spatial.exposure_ratio,active:coalesce(spatial.active,true)
+          } END) WHERE item IS NOT NULL] AS spatial_exposures
         RETURN elementId(s) AS element_id,
           coalesce(s.segmentId,s.segment_id,elementId(s)) AS segment_id,
           coalesce(s.mode,s.routeMode) AS mode,
@@ -41,6 +50,11 @@ def route_segments() -> list[dict[str, Any]]:
           a.latitude AS from_lat,a.longitude AS from_lng,
           coalesce(b.name,b.code,b.id,s.toNodeName) AS to_name,b.city AS to_city,b.country AS to_country,
           b.latitude AS to_lat,b.longitude AS to_lng,
+          s.geospatial_version AS geospatial_version,
+          s.geometry_geojson AS geometry_geojson,
+          s.geometry_status AS geometry_status,
+          s.geometry_confidence AS geometry_confidence,
+          spatial_exposures,
           s.route_weather_risk AS route_weather_risk,
           s.route_weather_provider AS route_weather_provider,
           s.route_weather_updated_at AS route_weather_updated_at,
@@ -48,7 +62,15 @@ def route_segments() -> list[dict[str, Any]]:
           s.route_weather_status AS route_weather_status,
           s.route_weather_data_completeness AS route_weather_data_completeness,
           s.route_weather_confidence AS route_weather_confidence,
-          s.route_weather_evidence AS route_weather_evidence
+          s.route_weather_evidence AS route_weather_evidence,
+          s.ais_congestion_score AS ais_congestion_score,
+          s.ais_congestion_provider AS ais_congestion_provider,
+          s.ais_congestion_status AS ais_congestion_status,
+          s.ais_congestion_confidence AS ais_congestion_confidence,
+          s.ais_congestion_data_completeness AS ais_congestion_data_completeness,
+          s.ais_congestion_observed_at AS ais_congestion_observed_at,
+          s.ais_congestion_expires_at AS ais_congestion_expires_at,
+          s.ais_congestion_snapshot_ids AS ais_congestion_snapshot_ids
     """)
 
 
@@ -249,6 +271,15 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
     weather_observed_at = parse_datetime(weather_updated_at)
     if weather_expires_at is None:
         weather_expires_at = weather_observed_at + timedelta(hours=6) if weather_observed_at else None
+    congestion_expires_at = parse_datetime(segment.get("ais_congestion_expires_at"))
+    congestion_evidence = segment.get("ais_congestion_snapshot_ids") or []
+    congestion_active = (
+        str(segment.get("ais_congestion_provider") or "").casefold() in {"aisstream", "aisstream.io"}
+        and segment.get("ais_congestion_status") == "available"
+        and congestion_expires_at is not None
+        and congestion_expires_at > now
+        and bool(congestion_evidence)
+    )
     signals = build_segment_signals(
         segment.get("mode"),
         news_score=news_risk,
@@ -263,6 +294,12 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
         weather_expires_at=weather_expires_at.isoformat() if weather_active and weather_expires_at else None,
         weather_confidence=segment.get("route_weather_confidence") if weather_active else None,
         weather_evidence=segment.get("route_weather_evidence") or [],
+        congestion_score=segment.get("ais_congestion_score") if congestion_active else None,
+        congestion_provider="AISStream.io" if congestion_active else None,
+        congestion_observed_at=segment.get("ais_congestion_observed_at") if congestion_active else None,
+        congestion_expires_at=segment.get("ais_congestion_expires_at") if congestion_active else None,
+        congestion_confidence=segment.get("ais_congestion_confidence") if congestion_active else None,
+        congestion_evidence=congestion_evidence,
     )
     risk = calculate_provider_risk(segment.get("mode"), signals, load_strategy())
     risk_properties = database_risk_properties(risk, now)

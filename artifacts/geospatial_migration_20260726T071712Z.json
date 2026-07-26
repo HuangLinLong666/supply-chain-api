@@ -1,0 +1,122 @@
+{
+  "before": {
+    "geo_zones": 10,
+    "owned_passes_through": 69,
+    "route_segments": 613,
+    "transport_locations": 102
+  },
+  "execution": {
+    "location_updates": 0,
+    "passes_through_deactivations": 0,
+    "passes_through_updates": 0,
+    "segment_updates": 0,
+    "status": "dry_run",
+    "zone_updates": 0
+  },
+  "metadata": {
+    "credentials_redacted": true,
+    "generated_at_utc": "2026-07-26T07:17:12.841309+00:00",
+    "geospatial_version": "geospatial-routing-v1",
+    "plan_sha256": "0e5feacd728475ecc5a89a59a140c14a6e70aadbd50898a278b87caa2322742e",
+    "reference_generated_at": "2026-07-26T06:23:15.257347+00:00"
+  },
+  "mode": "dry-run",
+  "plan": {
+    "locations": [],
+    "passes_through": [],
+    "passes_through_deactivations": [],
+    "segments": [],
+    "zones": []
+  },
+  "safety": {
+    "max_node_updates": 1000,
+    "max_relationship_updates": 5000,
+    "nodes_deleted": false,
+    "relationships_deleted": false,
+    "scoped_soft_deactivation_only": true,
+    "synthetic_geometry_promoted": false,
+    "uses_merge": true
+  },
+  "source_catalog": {
+    "geonames": {
+      "adopted": true,
+      "commercial_use": "allowed with attribution",
+      "license": "CC BY 4.0",
+      "name": "GeoNames cities15000",
+      "provider": "GeoNames",
+      "source_url": "https://download.geonames.org/export/dump/",
+      "usage": "Low-confidence city-centroid fallback only"
+    },
+    "marine_regions": {
+      "adopted": true,
+      "commercial_use": "review required; not for navigation or legal delimitation",
+      "license": "CC BY 4.0",
+      "name": "Marine Regions Gazetteer",
+      "provider": "Flanders Marine Institute (VLIZ)",
+      "source_url": "https://www.marineregions.org/",
+      "usage": "Published bounding extents for the Strait of Hormuz and Suez Canal"
+    },
+    "natural_earth": {
+      "adopted": true,
+      "commercial_use": "allowed",
+      "license": "Public Domain",
+      "name": "Natural Earth 5.1.x",
+      "provider": "Natural Earth",
+      "source_url": "https://www.naturalearthdata.com/downloads/",
+      "usage": "Marine region polygons and small-scale country land mask"
+    },
+    "nominatim": {
+      "adopted": false,
+      "commercial_use": "allowed with attribution and share-alike obligations",
+      "license": "ODbL 1.0",
+      "name": "OpenStreetMap Nominatim public service",
+      "provider": "OpenStreetMap Foundation",
+      "reason": "Not embedded as a periodic or bulk production geocoder; downloadable datasets are used instead",
+      "source_url": "https://operations.osmfoundation.org/policies/nominatim/"
+    },
+    "ourairports": {
+      "adopted": true,
+      "commercial_use": "allowed",
+      "license": "Public Domain",
+      "name": "OurAirports airports.csv",
+      "provider": "OurAirports",
+      "source_url": "https://ourairports.com/data/",
+      "usage": "Airport reference coordinates matched by IATA code"
+    },
+    "unlocode": {
+      "adopted": true,
+      "commercial_use": "allowed",
+      "download_mirror": "https://github.com/datasets/un-locode",
+      "license": "ODC PDDL-1.0",
+      "name": "UN/LOCODE 2025-1",
+      "provider": "UNECE",
+      "source_url": "https://unlocode.unece.org/publications/",
+      "usage": "Port and transport-location registry coordinates and canonical codes"
+    }
+  },
+  "summary": {
+    "coordinate_statuses": {
+      "estimated": 56,
+      "reference": 33,
+      "unavailable": 13
+    },
+    "desired_passes_through": 65,
+    "exposure_methods": {
+      "geometry_intersection": 16,
+      "inferred_from_endpoints": 49
+    },
+    "geometry_statuses": {
+      "estimated_endpoint_fallback": 5,
+      "estimated_open_sea_network": 5,
+      "estimated_road_network": 5,
+      "invalid_cross_ocean": 4,
+      "unavailable_synthetic": 594
+    },
+    "location_updates": 0,
+    "passes_through_deactivations": 0,
+    "passes_through_updates": 0,
+    "segment_updates": 0,
+    "zone_updates": 0,
+    "zones_with_geometry": 10
+  }
+}

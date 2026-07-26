@@ -14,7 +14,7 @@ from app.vehicle_network.providers.route_estimator import estimate_leg
 from app.vehicle_network.providers.sample_registry import SampleRegistryProvider
 from app.vehicle_network.repository import VehicleNetworkRepository
 from app.vehicle_network.scoring import calculate_mode_risk, estimate_cost, rank_routes
-from app.provider_risk import is_fresh
+from app.provider_risk import is_fresh, parse_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -139,6 +139,7 @@ class RouteGenerationService:
         provider_fields: tuple[str, ...],
         provider_markers: tuple[str, ...],
         observed_field: str | None = None,
+        expires_field: str | None = None,
         max_age_hours: float | None = None,
     ) -> float | None:
         values: list[float] = []
@@ -152,6 +153,10 @@ class RouteGenerationService:
                 max_age_hours=max_age_hours,
             ):
                 continue
+            if expires_field:
+                expires_at = parse_datetime(location.get(expires_field))
+                if expires_at is None or expires_at <= datetime.now(timezone.utc):
+                    continue
             value = self._risk_value(*(location.get(field) for field in value_fields))
             if value is not None:
                 values.append(value)
@@ -176,18 +181,28 @@ class RouteGenerationService:
             observed_field="weather_updated_at",
             max_age_hours=6,
         )
-        congestion = self._provider_risk_value(
+        port_congestion = self._provider_risk_value(
+            origin,
+            destination,
+            value_fields=("congestion_score_100", "congestion_score", "congestionRisk"),
+            provider_fields=("traffic_provider", "congestion_provider", "port_congestion_provider", "congestion_source"),
+            provider_markers=("aisstream", "official", "port authority", "project44", "fourkites", "marinetraffic", "portcast"),
+            observed_field="traffic_observed_at",
+            expires_field="traffic_expires_at",
+            max_age_hours=2,
+        )
+        airport_capacity = self._provider_risk_value(
             origin,
             destination,
             value_fields=("congestion_score", "congestionRisk"),
-            provider_fields=("congestion_provider", "port_congestion_provider", "congestion_source"),
-            provider_markers=("official", "port authority", "project44", "fourkites", "marinetraffic", "portcast"),
+            provider_fields=("congestion_provider", "congestion_source"),
+            provider_markers=("official", "airport authority", "project44", "fourkites"),
         )
         profiles = {
-            "sea": {"weather": weather, "piracy": None, "port_congestion": congestion, "geopolitical": news, "sanctions": None, "schedule_reliability": None},
+            "sea": {"weather": weather, "piracy": None, "port_congestion": port_congestion, "geopolitical": news, "sanctions": None, "schedule_reliability": None},
             "rail": {"border_customs": None, "geopolitical": news, "infrastructure": None, "weather": weather, "schedule_reliability": None, "sanctions": None},
             "road": {"traffic": None, "border_customs": None, "road_security": None, "weather": weather, "regulatory": None, "schedule_reliability": None},
-            "air": {"weather": weather, "airspace_conflict": news, "airport_capacity": congestion, "schedule_reliability": None, "sanctions": None, "cargo_handling": None},
+            "air": {"weather": weather, "airspace_conflict": news, "airport_capacity": airport_capacity, "schedule_reliability": None, "sanctions": None, "cargo_handling": None},
         }
         return profiles[mode]
 

@@ -6,7 +6,9 @@ import os
 import time
 import json
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Any, Literal
+from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +16,14 @@ from starlette.requests import Request
 from pydantic import BaseModel
 
 from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, risk_optimization_value, shortest_path
+from app.recommendation.config import load_recommendation_settings
+from app.recommendation.engine import RecommendationEngine
+from app.recommendation.models import RecommendationRequest, RecommendationResponse
+from app.recommendation.storage import (
+    GET_ROUTE_QUERY,
+    GET_SNAPSHOT_QUERY,
+    persist_recommendation_snapshot,
+)
 from database.neo4j_client import close_driver, get_settings, run_query, verify_connectivity
 from weather.config import WeatherSettings
 from weather.route_service import update_route_weather
@@ -21,6 +31,7 @@ from weather.service import update_ports
 from gdelt.config import GdeltSettings
 from gdelt.service import update_news_risk
 from app.vehicle_network.api import router as vehicle_network_router
+from ais.api import router as ais_router
 
 
 _route_graph_cache: tuple[float, list[dict[str, Any]]] | None = None
@@ -43,8 +54,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Supply Chain Graph API",
-    description="Read-only API for querying the Neo4j AuraDB supply-chain graph.",
-    version="0.2.0",
+    description="Supply-chain routing API with provider-backed weather, news, and AIS risk.",
+    version="0.5.0",
     lifespan=lifespan,
 )
 
@@ -57,6 +68,7 @@ app.add_middleware(
 )
 
 app.include_router(vehicle_network_router)
+app.include_router(ais_router)
 
 
 @app.middleware("http")
@@ -73,6 +85,15 @@ def safe_query(query: str, parameters: dict[str, Any] | None = None) -> list[dic
         return run_query(query, parameters)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def decoded_json(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
 
 
 @app.get("/", tags=["Service"], summary="API service information")
@@ -193,8 +214,18 @@ def risk_overview(limit: int = 25) -> dict[str, Any]:
         RETURN
           coalesce(p.name, p.portName, p.unlocode, p.code) AS name,
           coalesce(p.unlocode, p.code) AS code,
-          p.congestionRisk AS congestionRisk,
-          p.congestion_score AS congestion_score,
+          CASE WHEN coalesce(p.congestion_provider,p.port_congestion_provider,'')=''
+                    OR (p.congestion_provider='AISStream.io' AND
+                        (p.traffic_expires_at IS NULL OR p.traffic_expires_at<=datetime()))
+               THEN null ELSE p.congestionRisk END AS congestionRisk,
+          CASE WHEN coalesce(p.congestion_provider,p.port_congestion_provider,'')=''
+                    OR (p.congestion_provider='AISStream.io' AND
+                        (p.traffic_expires_at IS NULL OR p.traffic_expires_at<=datetime()))
+               THEN null ELSE p.congestion_score END AS congestion_score,
+          coalesce(p.congestion_provider,p.port_congestion_provider) AS congestion_provider,
+          CASE WHEN p.traffic_expires_at>datetime() THEN p.traffic_status ELSE 'unavailable' END AS traffic_status,
+          p.traffic_observed_at AS traffic_observed_at,
+          p.traffic_expires_at AS traffic_expires_at,
           p.avg_wait_time_hours AS avg_wait_time_hours,
           properties(p) AS properties
         LIMIT $limit
@@ -313,7 +344,12 @@ def route_nodes(search: str | None = Query(None), limit: int = Query(100, ge=1, 
         WITH DISTINCT node
         WITH node, coalesce(node.name, node.code, node.id, elementId(node)) AS name
         WHERE $search IS NULL OR toLower(toString(name)) CONTAINS toLower($search)
-        RETURN elementId(node) AS node_id, name, labels(node) AS labels
+        RETURN elementId(node) AS node_id, name, labels(node) AS labels,
+               coalesce(node.location_id,node.unlocode,node.iata,node.code,node.id) AS location_id,
+               node.latitude AS lat,node.longitude AS lng,
+               node.coordinate_source AS coordinate_source,
+               node.coordinate_status AS coordinate_status,
+               node.coordinate_confidence AS coordinate_confidence
         ORDER BY name
         LIMIT $limit
         """,
@@ -331,23 +367,66 @@ def route_graph_segments() -> list[dict[str, Any]]:
         """
         MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
         MATCH (segment)-[:TO_NODE]->(toNode)
+        WHERE coalesce(segment.feasibility_status,'') <> 'invalid_cross_ocean'
+        OPTIONAL MATCH (segment)-[spatialExposure:PASSES_THROUGH]->(geoZone:GeoZone)
+        WHERE coalesce(spatialExposure.active,true)=true
+        WITH segment,fromNode,toNode,
+          [item IN collect(DISTINCT CASE WHEN geoZone IS NULL THEN null ELSE {
+            zoneId:geoZone.zone_id,zoneName:geoZone.name,
+            exposureMethod:spatialExposure.exposure_method,
+            confidence:spatialExposure.confidence,
+            exposureRatio:spatialExposure.exposure_ratio,
+            intersectionDistanceKm:spatialExposure.intersection_distance_km
+          } END) WHERE item IS NOT NULL] AS spatial_exposures
+        OPTIONAL MATCH (segment)-[:HAS_COST_OBSERVATION]->(costObservation:CostObservation)
+        WITH segment,fromNode,toNode,spatial_exposures,costObservation
+        ORDER BY coalesce(costObservation.observed_at,costObservation.collected_at,costObservation.created_at) DESC
+        WITH segment,fromNode,toNode,spatial_exposures,
+             head(collect(properties(costObservation))) AS cost_observation
+        OPTIONAL MATCH (segment)-[:HAS_DELAY_OBSERVATION]->(delayObservation:DelayObservation)
+        WITH segment,fromNode,toNode,spatial_exposures,cost_observation,delayObservation
+        ORDER BY coalesce(delayObservation.observed_at,delayObservation.collected_at,delayObservation.created_at) DESC
+        WITH segment,fromNode,toNode,spatial_exposures,cost_observation,
+             head(collect(properties(delayObservation))) AS delay_observation
         RETURN
           elementId(fromNode) AS from_id,
           coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS from_name,
           fromNode.city AS from_city,
           fromNode.country AS from_country,
+          coalesce(fromNode.location_id,fromNode.unlocode,fromNode.iata,fromNode.code,fromNode.id) AS from_location_id,
+          fromNode.canonical_unlocode AS from_canonical_unlocode,
           fromNode.latitude AS from_lat,
           fromNode.longitude AS from_lng,
+          fromNode.coordinate_source AS from_coordinate_source,
+          fromNode.coordinate_status AS from_coordinate_status,
+          fromNode.coordinate_confidence AS from_coordinate_confidence,
           labels(fromNode) AS from_labels,
           elementId(toNode) AS to_id,
           coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS to_name,
           toNode.city AS to_city,
           toNode.country AS to_country,
+          coalesce(toNode.location_id,toNode.unlocode,toNode.iata,toNode.code,toNode.id) AS to_location_id,
+          toNode.canonical_unlocode AS to_canonical_unlocode,
           toNode.latitude AS to_lat,
           toNode.longitude AS to_lng,
+          toNode.coordinate_source AS to_coordinate_source,
+          toNode.coordinate_status AS to_coordinate_status,
+          toNode.coordinate_confidence AS to_coordinate_confidence,
           labels(toNode) AS to_labels,
           coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
-          coalesce(segment.mode, segment.routeMode) AS mode,
+          coalesce(segment.canonical_mode,segment.mode,segment.routeMode) AS mode,
+          coalesce(segment.mode,segment.routeMode) AS raw_mode,
+          segment.data_status AS data_status,
+          segment.source AS source,
+          segment.source_type AS source_type,
+          segment.provider AS provider,
+          coalesce(segment.confidence,segment.confidence_score) AS confidence,
+          segment.geometry_geojson AS geometry_geojson,
+          segment.geometry_source AS geometry_source,
+          segment.geometry_status AS geometry_status,
+          segment.geometry_confidence AS geometry_confidence,
+          segment.feasibility_status AS feasibility_status,
+          spatial_exposures,
           CASE WHEN segment.provider_risk_status IN ['available','partial']
                  AND segment.provider_risk_expires_at IS NOT NULL
                  AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
@@ -373,10 +452,13 @@ def route_graph_segments() -> list[dict[str, Any]]:
                  AND datetime(toString(segment.provider_risk_expires_at)) > datetime()
                THEN coalesce(segment.provider_risk_providers,[]) ELSE [] END AS risk_providers,
           segment.provider_risk_factors_json AS risk_factors_json,
-          coalesce(segment.estimated_cost_usd, segment.baseCostUSD, 0.0) AS cost_usd,
-          coalesce(segment.costScore, 0.5) AS cost_score,
-          coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0, 0.0) AS time_days,
-          coalesce(segment.distance_km, segment.distanceKm, 0.0) AS distance_km,
+          coalesce(segment.estimated_cost_usd, segment.baseCostUSD) AS cost_usd,
+          segment.costScore AS cost_score,
+          coalesce(segment.estimated_time_days, segment.estimatedTimeHours / 24.0) AS time_days,
+          coalesce(segment.geometry_distance_km,segment.distance_km, segment.distanceKm) AS distance_km,
+          segment.geometry_distance_km AS geometry_distance_km,
+          cost_observation,
+          delay_observation,
           segment.risk_explanation AS risk_explanation,
           CASE WHEN segment.provider_risk_status IN ['available','partial']
                  AND segment.provider_risk_expires_at IS NOT NULL
@@ -391,7 +473,24 @@ def route_graph_segments() -> list[dict[str, Any]]:
           segment.route_weather_sampling_method AS route_weather_sampling_method,
           segment.route_weather_updated_at AS route_weather_updated_at,
           segment.route_weather_expires_at AS route_weather_expires_at,
-          coalesce(segment.route_weather_evidence,[]) AS route_weather_evidence
+          coalesce(segment.route_weather_evidence,[]) AS route_weather_evidence,
+          CASE WHEN properties(segment)['ais_congestion_expires_at'] IS NOT NULL
+                    AND datetime(toString(properties(segment)['ais_congestion_expires_at'])) > datetime()
+               THEN properties(segment)['ais_congestion_score'] END AS ais_congestion_score,
+          CASE WHEN properties(segment)['ais_congestion_expires_at'] IS NOT NULL
+                    AND datetime(toString(properties(segment)['ais_congestion_expires_at'])) > datetime()
+               THEN properties(segment)['ais_congestion_status'] ELSE 'unavailable' END AS ais_congestion_status,
+          CASE WHEN properties(segment)['ais_congestion_expires_at'] IS NOT NULL
+                    AND datetime(toString(properties(segment)['ais_congestion_expires_at'])) > datetime()
+               THEN properties(segment)['ais_congestion_confidence'] END AS ais_congestion_confidence,
+          CASE WHEN properties(segment)['ais_congestion_expires_at'] IS NOT NULL
+                    AND datetime(toString(properties(segment)['ais_congestion_expires_at'])) > datetime()
+               THEN properties(segment)['ais_congestion_data_completeness'] ELSE 0.0 END AS ais_congestion_data_completeness,
+          CASE WHEN properties(segment)['ais_congestion_expires_at'] IS NOT NULL
+                    AND datetime(toString(properties(segment)['ais_congestion_expires_at'])) > datetime()
+               THEN coalesce(properties(segment)['ais_congestion_snapshot_ids'],[]) ELSE [] END AS ais_congestion_evidence,
+          properties(segment)['ais_congestion_observed_at'] AS ais_congestion_observed_at,
+          properties(segment)['ais_congestion_expires_at'] AS ais_congestion_expires_at
         """
     )
     add_coordinate_fallbacks(segments)
@@ -410,6 +509,8 @@ def matching_node_ids(segments: list[dict[str, Any]], value: str) -> set[str]:
                 node_id,
                 str(segment.get(f"{prefix}_name") or ""),
                 str(segment.get(f"{prefix}_city") or ""),
+                str(segment.get(f"{prefix}_location_id") or ""),
+                str(segment.get(f"{prefix}_canonical_unlocode") or ""),
             }
             normalized = {item.strip().casefold() for item in values if item.strip()}
             if expected in normalized:
@@ -433,6 +534,99 @@ def high_risk_zones_in_path(path: list[dict[str, Any]], threshold: float = 0.6) 
         if float(segment.get("news_risk_score") or 0.0) >= threshold
         for zone in segment.get("news_risk_zones", [])
     })
+
+
+def recommendation_supplier(value: str) -> dict[str, Any] | None:
+    rows = safe_query(
+        """
+        MATCH (supplier:Supplier)
+        WHERE toLower(coalesce(supplier.supplier_id,supplier.supplierCode,''))=toLower($value)
+           OR toLower(coalesce(supplier.name,''))=toLower($value)
+           OR toLower(coalesce(supplier.supplier_id,supplier.supplierCode,'')) CONTAINS toLower($value)
+           OR toLower(coalesce(supplier.name,'')) CONTAINS toLower($value)
+        OPTIONAL MATCH (supplier)-[:SHIPS_FROM]->(shippingOrigin)
+        WITH supplier,
+             CASE WHEN toLower(coalesce(supplier.supplier_id,supplier.supplierCode,''))=toLower($value)
+                        OR toLower(coalesce(supplier.name,''))=toLower($value)
+                  THEN 0 ELSE 1 END AS exactRank,
+             [item IN collect(DISTINCT CASE WHEN shippingOrigin IS NULL THEN null ELSE {
+               elementId:elementId(shippingOrigin),
+               id:coalesce(shippingOrigin.location_id,shippingOrigin.unlocode,shippingOrigin.iata,
+                           shippingOrigin.code,shippingOrigin.id,shippingOrigin.name),
+               name:shippingOrigin.name,
+               city:shippingOrigin.city,
+               country:shippingOrigin.country,
+               labels:labels(shippingOrigin)
+             } END) WHERE item IS NOT NULL] AS shippingOrigins
+        RETURN coalesce(supplier.supplier_id,supplier.supplierCode,elementId(supplier)) AS id,
+               supplier.name AS name,supplier.city AS city,supplier.country AS country,
+               CASE WHEN supplier.provider_risk_status IN ['available','partial']
+                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
+                    THEN supplier.provider_risk_score END AS riskScore,
+               CASE WHEN supplier.provider_risk_status IN ['available','partial']
+                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
+                    THEN supplier.provider_risk_status ELSE 'unavailable' END AS riskStatus,
+               CASE WHEN supplier.provider_risk_status IN ['available','partial']
+                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
+                    THEN coalesce(supplier.provider_risk_data_completeness,0.0) ELSE 0.0 END AS riskDataCompleteness,
+               CASE WHEN supplier.provider_risk_status IN ['available','partial']
+                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
+                    THEN coalesce(supplier.provider_risk_providers,[]) ELSE [] END AS riskProviders,
+               CASE WHEN supplier.provider_risk_status IN ['available','partial']
+                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
+                    THEN coalesce(supplier.provider_risk_evidence,[]) ELSE [] END AS riskEvidence,
+               supplier.risk_explanation AS riskExplanation,
+               shippingOrigins,
+               exactRank
+        ORDER BY exactRank,name
+        LIMIT 1
+        """,
+        {"value": value},
+    )
+    return rows[0] if rows else None
+
+
+def supplier_origin_node_ids(
+    segments: list[dict[str, Any]],
+    matched_origin_ids: set[str],
+    supplier: dict[str, Any],
+) -> set[str]:
+    supplier_origins = supplier.get("shippingOrigins") or []
+    if not supplier_origins:
+        return set()
+
+    def normalized(values: set[Any]) -> set[str]:
+        return {str(item).strip().casefold() for item in values if item is not None and str(item).strip()}
+
+    supplier_values = [
+        normalized(
+            {
+                origin.get("elementId"),
+                origin.get("id"),
+                origin.get("name"),
+                origin.get("city"),
+            }
+        )
+        for origin in supplier_origins
+    ]
+    compatible: set[str] = set()
+    for segment in segments:
+        for prefix in ("from", "to"):
+            node_id = str(segment[f"{prefix}_id"])
+            if node_id not in matched_origin_ids:
+                continue
+            node_values = normalized(
+                {
+                    node_id,
+                    segment.get(f"{prefix}_location_id"),
+                    segment.get(f"{prefix}_canonical_unlocode"),
+                    segment.get(f"{prefix}_name"),
+                    segment.get(f"{prefix}_city"),
+                }
+            )
+            if any(node_values.intersection(origin_values) for origin_values in supplier_values):
+                compatible.add(node_id)
+    return compatible
 
 
 @app.get(
@@ -471,6 +665,20 @@ def suppliers(search: str | None = Query(None), limit: int = Query(100, ge=1, le
 
 
 @app.get(
+    "/api/suppliers/{supplier_id}/origins",
+    tags=["Route Planning"],
+    summary="List origins explicitly linked to a supplier",
+)
+def supplier_origins(supplier_id: str) -> dict[str, Any]:
+    supplier = recommendation_supplier(supplier_id)
+    if supplier is None:
+        raise HTTPException(status_code=404, detail=f"Supplier {supplier_id!r} was not found")
+    origins = supplier.pop("shippingOrigins", [])
+    supplier.pop("exactRank", None)
+    return {"supplier": supplier, "count": len(origins), "origins": origins}
+
+
+@app.get(
     "/api/cities",
     tags=["Route Planning"],
     summary="List origin and destination cities or named route nodes",
@@ -484,7 +692,14 @@ def cities(search: str | None = Query(None), limit: int = Query(200, ge=1, le=50
              coalesce(node.name, node.code, node.id, elementId(node)) AS name
         WHERE $search IS NULL OR toLower(toString(value)) CONTAINS toLower($search)
         RETURN value AS id, value, name, node.city AS city, node.country AS country,
-               node.latitude AS lat, node.longitude AS lng, labels(node) AS labels
+               node.latitude AS lat, node.longitude AS lng, labels(node) AS labels,
+               coalesce(node.location_id,node.unlocode,node.iata,node.code,node.id) AS locationId,
+               node.canonical_unlocode AS canonicalUnlocode,
+               node.coordinate_source AS coordinateSource,
+               node.coordinate_source_url AS coordinateSourceUrl,
+               node.coordinate_status AS coordinateStatus,
+               node.coordinate_confidence AS coordinateConfidence,
+               node.coordinate_collected_at AS coordinateCollectedAt
         ORDER BY value, name
         LIMIT $limit
         """,
@@ -494,9 +709,224 @@ def cities(search: str | None = Query(None), limit: int = Query(200, ge=1, le=50
 
 
 @app.get(
+    "/api/geography/locations",
+    tags=["Geospatial"],
+    summary="List route locations with coordinate provenance",
+)
+def geography_locations(
+    status: str | None = Query(None, description="Filter by coordinate_status"),
+    limit: int = Query(250, ge=1, le=1000),
+) -> dict[str, Any]:
+    status_value = status if isinstance(status, str) else None
+    rows = safe_query(
+        """
+        MATCH (location:TransportLocation)
+        WHERE $status IS NULL OR location.coordinate_status=$status
+        RETURN coalesce(location.location_id,location.unlocode,location.iata,location.code,location.id) AS locationId,
+               coalesce(location.name_zh,location.name_en,location.name) AS name,
+               location.city AS city,location.country AS country,labels(location) AS labels,
+               location.unlocode AS legacyUnlocode,
+               location.canonical_unlocode AS canonicalUnlocode,
+               location.identity_status AS identityStatus,
+               location.latitude AS lat,location.longitude AS lng,
+               location.coordinate_source AS coordinateSource,
+               location.coordinate_source_url AS coordinateSourceUrl,
+               location.coordinate_license AS coordinateLicense,
+               location.coordinate_status AS coordinateStatus,
+               location.coordinate_confidence AS coordinateConfidence,
+               location.coordinate_collected_at AS coordinateCollectedAt
+        ORDER BY locationId
+        LIMIT $limit
+        """,
+        {"status": status_value, "limit": limit},
+    )
+    return {"count": len(rows), "locations": rows}
+
+
+@app.get(
+    "/api/geography/zones",
+    tags=["Geospatial"],
+    summary="List geospatial risk zones and their source metadata",
+)
+def geography_zones(include_geometry: bool = Query(True)) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (zone:GeoZone)
+        RETURN zone.zone_id AS zoneId,zone.name AS name,zone.zone_type AS zoneType,
+               zone.applicable_modes AS applicableModes,
+               zone.geometry_geojson AS geometry,
+               zone.geometry_source AS geometrySource,
+               zone.geometry_source_url AS geometrySourceUrl,
+               zone.geometry_license AS geometryLicense,
+               zone.geometry_status AS geometryStatus,
+               zone.geometry_confidence AS geometryConfidence,
+               zone.geometry_collected_at AS geometryCollectedAt,
+               zone.current_risk_score AS currentRiskScore,
+               zone.current_risk_level AS currentRiskLevel,
+               zone.updated_at AS riskUpdatedAt,zone.expires_at AS riskExpiresAt
+        ORDER BY zoneId
+        """
+    )
+    for row in rows:
+        if include_geometry:
+            row["geometry"] = decoded_json(row.get("geometry"))
+        else:
+            row.pop("geometry", None)
+    return {"count": len(rows), "zones": rows}
+
+
+@app.get(
+    "/api/geography/segments/{segment_id}",
+    tags=["Geospatial"],
+    summary="Get one route geometry and its risk-zone intersections",
+)
+def geography_segment(segment_id: str) -> dict[str, Any]:
+    rows = safe_query(
+        """
+        MATCH (segment:RouteSegment)
+        WHERE coalesce(segment.segment_id,segment.segmentId,elementId(segment))=$segment_id
+        OPTIONAL MATCH (segment)-[:FROM_NODE]->(origin)
+        OPTIONAL MATCH (segment)-[:TO_NODE]->(destination)
+        OPTIONAL MATCH (segment)-[exposure:PASSES_THROUGH]->(zone:GeoZone)
+        WHERE coalesce(exposure.active,true)=true
+        WITH segment,head(collect(DISTINCT origin)) AS origin,
+             head(collect(DISTINCT destination)) AS destination,
+             [item IN collect(DISTINCT CASE WHEN zone IS NULL THEN null ELSE {
+               zoneId:zone.zone_id,zoneName:zone.name,
+               exposureMethod:exposure.exposure_method,
+               intersectionDistanceKm:exposure.intersection_distance_km,
+               routeDistanceKm:exposure.route_distance_km,
+               exposureRatio:exposure.exposure_ratio,
+               confidence:exposure.confidence,
+               geometryStatus:exposure.geometry_status
+             } END) WHERE item IS NOT NULL] AS exposures
+        RETURN coalesce(segment.segment_id,segment.segmentId,elementId(segment)) AS segmentId,
+               coalesce(segment.canonical_mode,segment.mode,segment.routeMode) AS mode,
+               segment.data_status AS dataStatus,
+               segment.feasibility_status AS feasibilityStatus,
+               segment.feasibility_reason AS feasibilityReason,
+               segment.geometry_geojson AS geometry,
+               segment.geometry_source AS geometrySource,
+               segment.geometry_source_url AS geometrySourceUrl,
+               segment.geometry_license AS geometryLicense,
+               segment.geometry_status AS geometryStatus,
+               segment.geometry_confidence AS geometryConfidence,
+               segment.geometry_distance_km AS geometryDistanceKm,
+               segment.geometry_method AS geometryMethod,
+               segment.geometry_generated_at AS geometryGeneratedAt,
+               {id:coalesce(origin.location_id,origin.unlocode,origin.iata,origin.code,origin.id),
+                name:coalesce(origin.name_zh,origin.name_en,origin.name),city:origin.city,country:origin.country,
+                lat:origin.latitude,lng:origin.longitude,coordinateSource:origin.coordinate_source,
+                coordinateStatus:origin.coordinate_status,coordinateConfidence:origin.coordinate_confidence} AS origin,
+               {id:coalesce(destination.location_id,destination.unlocode,destination.iata,destination.code,destination.id),
+                name:coalesce(destination.name_zh,destination.name_en,destination.name),city:destination.city,country:destination.country,
+                lat:destination.latitude,lng:destination.longitude,coordinateSource:destination.coordinate_source,
+                coordinateStatus:destination.coordinate_status,coordinateConfidence:destination.coordinate_confidence} AS destination,
+               exposures
+        """,
+        {"segment_id": segment_id},
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"RouteSegment {segment_id!r} was not found")
+    result = rows[0]
+    result["geometry"] = decoded_json(result.get("geometry"))
+    return result
+
+
+@app.post(
+    "/api/routes/recommend",
+    tags=["Route Planning"],
+    summary="Recommend routes with multi-objective weights and hard constraints",
+    response_model=RecommendationResponse,
+    response_model_by_alias=True,
+)
+def recommend_routes_post(payload: RecommendationRequest) -> RecommendationResponse:
+    supplier = recommendation_supplier(payload.supplier_id)
+    if supplier is None:
+        raise HTTPException(status_code=404, detail=f"Supplier {payload.supplier_id!r} was not found")
+
+    segments = route_graph_segments()
+    matched_origin_ids = matching_node_ids(segments, payload.origin)
+    destination_ids = matching_node_ids(segments, payload.destination)
+    if not matched_origin_ids:
+        raise HTTPException(status_code=404, detail=f"Origin {payload.origin!r} was not found in the route network")
+    if not destination_ids:
+        raise HTTPException(status_code=404, detail=f"Destination {payload.destination!r} was not found in the route network")
+    if not supplier.get("shippingOrigins"):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Supplier {supplier['id']!r} has no SHIPS_FROM origin mapping; recommendation was not guessed",
+        )
+    origin_ids = supplier_origin_node_ids(segments, matched_origin_ids, supplier)
+    if not origin_ids:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Origin {payload.origin!r} is not linked to supplier {supplier['id']!r}; "
+                "use GET /api/suppliers/{supplier_id}/origins"
+            ),
+        )
+
+    engine = RecommendationEngine()
+    try:
+        result = engine.recommend(segments, origin_ids, destination_ids, supplier, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if not result["networkPathFound"]:
+        raise HTTPException(
+            status_code=404,
+            detail="No directed feasible RouteSegment path connects the supplier origin and destination",
+        )
+
+    generated_at = datetime.now(timezone.utc)
+    supplier_summary = {
+        "id": supplier["id"],
+        "name": supplier.get("name"),
+        "city": supplier.get("city"),
+        "country": supplier.get("country"),
+    }
+    response = RecommendationResponse.model_validate(
+        {
+            "snapshotId": f"recommendation_{uuid4().hex}",
+            "scoringVersion": engine.scoring_version,
+            "generatedAt": generated_at,
+            "query": {
+                "supplier": supplier_summary,
+                "origin": payload.origin,
+                "destination": payload.destination,
+                "resolvedOriginNodeIds": sorted(origin_ids),
+                "resolvedDestinationNodeIds": sorted(destination_ids),
+                "cargo": payload.cargo.model_dump(mode="json", by_alias=True),
+                "strategy": payload.strategy.value,
+                "constraintsAppliedBeforeRanking": True,
+            },
+            "resolvedWeights": engine.resolved_weights(payload).model_dump(mode="json", by_alias=True),
+            "normalization": engine.normalization_metadata(),
+            "dynamicRouting": result["dynamicRouting"],
+            "candidateCount": result["candidateCount"],
+            "eligibleCount": result["eligibleCount"],
+            "count": len(result["routes"]),
+            "rejectedCandidates": result["rejectedCandidates"],
+            "routes": result["routes"],
+        }
+    )
+    settings = load_recommendation_settings()
+    persist_recommendation_snapshot(
+        safe_query,
+        payload,
+        response,
+        result["includedSegments"],
+        int(settings["snapshot"]["retention_days"]),
+    )
+    return response
+
+
+@app.get(
     "/api/routes/recommend",
     tags=["Route Planning"],
     summary="Query multiple complete routes by supplier, origin, and destination",
+    deprecated=True,
+    description="兼容旧前端；新开发请使用同路径的 POST 接口。",
 )
 def recommend_routes(
     supplier: str = Query(..., description="Supplier ID or name, for example CATL or SUP-CATL"),
@@ -589,7 +1019,7 @@ def recommend_routes(
                 "detail": exact_supplier.get("riskExplanation") or f"供应商 {exact_supplier['name']} 暂无可验证风险 Provider",
             },
         )
-    maximum_cost = max(item["cost"] for item in formatted) or 1.0
+    legacy_engine = RecommendationEngine()
     formatted.sort(
         key=lambda route: risk_weight
         * risk_optimization_value(
@@ -598,7 +1028,7 @@ def recommend_routes(
                 "risk_data_completeness": route.get("riskDataCompleteness"),
             }
         )
-        + (1 - risk_weight) * route["cost"] / maximum_cost
+        + (1 - risk_weight) * legacy_engine.penalty_score(float(route["cost"]), "cost_per_vehicle_usd")
     )
     routes = formatted[:limit]
     if routes:
@@ -967,3 +1397,42 @@ def trigger_gdelt_update(payload: GdeltUpdateRequest, background_tasks: Backgrou
         raise HTTPException(401, "Invalid or missing GDELT admin token")
     background_tasks.add_task(update_news_risk, payload.dryRun, zone_ids=payload.zoneIds or None)
     return {"status": "accepted"}
+
+
+@app.get(
+    "/api/recommendations/{snapshot_id}",
+    tags=["Route Planning"],
+    summary="Read a persisted recommendation snapshot",
+    response_model=RecommendationResponse,
+    response_model_by_alias=True,
+)
+def recommendation_snapshot(snapshot_id: str) -> RecommendationResponse:
+    rows = safe_query(GET_SNAPSHOT_QUERY, {"snapshot_id": snapshot_id})
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"RecommendationSnapshot {snapshot_id!r} was not found")
+    payload = decoded_json(rows[0].get("response_json"))
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=500, detail="RecommendationSnapshot response_json is invalid")
+    return RecommendationResponse.model_validate(payload)
+
+
+@app.get(
+    "/api/routes/{route_id}",
+    tags=["Route Planning"],
+    summary="Read one route from its latest recommendation snapshot",
+)
+def recommended_route_detail(route_id: str) -> dict[str, Any]:
+    rows = safe_query(GET_ROUTE_QUERY, {"route_id": route_id})
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"Recommended route {route_id!r} was not found")
+    payload = decoded_json(rows[0].get("response_json"))
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=500, detail="RecommendationSnapshot response_json is invalid")
+    route = next((item for item in payload.get("routes", []) if item.get("id") == route_id), None)
+    if route is None:
+        raise HTTPException(status_code=404, detail=f"Recommended route {route_id!r} was not found in snapshot")
+    return {
+        "snapshotId": rows[0]["snapshot_id"],
+        "createdAt": rows[0].get("created_at"),
+        "route": route,
+    }

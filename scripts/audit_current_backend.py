@@ -544,20 +544,19 @@ def collect_api_inventory() -> list[dict[str, Any]]:
     from app.main import app
 
     routes: list[dict[str, Any]] = []
-    for route in app.routes:
-        path = getattr(route, "path", None)
-        methods = sorted(getattr(route, "methods", set()) or set())
-        if not path or not methods:
-            continue
-        routes.append(
-            {
-                "path": path,
-                "methods": methods,
-                "name": getattr(route, "name", None),
-                "deprecated": bool(getattr(route, "deprecated", False)),
-                "tags": list(getattr(route, "tags", None) or []),
-            }
-        )
+    for path, path_item in app.openapi().get("paths", {}).items():
+        for method, operation in path_item.items():
+            if method.upper() not in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}:
+                continue
+            routes.append(
+                {
+                    "path": path,
+                    "methods": [method.upper()],
+                    "name": operation.get("operationId"),
+                    "deprecated": bool(operation.get("deprecated", False)),
+                    "tags": list(operation.get("tags") or []),
+                }
+            )
     return sorted(routes, key=lambda item: (item["path"], item["methods"]))
 
 
@@ -704,9 +703,9 @@ def render_report(inventory: dict[str, Any]) -> str:
     lines = [
         "# 当前后端与 AuraDB 只读审计报告",
         "",
-        f"> 生成时间（UTC）：`{metadata['generated_at_utc']}`  ",
-        f"> 审计版本：`{metadata['audit_version']}`  ",
-        f"> 数据库：`{metadata['database']}`  ",
+        f"> 生成时间（UTC）：`{metadata['generated_at_utc']}`",
+        f"> 审计版本：`{metadata['audit_version']}`",
+        f"> 数据库：`{metadata['database']}`",
         "> 本报告由只读 Neo4j 会话生成；本阶段未执行新增、修改或删除。",
         "",
         "## 1. 审计结论",
@@ -836,7 +835,7 @@ def render_report(inventory: dict[str, Any]) -> str:
             ),
             "### 6.2 当前 FastAPI 路由",
             "",
-            f"当前应用共注册 **{len(inventory['api_routes'])}** 个 HTTP 路由（包含 `/docs` 等框架路由）。",
+            f"当前 OpenAPI 共公开 **{len(inventory['api_routes'])}** 个 HTTP 操作（不包含 `/docs` 等框架页面）。",
             "",
             markdown_table(
                 ["方法", "路径", "标签", "deprecated"],

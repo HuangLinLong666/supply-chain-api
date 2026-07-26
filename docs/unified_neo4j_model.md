@@ -33,9 +33,12 @@
 | `CostObservation` | `observation_id` | 609 | `RouteCostObservation`、`CostEstimate` |
 | `DelayObservation` | `observation_id` | 628 | `RouteDelayObservation` |
 | `Evidence` | `evidence_id` | 11,957 | GDELT 新闻、`SourceEvidence` |
-| `Vessel` | `mmsi` | 1 | 原 `Vessel` |
-| `PortTrafficSnapshot` | `snapshot_id` | 0 | 已建约束，等待阶段 7 AIS 数据 |
-| `RecommendationSnapshot` | `snapshot_id` | 0 | 已建约束，等待阶段 8 推荐结果快照 |
+| `Vessel` | `mmsi` | 1 | 旧 DEMO 已在阶段 7 标为 `synthetic + excluded` |
+| `VesselObservation` | `observation_id` | 1 | 旧 DEMO 观测已排除；真实 worker 每船只保留一条最新状态 |
+| `AisObservationTarget` | `target_id` | 4 | 上海、新加坡、鹿特丹、苏伊士监测区 |
+| `AisProviderState` | `provider_id` | 1 | AIS worker 健康状态，不保存 API Key |
+| `PortTrafficSnapshot` | `snapshot_id` | 0 | 阶段 7 聚合模型已完成，等待真实 AIS worker 产生快照 |
+| `RecommendationSnapshot` | `snapshot_id` | 3 | 阶段 8 真实 API 冒烟调用的算法审计快照 |
 
 `Port`、`Airport`、`RailTerminal` 和 `RoadTerminal` 都使用 `TransportLocation.location_id` 的全局唯一约束，不重复创建互相冲突的地点主键体系。
 
@@ -48,6 +51,11 @@
 (Route)-[:HAS_RISK_OBSERVATION]->(RiskObservation)
 (Route)-[:HAS_COST_OBSERVATION]->(CostObservation)
 (Port)-[:HAS_RISK_OBSERVATION]->(RiskObservation)
+(AisObservationTarget)-[:REPRESENTS_PORT]->(Port)
+(AisObservationTarget)-[:REPRESENTS_ZONE]->(GeoZone)
+(AisObservationTarget)-[:HAS_TRAFFIC_SNAPSHOT]->(PortTrafficSnapshot)
+(RouteSegment)-[:EXPOSED_TO_AIS_TRAFFIC]->(PortTrafficSnapshot)
+(RouteSegment)-[:INCLUDED_IN]->(RecommendationSnapshot)
 ```
 
 本次新增 69 条关系：
@@ -170,7 +178,7 @@ ORDER BY count DESC;
 
 - 未删除无 Provider 的默认风险，交由阶段 4 处理；
 - 未执行 GDELT 去重、分类与 TTL 重构，交由阶段 5 处理；
-- 未补地点坐标、路线 geometry 和 GeoZone Polygon，交由阶段 6 处理；
-- 未创建真实 `PortTrafficSnapshot`，交由阶段 7 AIS 整合；
-- 未创建 `RecommendationSnapshot`，交由阶段 8 推荐接口；
+- 地点坐标、路线 geometry、GeoZone Polygon 和 `PASSES_THROUGH` 已在阶段 6 完成，见 `docs/stage6_geospatial_risk_zones.md`；
+- 阶段 7 AIS 消费、聚合、健康检查与路段拥堵风险已完成；当前因未配置真实 worker，`PortTrafficSnapshot=0`，见 `docs/aisstream_port_traffic.md`；
+- 阶段 8 已创建 `RecommendationSnapshot`，保存请求、权重、约束、评分版本和完整响应，并用 `INCLUDED_IN` 连接入选分段；
 - 未把来源不明的数据错误标记为真实 Provider。
