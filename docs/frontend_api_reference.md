@@ -29,6 +29,7 @@ Swagger=https://supply-chain-api-kyiy.onrender.com/docs
 | 查询推荐路径 | `POST /api/routes/recommend` | 返回多条完整候选路径并完成排序 |
 | 查看历史推荐 | `GET /api/recommendations/{snapshotId}` | 回读一次完整推荐结果 |
 | 查看单条路线 | `GET /api/routes/{routeId}` | 回读某条候选路线 |
+| 查看路线风险新闻 | `GET /api/routes/{routeId}/risk-news` | 返回影响该路线的新闻、链接、风险区和分段 |
 
 ## 3. 地点 ID 约定
 
@@ -324,6 +325,68 @@ GET /api/routes/{routeId}
 ```
 
 作用：进入路线详情页时读取单条候选路线。`routeId` 来自 `routes[].id`，不能用 `snapshotId` 代替。
+
+### 6.3 获取某条路线的风险新闻
+
+```http
+GET /api/routes/{routeId}/risk-news?active_only=true&limit=50
+```
+
+可选参数：
+
+| 参数 | 默认值 | 作用 |
+|---|---|---|
+| `active_only` | `true` | 只返回仍在 TTL 有效期内的事件簇 |
+| `category` | 空 | 按 `conflict`、`trade_policy` 等事件类别筛选 |
+| `limit` | `50` | 限制新闻数量，范围 `1-200` |
+
+该接口使用当时推荐快照中的 `legs[].id`，查询每个分段通过 `EXPOSED_TO_NEWS_CLUSTER` 关联的 GDELT 事件簇和原始新闻。不会把只是地名相似、但未与该路段建立风险关联的新闻混入结果。
+
+响应关键字段：
+
+| 字段 | 前端用途 |
+|---|---|
+| `riskScoreEvidence` | 显示路线总风险分、新闻因子分、Provider 和有效期 |
+| `affectedLegs` | 在地图上高亮受新闻影响的具体分段 |
+| `zones` | 显示苏伊士、红海、马六甲等受影响风险区 |
+| `clusters` | 展示去重聚类后的事件、严重度和来源数 |
+| `events` | 展示新闻标题、`url`、时间、来源、类别和受影响分段 |
+
+```json
+{
+  "routeId": "route-xxx",
+  "riskScoreEvidence": {
+    "routeRiskScore": 58,
+    "newsFactorScore": 72,
+    "provider": "GDELT",
+    "scoreRole": "input_factor",
+    "articleLevelAllocation": "not_available"
+  },
+  "affectedLegs": [
+    {
+      "id": "SEG-SEA-1",
+      "newsRiskScore": 72,
+      "zoneIds": ["suez-canal"],
+      "clusterIds": ["cluster-1"]
+    }
+  ],
+  "events": [
+    {
+      "id": "article-1",
+      "title": "Shipping disruption near canal",
+      "url": "https://example.com/news/1",
+      "category": "conflict",
+      "usedByRiskScore": true,
+      "affectedLegIds": ["SEG-SEA-1"],
+      "zoneIds": ["suez-canal"]
+    }
+  ]
+}
+```
+
+`articleLevelAllocation=not_available` 表示新闻事件簇确实参与新闻风险因子，但后端不伪造“某单篇文章单独贡献了总分的 12%”这类无法审计的数字。
+
+`scoreBasis=recommendation_snapshot` 表示路线总分使用推荐当时的快照；`active_only=true` 时新闻列表则按调用接口当时的事件簇 TTL 筛选。因此当新闻后来过期时，历史 RiskScore 仍然可回读，但当前有效新闻列表可以为空。
 
 ## 7. 实时风险与数据新鲜度
 

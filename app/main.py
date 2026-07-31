@@ -1479,12 +1479,7 @@ def recommendation_snapshot(snapshot_id: str) -> RecommendationResponse:
     return RecommendationResponse.model_validate(payload)
 
 
-@app.get(
-    "/api/routes/{route_id}",
-    tags=["Route Planning"],
-    summary="Read one route from its latest recommendation snapshot",
-)
-def recommended_route_detail(route_id: str) -> dict[str, Any]:
+def _latest_recommended_route(route_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
     rows = safe_query(GET_ROUTE_QUERY, {"route_id": route_id})
     if not rows:
         raise HTTPException(status_code=404, detail=f"Recommended route {route_id!r} was not found")
@@ -1494,8 +1489,230 @@ def recommended_route_detail(route_id: str) -> dict[str, Any]:
     route = next((item for item in payload.get("routes", []) if item.get("id") == route_id), None)
     if route is None:
         raise HTTPException(status_code=404, detail=f"Recommended route {route_id!r} was not found in snapshot")
+    return rows[0], route
+
+
+@app.get(
+    "/api/routes/{route_id}",
+    tags=["Route Planning"],
+    summary="Read one route from its latest recommendation snapshot",
+)
+def recommended_route_detail(route_id: str) -> dict[str, Any]:
+    snapshot, route = _latest_recommended_route(route_id)
     return {
-        "snapshotId": rows[0]["snapshot_id"],
-        "createdAt": rows[0].get("created_at"),
+        "snapshotId": snapshot["snapshot_id"],
+        "createdAt": snapshot.get("created_at"),
         "route": route,
+    }
+
+
+@app.get(
+    "/api/routes/{route_id}/risk-news",
+    tags=["Route Planning"],
+    summary="Get GDELT news evidence affecting one recommended route",
+)
+def recommended_route_risk_news(
+    route_id: str,
+    active_only: bool = Query(True, description="Only return clusters whose risk TTL has not expired"),
+    category: str | None = Query(None, description="Optional GDELT event category filter"),
+    limit: int = Query(50, ge=1, le=200),
+) -> dict[str, Any]:
+    snapshot, route = _latest_recommended_route(route_id)
+    legs = [leg for leg in route.get("legs", []) if isinstance(leg, dict) and leg.get("id")]
+    leg_ids = [str(leg["id"]) for leg in legs]
+    rows = safe_query(
+        """
+        UNWIND $leg_ids AS requested_leg_id
+        MATCH (segment:RouteSegment)
+        WHERE coalesce(segment.segment_id,segment.segmentId,elementId(segment))=requested_leg_id
+        MATCH (segment)-[:EXPOSED_TO_NEWS_CLUSTER]->(cluster:NewsRiskCluster)
+        WHERE (NOT $active_only OR coalesce(cluster.expires_at>datetime(),false))
+          AND ($category IS NULL OR cluster.event_category=$category)
+        OPTIONAL MATCH (cluster)-[:AFFECTS_ZONE]->(zone:NewsRiskZone)
+        OPTIONAL MATCH (event:NewsRiskEvent)-[:MEMBER_OF_EVENT_CLUSTER]->(cluster)
+        RETURN requested_leg_id AS legId,
+               segment.news_risk_score AS segmentNewsRiskScore,
+               segment.news_risk_status AS segmentNewsRiskStatus,
+               segment.news_risk_updated_at AS segmentNewsRiskUpdatedAt,
+               segment.news_risk_expires_at AS segmentNewsRiskExpiresAt,
+               cluster.cluster_id AS clusterId,
+               cluster.event_category AS category,
+               cluster.representative_title AS clusterTitle,
+               cluster.severity AS clusterSeverity,
+               cluster.effective_severity AS clusterEffectiveSeverity,
+               cluster.article_count AS clusterArticleCount,
+               cluster.distinct_domain_count AS clusterSourceCount,
+               cluster.domains AS clusterDomains,
+               cluster.first_seen AS clusterFirstSeen,
+               cluster.last_seen AS clusterLastSeen,
+               cluster.expires_at AS clusterExpiresAt,
+               cluster.source_credibility_status AS clusterSourceCredibilityStatus,
+               coalesce(cluster.expires_at>datetime(),false) AS active,
+               zone.zone_id AS zoneId,zone.name AS zoneName,
+               zone.current_risk_score AS zoneRiskScore,
+               zone.current_risk_level AS zoneRiskLevel,
+               event.article_id AS eventId,event.title AS title,event.url AS url,
+               event.canonical_url AS canonicalUrl,event.domain AS domain,
+               event.seen_at AS seenAt,event.severity AS severity,
+               event.event_category AS eventCategory,event.matched_terms AS matchedTerms,
+               event.source_credibility_status AS sourceCredibilityStatus
+        ORDER BY event.seen_at DESC,cluster.last_seen DESC,requested_leg_id
+        LIMIT $limit
+        """,
+        {"leg_ids": leg_ids, "active_only": active_only, "category": category, "limit": limit},
+    ) if leg_ids else []
+
+    news_factor = next(
+        (
+            factor
+            for factor in route.get("riskFactors", [])
+            if isinstance(factor, dict) and factor.get("key") in {"news", "news_risk"}
+        ),
+        None,
+    ) or {}
+    scoring_cluster_ids = {str(item) for item in news_factor.get("evidence") or [] if item}
+    leg_by_id = {str(leg["id"]): leg for leg in legs}
+    affected_legs: dict[str, dict[str, Any]] = {}
+    zones: dict[str, dict[str, Any]] = {}
+    clusters: dict[str, dict[str, Any]] = {}
+    events: dict[str, dict[str, Any]] = {}
+
+    for row in rows:
+        leg_id = str(row.get("legId") or "")
+        leg = leg_by_id.get(leg_id, {})
+        affected_leg = affected_legs.setdefault(
+            leg_id,
+            {
+                "id": leg_id,
+                "from": leg.get("from"),
+                "to": leg.get("to"),
+                "mode": leg.get("mode"),
+                "routeRiskScore": leg.get("riskScore"),
+                "newsRiskScore": (
+                    round(float(row["segmentNewsRiskScore"]) * 100, 2)
+                    if row.get("segmentNewsRiskScore") is not None
+                    and 0 <= float(row["segmentNewsRiskScore"]) <= 1
+                    else row.get("segmentNewsRiskScore")
+                ),
+                "newsRiskStatus": row.get("segmentNewsRiskStatus") or "unavailable",
+                "observedAt": row.get("segmentNewsRiskUpdatedAt"),
+                "expiresAt": row.get("segmentNewsRiskExpiresAt"),
+                "zoneIds": [],
+                "clusterIds": [],
+            },
+        )
+        zone_id = row.get("zoneId")
+        if zone_id:
+            if zone_id not in affected_leg["zoneIds"]:
+                affected_leg["zoneIds"].append(zone_id)
+            zone = zones.setdefault(
+                str(zone_id),
+                {
+                    "id": zone_id,
+                    "name": row.get("zoneName"),
+                    "riskScore": row.get("zoneRiskScore"),
+                    "riskLevel": row.get("zoneRiskLevel"),
+                    "affectedLegIds": [],
+                    "clusterIds": [],
+                },
+            )
+            if leg_id not in zone["affectedLegIds"]:
+                zone["affectedLegIds"].append(leg_id)
+
+        cluster_id = row.get("clusterId")
+        if cluster_id:
+            cluster_id = str(cluster_id)
+            if cluster_id not in affected_leg["clusterIds"]:
+                affected_leg["clusterIds"].append(cluster_id)
+            cluster = clusters.setdefault(
+                cluster_id,
+                {
+                    "id": cluster_id,
+                    "category": row.get("category"),
+                    "title": row.get("clusterTitle"),
+                    "severity": row.get("clusterSeverity"),
+                    "effectiveSeverity": row.get("clusterEffectiveSeverity"),
+                    "articleCount": row.get("clusterArticleCount"),
+                    "sourceCount": row.get("clusterSourceCount"),
+                    "domains": row.get("clusterDomains") or [],
+                    "firstSeen": row.get("clusterFirstSeen"),
+                    "lastSeen": row.get("clusterLastSeen"),
+                    "expiresAt": row.get("clusterExpiresAt"),
+                    "active": bool(row.get("active")),
+                    "sourceCredibilityStatus": row.get("clusterSourceCredibilityStatus"),
+                    "usedByRiskScore": cluster_id in scoring_cluster_ids,
+                    "affectedLegIds": [],
+                    "zoneIds": [],
+                    "eventIds": [],
+                },
+            )
+            if leg_id not in cluster["affectedLegIds"]:
+                cluster["affectedLegIds"].append(leg_id)
+            if zone_id and zone_id not in cluster["zoneIds"]:
+                cluster["zoneIds"].append(zone_id)
+            if zone_id and cluster_id not in zones[str(zone_id)]["clusterIds"]:
+                zones[str(zone_id)]["clusterIds"].append(cluster_id)
+
+        event_id = row.get("eventId")
+        if event_id:
+            event_id = str(event_id)
+            event = events.setdefault(
+                event_id,
+                {
+                    "id": event_id,
+                    "title": row.get("title"),
+                    "url": row.get("url"),
+                    "canonicalUrl": row.get("canonicalUrl"),
+                    "domain": row.get("domain"),
+                    "seenAt": row.get("seenAt"),
+                    "severity": row.get("severity"),
+                    "category": row.get("eventCategory") or row.get("category"),
+                    "matchedTerms": row.get("matchedTerms") or [],
+                    "sourceCredibilityStatus": row.get("sourceCredibilityStatus"),
+                    "usedByRiskScore": bool(cluster_id and cluster_id in scoring_cluster_ids),
+                    "affectedLegIds": [],
+                    "zoneIds": [],
+                    "clusterIds": [],
+                },
+            )
+            if leg_id not in event["affectedLegIds"]:
+                event["affectedLegIds"].append(leg_id)
+            if zone_id and zone_id not in event["zoneIds"]:
+                event["zoneIds"].append(zone_id)
+            if cluster_id and cluster_id not in event["clusterIds"]:
+                event["clusterIds"].append(cluster_id)
+            if cluster_id and event_id not in clusters[cluster_id]["eventIds"]:
+                clusters[cluster_id]["eventIds"].append(event_id)
+
+    return {
+        "snapshotId": snapshot["snapshot_id"],
+        "routeId": route_id,
+        "routeName": route.get("name"),
+        "createdAt": snapshot.get("created_at"),
+        "activeOnly": active_only,
+        "category": category,
+        "riskScoreEvidence": {
+            "routeRiskScore": route.get("riskScore"),
+            "routeRiskStatus": route.get("riskStatus"),
+            "newsFactorScore": news_factor.get("score"),
+            "newsFactorStatus": news_factor.get("status") or "unavailable",
+            "provider": news_factor.get("provider"),
+            "observedAt": news_factor.get("observedAt"),
+            "expiresAt": news_factor.get("expiresAt"),
+            "affectedLegIds": news_factor.get("affectedLegIds") or [],
+            "clusterIds": sorted(scoring_cluster_ids),
+            "scoreRole": "input_factor",
+            "articleLevelAllocation": "not_available",
+            "scoreBasis": "recommendation_snapshot",
+            "evidenceSelectionBasis": "current_cluster_ttl" if active_only else "all_linked_clusters",
+            "explanation": "GDELT 事件簇作为新闻风险因子证据；后端不伪造单篇文章对总分的独立百分比。",
+        },
+        "affectedLegCount": len([leg for leg in affected_legs.values() if leg["clusterIds"]]),
+        "zoneCount": len(zones),
+        "clusterCount": len(clusters),
+        "count": len(events),
+        "affectedLegs": [leg for leg in affected_legs.values() if leg["clusterIds"]],
+        "zones": list(zones.values()),
+        "clusters": list(clusters.values()),
+        "events": list(events.values()),
     }
