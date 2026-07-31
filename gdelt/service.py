@@ -48,6 +48,7 @@ def update_news_risk(
     for segment in segments:
         inferred = exposed_zone_ids(segment, zones)
         exposed = [zone_id for zone_id in inferred if zone_id in zone_results]
+        failed_exposed = sorted(set(inferred) & failed_zone_ids)
         if exposed:
             spatial_by_zone = {
                 str(item.get("zone_id") or item.get("zoneId")): item
@@ -59,7 +60,8 @@ def update_news_risk(
                     "zones": exposed,
                     "exposureEvidence": [spatial_by_zone[zone_id] for zone_id in exposed if zone_id in spatial_by_zone],
                     "activeZones": [zone_id for zone_id in exposed if zone_results[zone_id]["status"] == "available"],
-                    "skippedBecauseFetchFailed": bool(set(inferred) & failed_zone_ids),
+                    "partialBecauseFetchFailed": bool(failed_exposed),
+                    "failedZoneIds": failed_exposed,
                 }
             )
     if not dry_run:
@@ -69,9 +71,10 @@ def update_news_risk(
                 write_zone(zone, zone_results[zone["id"]], config["scoring_version"], settings.risk_ttl_hours)
         for segment in segments:
             inferred = exposed_zone_ids(segment, zones)
-            if set(inferred) & failed_zone_ids:
-                continue
+            failed_exposed = set(inferred) & failed_zone_ids
             exposed = [zone_id for zone_id in inferred if zone_id in zone_results]
+            if failed_exposed and not exposed:
+                continue
             apply_segment_overlay(segment, zone_results, exposed, settings.risk_ttl_hours)
     return {
         "updatedAt": datetime.now(timezone.utc).isoformat(), "dryRun": dry_run,

@@ -204,15 +204,21 @@ class RecommendationEngine:
             for segment in prepared
             if float(segment.get("news_risk_score") or 0.0) >= threshold
         }
+        baseline_high_news_segments = {
+            str(segment["segment_id"])
+            for segment in (baseline_paths[0] if baseline_paths else [])
+            if float(segment.get("news_risk_score") or 0.0) >= threshold
+        }
+        reroute_requested = bool(request.auto_reroute and baseline_high_news_segments)
         safe_segments = [
             segment for segment in prepared if str(segment["segment_id"]) not in high_news_segments
         ]
         safe_paths = (
             self._candidate_paths(safe_segments, origin_ids, destination_ids, request, weights)
-            if request.auto_reroute and high_news_segments
+            if reroute_requested
             else baseline_paths
         )
-        fallback_used = bool(request.auto_reroute and high_news_segments and not safe_paths and baseline_paths)
+        fallback_used = bool(reroute_requested and not safe_paths and baseline_paths)
         candidate_paths = baseline_paths if fallback_used else safe_paths
         if not candidate_paths:
             return {
@@ -240,9 +246,10 @@ class RecommendationEngine:
             else:
                 eligible.append(route)
 
-        eligible.sort(key=self._ranking_key)
+        risk_first_reroute = bool(reroute_requested and not fallback_used)
+        eligible.sort(key=self._risk_first_ranking_key if risk_first_reroute else self._ranking_key)
         selected = eligible[: request.limit]
-        self._decorate_rankings(selected, request)
+        self._decorate_rankings(selected, request, risk_first_reroute=risk_first_reroute)
 
         baseline_signature = route_signature(baseline_paths[0]) if baseline_paths else ()
         selected_signature = tuple(selected[0].pop("_segment_ids", [])) if selected else ()
@@ -837,13 +844,36 @@ class RecommendationEngine:
             str(route["id"]),
         )
 
-    def _decorate_rankings(self, routes: list[dict[str, Any]], request: RecommendationRequest) -> None:
+    def _risk_first_ranking_key(self, route: dict[str, Any]) -> tuple[Any, ...]:
+        risk = optional_float(route.get("riskScore"))
+        cost = optional_float(route.get("cost"))
+        duration = optional_float(route.get("durationDays"))
+        return (
+            risk is None,
+            risk if risk is not None else float("inf"),
+            -float(route["finalScore"]),
+            cost if cost is not None else float("inf"),
+            duration if duration is not None else float("inf"),
+            str(route["id"]),
+        )
+
+    def _decorate_rankings(
+        self,
+        routes: list[dict[str, Any]],
+        request: RecommendationRequest,
+        *,
+        risk_first_reroute: bool = False,
+    ) -> None:
         if not routes:
             return
         for index, route in enumerate(routes, start=1):
             route["rank"] = index
             route["whyRecommended"] = [
-                f"按 {request.strategy.value} 策略排名第 {index}",
+                (
+                    f"原首选路线超过新闻风险阈值，改道候选按风险最低优先排名第 {index}"
+                    if risk_first_reroute
+                    else f"按 {request.strategy.value} 策略排名第 {index}"
+                ),
                 f"固定锚点基础分 {route['scoreBreakdown']['baseScore']:.2f}，不确定性扣分 {route['uncertaintyPenalty']:.2f}",
                 f"最终综合分 {route['finalScore']:.2f}/100，数据完整度 {route['dataCompleteness']:.1%}",
             ]

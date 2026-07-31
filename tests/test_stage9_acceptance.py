@@ -238,6 +238,37 @@ def test_05_gdelt_high_risk_zone_triggers_reroute():
     }
 
 
+def test_05b_reroute_selects_lowest_risk_safe_alternative():
+    segments = [
+        route_segment(
+            "RED-SEA-DIRECT",
+            distance=100,
+            duration=2,
+            risk=0.8,
+            provider="GDELT",
+            factor_key="geopolitical",
+            news_risk_score=0.9,
+            news_risk_zones=["red-sea"],
+        ),
+        route_segment("CHEAP-1", from_id="A", to_id="C", distance=200, duration=3, risk=0.5),
+        route_segment("CHEAP-2", from_id="C", to_id="B", distance=200, duration=3, risk=0.5),
+        route_segment("SAFE-1", from_id="A", to_id="D", mode="air", distance=800, duration=1, risk=0.1),
+        route_segment("SAFE-2", from_id="D", to_id="B", mode="air", distance=800, duration=1, risk=0.1),
+    ]
+
+    result = RecommendationEngine().recommend(
+        segments,
+        {"A"},
+        {"B"},
+        SUPPLIER,
+        recommendation_request("min_cost", auto_reroute=True),
+    )
+
+    assert first_leg_ids(result) == ["SAFE-1", "SAFE-2"]
+    assert result["dynamicRouting"]["rerouted"] is True
+    assert result["routes"][0]["whyRecommended"][0].startswith("原首选路线超过新闻风险阈值")
+
+
 def test_06_missing_ais_never_creates_congestion_risk():
     provider_risk = calculate_provider_risk("sea", build_segment_signals("sea"), load_strategy())
     result = RecommendationEngine().recommend(

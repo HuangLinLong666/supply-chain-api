@@ -15,6 +15,13 @@ class FakeClient:
         ]
 
 
+class PartiallyFailingClient(FakeClient):
+    def search(self, query):
+        if query == "failed-query":
+            raise RuntimeError("provider timeout")
+        return super().search(query)
+
+
 def test_update_can_target_one_zone_for_debugging(monkeypatch):
     monkeypatch.setattr(
         "gdelt.service.load_zone_config",
@@ -31,3 +38,39 @@ def test_update_can_target_one_zone_for_debugging(monkeypatch):
     assert result["zonesRequested"] == 1
     assert result["zonesUpdated"] == 1
     assert set(result["zoneRisks"]) == {"two"}
+
+
+def test_partial_zone_failure_does_not_skip_whole_route(monkeypatch):
+    zones = [
+        {"id": "available-zone", "name": "Available", "type": "region", "query": "ok"},
+        {"id": "failed-zone", "name": "Failed", "type": "region", "query": "failed-query"},
+    ]
+    segment = {
+        "element_id": "segment-1",
+        "segment_id": "SEG-1",
+        "mode": "sea",
+        "spatial_exposures": [
+            {"zone_id": "available-zone", "active": True},
+            {"zone_id": "failed-zone", "active": True},
+        ],
+    }
+    overlays = []
+    monkeypatch.setattr(
+        "gdelt.service.load_zone_config",
+        lambda: {"scoring_version": "gdelt-event-cluster-v3", "zones": zones},
+    )
+    monkeypatch.setattr("gdelt.service.route_segments", lambda: [segment])
+    monkeypatch.setattr("gdelt.service.ensure_schema", lambda: None)
+    monkeypatch.setattr("gdelt.service.write_zone", lambda *args: None)
+    monkeypatch.setattr(
+        "gdelt.service.apply_segment_overlay",
+        lambda route_segment, zone_results, exposed, ttl_hours: overlays.append(exposed),
+    )
+
+    result = update_news_risk(dry_run=False, client=PartiallyFailingClient())
+
+    assert result["zonesUpdated"] == 1
+    assert result["failures"] == [{"zoneId": "failed-zone", "error": "provider timeout"}]
+    assert result["overlays"][0]["partialBecauseFetchFailed"] is True
+    assert result["overlays"][0]["failedZoneIds"] == ["failed-zone"]
+    assert overlays == [["available-zone"]]
