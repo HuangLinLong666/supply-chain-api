@@ -171,6 +171,8 @@ class LocationResponse(FlexibleApiModel):
     name: str = Field(min_length=1)
     city: str | None = None
     country: str | None = None
+    country_code: str | None = None
+    country_name_zh: str | None = None
     lat: float | None = None
     lng: float | None = None
     coordinate_source: str = "unavailable"

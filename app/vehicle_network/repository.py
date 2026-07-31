@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from database.country_identity import canonical_country_fields
+from database.location_identity import LOCATION_ID_VERSION, canonical_location_id, location_aliases
 from database.neo4j_client import get_driver, get_settings, to_jsonable
 from database.unified_schema import SCHEMA_VERSION, data_status_for_source_type, unified_schema_statements
 from app.vehicle_network.core import json_text
@@ -68,7 +70,23 @@ class VehicleNetworkRepository:
         for location in locations:
             row = location.model_dump(mode="json")
             row["label"] = LABEL_BY_KIND[location.kind.value]
-            row["aliases_json"] = json_text(row.pop("aliases", []))
+            country_fields = canonical_country_fields(row)
+            if country_fields is None:
+                raise ValueError(f"地点 {location.id!r} 缺少有效的 ISO 3166-1 alpha-2 国家代码")
+            row.update(country_fields)
+            source_aliases = row.pop("aliases", [])
+            raw_id = str(row["id"])
+            row["id"] = canonical_location_id(
+                [row["label"]],
+                {**row, "location_id": raw_id},
+                element_id=f"ingest:{location.kind.value}:{raw_id}",
+            )
+            row["location_aliases"] = list(
+                dict.fromkeys([*location_aliases({**row, "location_id": raw_id}), *source_aliases])
+            )
+            row["aliases_json"] = json_text(source_aliases)
+            row["canonical_location_id"] = row["id"]
+            row["location_id_version"] = LOCATION_ID_VERSION
             row["schema_version"] = SCHEMA_VERSION
             row["location_kind"] = location.kind.value
             row["data_status"] = data_status_for_source_type(
@@ -84,13 +102,14 @@ class VehicleNetworkRepository:
                 candidates = list(transaction.run(f"""
                     MATCH (location:{row['label']})
                     WHERE location.location_id=$id
+                       OR any(alias IN coalesce(location.location_aliases,[]) WHERE alias IN $aliases)
                        OR ($unlocode IS NOT NULL AND (location.unlocode=$unlocode OR location.code=$unlocode))
                        OR ($iata IS NOT NULL AND (location.iata=$iata OR location.iata_code=$iata OR location.code=$iata))
                        OR ($icao IS NOT NULL AND location.icao=$icao)
                     RETURN elementId(location) AS element_id,
                            CASE WHEN location.location_id=$id THEN 0 ELSE 1 END AS priority
                     ORDER BY priority LIMIT 2
-                """, id=row["id"], unlocode=row.get("unlocode"), iata=row.get("iata"), icao=row.get("icao")))
+                """, id=row["id"], aliases=row["location_aliases"], unlocode=row.get("unlocode"), iata=row.get("iata"), icao=row.get("icao")))
                 if len(candidates) > 1:
                     raise RuntimeError(f"地点身份冲突: {row['id']} 同时匹配多个已有节点，请先人工合并重复地点")
                 if candidates:
@@ -98,9 +117,18 @@ class VehicleNetworkRepository:
                         MATCH (location) WHERE elementId(location)=$element_id
                         SET location:TransportLocation:{row['label']},
                             location.location_id=coalesce(location.location_id,$id),
+                            location.canonical_location_id=coalesce(location.canonical_location_id,$id),
+                            location.location_aliases=reduce(aliases=coalesce(location.location_aliases,[]), alias IN $aliases |
+                                CASE WHEN alias IN aliases THEN aliases ELSE aliases + alias END),
+                            location.location_id_version=$location_id_version,
                             location.name_en=coalesce(location.name_en,$name_en),
                             location.name_zh=coalesce(location.name_zh,$name_zh),
-                            location.country_code=coalesce(location.country_code,$country_code),
+                            location.country_code=$country_code,
+                            location.country=$country,
+                            location.country_name_en=$country_name_en,
+                            location.country_name_zh=$country_name_zh,
+                            location.country_aliases=$country_aliases,
+                            location.country_naming_version=$country_naming_version,
                             location.unlocode=coalesce(location.unlocode,$unlocode),
                             location.iata=coalesce(location.iata,$iata),
                             location.icao=coalesce(location.icao,$icao),
@@ -125,8 +153,12 @@ class VehicleNetworkRepository:
                         WITH location
                         MATCH (job:IngestionJob {{job_id:$job_id}})
                         MERGE (job)-[:INGESTED]->(location)
-                    """, element_id=candidates[0]["element_id"], id=row["id"], name_en=row.get("name_en"),
-                         name_zh=row.get("name_zh"), country_code=row.get("country_code"), unlocode=row.get("unlocode"),
+                    """, element_id=candidates[0]["element_id"], id=row["id"], aliases=row["location_aliases"],
+                         location_id_version=LOCATION_ID_VERSION, name_en=row.get("name_en"),
+                         name_zh=row.get("name_zh"), country_code=row.get("country_code"), country=row.get("country"),
+                         country_name_en=row.get("country_name_en"), country_name_zh=row.get("country_name_zh"),
+                         country_aliases=row.get("country_aliases"), country_naming_version=row.get("country_naming_version"),
+                         unlocode=row.get("unlocode"),
                          iata=row.get("iata"), icao=row.get("icao"), latitude=row.get("latitude"), longitude=row.get("longitude"),
                          eligible_export=row.get("eligible_for_vehicle_export", False), eligible_import=row.get("eligible_for_vehicle_import", False),
                          source=row.get("source"), source_type=row.get("source_type"), confidence=row.get("confidence"),
@@ -151,6 +183,7 @@ class VehicleNetworkRepository:
             MATCH (location)
             WHERE location.deleted_at IS NULL AND (
                 toLower(coalesce(location.location_id,''))=toLower($value)
+                OR any(alias IN coalesce(location.location_aliases,[]) WHERE toLower(alias)=toLower($value))
                 OR toLower(coalesce(location.unlocode,''))=toLower($value)
                 OR toLower(coalesce(location.code,''))=toLower($value)
                 OR toLower(coalesce(location.iata,''))=toLower($value)
@@ -209,8 +242,8 @@ class VehicleNetworkRepository:
                 MERGE (route:VehicleRoute:Route {route_id:$route_id})
                 SET route += $properties,route.updated_at=datetime(),route.deleted_at=null
                 WITH route
-                MATCH (origin) WHERE coalesce(origin.location_id,origin.unlocode,origin.code,origin.id)=$origin_id
-                MATCH (destination) WHERE coalesce(destination.location_id,destination.unlocode,destination.code,destination.id)=$destination_id
+                MATCH (origin) WHERE origin.location_id=$origin_id OR $origin_id IN coalesce(origin.location_aliases,[])
+                MATCH (destination) WHERE destination.location_id=$destination_id OR $destination_id IN coalesce(destination.location_aliases,[])
                 MERGE (route)-[:ORIGIN]->(origin)
                 MERGE (route)-[:DESTINATION]->(destination)
             """, route_id=route.route_id, properties=payload, origin_id=route.origin_id, destination_id=route.destination_id).consume()
@@ -241,8 +274,8 @@ class VehicleNetworkRepository:
                     MERGE (route)-[canonical:HAS_SEGMENT]->(leg)
                     SET canonical.sequence=$sequence,canonical.schema_version=$schema_version
                     WITH leg
-                    MATCH (origin) WHERE coalesce(origin.location_id,origin.unlocode,origin.code,origin.id)=$origin_id
-                    MATCH (destination) WHERE coalesce(destination.location_id,destination.unlocode,destination.code,destination.id)=$destination_id
+                    MATCH (origin) WHERE origin.location_id=$origin_id OR $origin_id IN coalesce(origin.location_aliases,[])
+                    MATCH (destination) WHERE destination.location_id=$destination_id OR $destination_id IN coalesce(destination.location_aliases,[])
                     MERGE (leg)-[:FROM_NODE]->(origin)
                     MERGE (leg)-[:TO_NODE]->(destination)
                 """, route_id=route.route_id, leg_id=leg.leg_id, properties=properties, sequence=leg.sequence,

@@ -24,6 +24,7 @@ from app.recommendation.storage import (
     GET_SNAPSHOT_QUERY,
     persist_recommendation_snapshot,
 )
+from database.country_identity import resolve_country_code
 from database.neo4j_client import close_driver, get_settings, run_query, verify_connectivity
 from weather.config import WeatherSettings
 from weather.route_service import update_route_weather
@@ -269,8 +270,8 @@ def ranked_risk_segments(
 ) -> dict[str, Any]:
     segments = safe_query(
         """
-        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
-        MATCH (segment)-[:TO_NODE]->(toNode)
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode:TransportLocation)
+        MATCH (segment)-[:TO_NODE]->(toNode:TransportLocation)
         WITH segment, fromNode, toNode,
              CASE WHEN segment.provider_risk_status IN ['available','partial']
                     AND segment.provider_risk_expires_at IS NOT NULL
@@ -313,8 +314,8 @@ def ranked_cost_segments(
     order_clause = "ASC" if order == "asc" else "DESC"
     segments = safe_query(
         f"""
-        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
-        MATCH (segment)-[:TO_NODE]->(toNode)
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode:TransportLocation)
+        MATCH (segment)-[:TO_NODE]->(toNode:TransportLocation)
         RETURN
           coalesce(segment.segmentId, segment.segment_id, elementId(segment)) AS segment_id,
           coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS origin,
@@ -340,7 +341,7 @@ def ranked_cost_segments(
 def route_nodes(search: str | None = Query(None), limit: int = Query(100, ge=1, le=500)) -> dict[str, Any]:
     nodes = safe_query(
         """
-        MATCH (segment:RouteSegment)-[:FROM_NODE|TO_NODE]->(node)
+        MATCH (segment:RouteSegment)-[:FROM_NODE|TO_NODE]->(node:TransportLocation)
         WITH DISTINCT node
         WITH node, coalesce(node.name, node.code, node.id, elementId(node)) AS name
         WHERE $search IS NULL OR toLower(toString(name)) CONTAINS toLower($search)
@@ -365,8 +366,8 @@ def route_graph_segments() -> list[dict[str, Any]]:
         return _route_graph_cache[1]
     segments = safe_query(
         """
-        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode)
-        MATCH (segment)-[:TO_NODE]->(toNode)
+        MATCH (segment:RouteSegment)-[:FROM_NODE]->(fromNode:TransportLocation)
+        MATCH (segment)-[:TO_NODE]->(toNode:TransportLocation)
         WHERE coalesce(segment.feasibility_status,'') <> 'invalid_cross_ocean'
         OPTIONAL MATCH (segment)-[spatialExposure:PASSES_THROUGH]->(geoZone:GeoZone)
         WHERE coalesce(spatialExposure.active,true)=true
@@ -393,7 +394,10 @@ def route_graph_segments() -> list[dict[str, Any]]:
           coalesce(fromNode.name, fromNode.code, fromNode.id, segment.fromNodeName) AS from_name,
           fromNode.city AS from_city,
           fromNode.country AS from_country,
+          fromNode.country_code AS from_country_code,
+          fromNode.country_name_zh AS from_country_name_zh,
           coalesce(fromNode.location_id,fromNode.unlocode,fromNode.iata,fromNode.code,fromNode.id) AS from_location_id,
+          coalesce(fromNode.location_aliases,[]) AS from_location_aliases,
           fromNode.canonical_unlocode AS from_canonical_unlocode,
           fromNode.latitude AS from_lat,
           fromNode.longitude AS from_lng,
@@ -405,7 +409,10 @@ def route_graph_segments() -> list[dict[str, Any]]:
           coalesce(toNode.name, toNode.code, toNode.id, segment.toNodeName) AS to_name,
           toNode.city AS to_city,
           toNode.country AS to_country,
+          toNode.country_code AS to_country_code,
+          toNode.country_name_zh AS to_country_name_zh,
           coalesce(toNode.location_id,toNode.unlocode,toNode.iata,toNode.code,toNode.id) AS to_location_id,
+          coalesce(toNode.location_aliases,[]) AS to_location_aliases,
           toNode.canonical_unlocode AS to_canonical_unlocode,
           toNode.latitude AS to_lat,
           toNode.longitude AS to_lng,
@@ -511,6 +518,7 @@ def matching_node_ids(segments: list[dict[str, Any]], value: str) -> set[str]:
                 str(segment.get(f"{prefix}_city") or ""),
                 str(segment.get(f"{prefix}_location_id") or ""),
                 str(segment.get(f"{prefix}_canonical_unlocode") or ""),
+                *(str(item) for item in segment.get(f"{prefix}_location_aliases") or []),
             }
             normalized = {item.strip().casefold() for item in values if item.strip()}
             if expected in normalized:
@@ -553,6 +561,7 @@ def recommendation_supplier(value: str) -> dict[str, Any] | None:
                elementId:elementId(shippingOrigin),
                id:coalesce(shippingOrigin.location_id,shippingOrigin.unlocode,shippingOrigin.iata,
                            shippingOrigin.code,shippingOrigin.id,shippingOrigin.name),
+               aliases:coalesce(shippingOrigin.location_aliases,[]),
                name:shippingOrigin.name,
                city:shippingOrigin.city,
                country:shippingOrigin.country,
@@ -605,6 +614,7 @@ def supplier_origin_node_ids(
                 origin.get("id"),
                 origin.get("name"),
                 origin.get("city"),
+                *(origin.get("aliases") or []),
             }
         )
         for origin in supplier_origins
@@ -622,6 +632,7 @@ def supplier_origin_node_ids(
                     segment.get(f"{prefix}_canonical_unlocode"),
                     segment.get(f"{prefix}_name"),
                     segment.get(f"{prefix}_city"),
+                    *(segment.get(f"{prefix}_location_aliases") or []),
                 }
             )
             if any(node_values.intersection(origin_values) for origin_values in supplier_values):
@@ -673,9 +684,44 @@ def supplier_origins(supplier_id: str) -> dict[str, Any]:
     supplier = recommendation_supplier(supplier_id)
     if supplier is None:
         raise HTTPException(status_code=404, detail=f"Supplier {supplier_id!r} was not found")
-    origins = supplier.pop("shippingOrigins", [])
+    legacy_origins = supplier.pop("shippingOrigins", [])
+    origins = safe_query(
+        """
+        UNWIND $legacy_origins AS legacy
+        MATCH (:RouteSegment)-[:FROM_NODE]->(location:TransportLocation)
+        WHERE toLower(coalesce(location.location_id,''))=toLower(coalesce(legacy.id,''))
+           OR any(alias IN coalesce(location.location_aliases,[])
+                  WHERE toLower(alias)=toLower(coalesce(legacy.id,'')))
+           OR (
+             legacy.city IS NOT NULL AND location.city IS NOT NULL
+             AND toLower(location.city)=toLower(legacy.city)
+           )
+        WITH DISTINCT location
+        RETURN location.location_id AS id,
+               location.location_id AS locationId,
+               coalesce(location.name_zh,location.name_en,location.name,location.city) AS name,
+               location.city AS city,location.country AS country,
+               location.country_code AS countryCode,
+               location.country_name_zh AS countryNameZh,
+               coalesce(location.country_aliases,[]) AS countryAliases,
+               location.country_naming_version AS countryNamingVersion,
+               location.location_kind AS locationType,
+               location.latitude AS lat,location.longitude AS lng,
+               coalesce(location.location_aliases,[]) AS aliases,
+               location.location_id_version AS locationIdVersion,
+               'resolved_from_legacy_supplier_origin' AS resolutionStatus
+        ORDER BY name,id
+        """,
+        {"legacy_origins": legacy_origins},
+    ) if legacy_origins else []
     supplier.pop("exactRank", None)
-    return {"supplier": supplier, "count": len(origins), "origins": origins}
+    return {
+        "supplier": supplier,
+        "count": len(origins),
+        "origins": origins,
+        "legacyOriginCount": len(legacy_origins),
+        "resolutionStatus": "resolved" if origins else "unavailable",
+    }
 
 
 @app.get(
@@ -686,14 +732,22 @@ def supplier_origins(supplier_id: str) -> dict[str, Any]:
 def cities(search: str | None = Query(None), limit: int = Query(200, ge=1, le=500)) -> dict[str, Any]:
     rows = safe_query(
         """
-        MATCH (:RouteSegment)-[:FROM_NODE|TO_NODE]->(node)
+        MATCH (:RouteSegment)-[:FROM_NODE|TO_NODE]->(node:TransportLocation)
         WITH DISTINCT node,
              coalesce(node.city, node.name, node.code, node.id, elementId(node)) AS value,
-             coalesce(node.name, node.code, node.id, elementId(node)) AS name
+             coalesce(node.name_zh,node.name_en,node.name,node.code,node.id,elementId(node)) AS name
         WHERE $search IS NULL OR toLower(toString(value)) CONTAINS toLower($search)
-        RETURN value AS id, value, name, node.city AS city, node.country AS country,
+        RETURN coalesce(node.location_id,node.unlocode,node.iata,node.code,node.id) AS id,
+               value, name, node.city AS city, node.country AS country,
+               node.country_code AS countryCode,
+               node.country_name_zh AS countryNameZh,
+               coalesce(node.country_aliases,[]) AS countryAliases,
+               node.country_naming_version AS countryNamingVersion,
                node.latitude AS lat, node.longitude AS lng, labels(node) AS labels,
                coalesce(node.location_id,node.unlocode,node.iata,node.code,node.id) AS locationId,
+               node.location_kind AS locationType,
+               coalesce(node.location_aliases,[]) AS aliases,
+               node.location_id_version AS locationIdVersion,
                node.canonical_unlocode AS canonicalUnlocode,
                node.coordinate_source AS coordinateSource,
                node.coordinate_source_url AS coordinateSourceUrl,
@@ -724,9 +778,17 @@ def geography_locations(
         WHERE $status IS NULL OR location.coordinate_status=$status
         RETURN coalesce(location.location_id,location.unlocode,location.iata,location.code,location.id) AS locationId,
                coalesce(location.name_zh,location.name_en,location.name) AS name,
-               location.city AS city,location.country AS country,labels(location) AS labels,
+               location.city AS city,location.country AS country,
+               location.country_code AS countryCode,
+               location.country_name_zh AS countryNameZh,
+               coalesce(location.country_aliases,[]) AS countryAliases,
+               location.country_naming_version AS countryNamingVersion,
+               labels(location) AS labels,
                location.unlocode AS legacyUnlocode,
                location.canonical_unlocode AS canonicalUnlocode,
+               location.location_kind AS locationType,
+               coalesce(location.location_aliases,[]) AS aliases,
+               location.location_id_version AS locationIdVersion,
                location.identity_status AS identityStatus,
                location.latitude AS lat,location.longitude AS lng,
                location.coordinate_source AS coordinateSource,
@@ -1175,7 +1237,8 @@ def route_recommendations(
 @app.get("/api/ports/weather-risks", tags=["Port Weather"])
 def port_weather_risks(risk_level: str | None=None, country: str | None=None, min_score: float=0, updated_after: str | None=None, page: int=1, page_size: int=50, sort_by: Literal["score","updated_at","name"]="score", sort_order: Literal["asc","desc"]="desc") -> dict[str,Any]:
     page=max(page,1); page_size=max(1,min(page_size,200)); order={"score":"p.weather_risk_score","updated_at":"p.weather_updated_at","name":"p.name"}[sort_by]; direction="ASC" if sort_order=="asc" else "DESC"
-    rows=safe_query(f"""MATCH (p:Port) WHERE p.weather_risk_score IS NOT NULL AND ($level IS NULL OR p.weather_risk_level=$level) AND ($country IS NULL OR toLower(p.country)=toLower($country)) AND p.weather_risk_score >= $min_score AND ($updated_after IS NULL OR p.weather_updated_at >= datetime($updated_after)) RETURN coalesce(p.unlocode,p.code,p['port_id'],elementId(p)) AS portId,p.name AS portName,p.country AS country,p.latitude AS latitude,p.longitude AS longitude,p.weather_risk_score AS score,p.weather_risk_level AS level,p.weather_risk_confidence AS confidence,p.weather_data_completeness AS dataCompleteness,p.weather_risk_trend AS trend,p.weather_risk_summary AS summary,p.weather_updated_at AS updatedAt ORDER BY {order} {direction} SKIP $skip LIMIT $limit""",{"level":risk_level,"country":country,"min_score":min_score,"updated_after":updated_after,"skip":(page-1)*page_size,"limit":page_size})
+    country_code=resolve_country_code(country) if country else None
+    rows=safe_query(f"""MATCH (p:Port) WHERE p.weather_risk_score IS NOT NULL AND ($level IS NULL OR p.weather_risk_level=$level) AND ($country IS NULL OR p.country_code=$country_code OR toLower(p.country)=toLower($country) OR any(alias IN coalesce(p.country_aliases,[]) WHERE toLower(alias)=toLower($country))) AND p.weather_risk_score >= $min_score AND ($updated_after IS NULL OR p.weather_updated_at >= datetime($updated_after)) RETURN coalesce(p.location_id,p.unlocode,p.code,elementId(p)) AS portId,p.name AS portName,p.country AS country,p.country_code AS countryCode,p.country_name_zh AS countryNameZh,p.latitude AS latitude,p.longitude AS longitude,p.weather_risk_score AS score,p.weather_risk_level AS level,p.weather_risk_confidence AS confidence,p.weather_data_completeness AS dataCompleteness,p.weather_risk_trend AS trend,p.weather_risk_summary AS summary,p.weather_updated_at AS updatedAt ORDER BY {order} {direction} SKIP $skip LIMIT $limit""",{"level":risk_level,"country":country,"country_code":country_code,"min_score":min_score,"updated_after":updated_after,"skip":(page-1)*page_size,"limit":page_size})
     return {"page":page,"pageSize":page_size,"count":len(rows),"ports":rows}
 
 
@@ -1185,7 +1248,7 @@ def high_risk_ports() -> dict[str,Any]: return port_weather_risks(min_score=50,p
 
 @app.get("/api/ports/{port_id}/weather", tags=["Port Weather"])
 def port_weather(port_id: str) -> dict[str,Any]:
-    rows=safe_query("""MATCH (p:Port) WHERE coalesce(p.unlocode,p.code,p['port_id'],elementId(p))=$id OPTIONAL MATCH (p)-[:HAS_WEATHER_SNAPSHOT]->(w:WeatherRiskSnapshot) WITH p,w ORDER BY w.observed_at DESC LIMIT 1 RETURN coalesce(p.unlocode,p.code,p['port_id'],elementId(p)) AS portId,p.name AS portName,p.country AS country,{latitude:p.latitude,longitude:p.longitude} AS coordinates,{temperatureC:p.current_temperature_c,relativeHumidity:p.current_relative_humidity,precipitationMm:p.current_precipitation_mm,visibilityM:p.current_visibility_m,windSpeedKmh:p.current_wind_speed_kmh,windGustsKmh:p.current_wind_gusts_kmh,windDirectionDeg:p.current_wind_direction_deg,weatherCode:p.current_weather_code} AS currentWeather,{waveHeightM:p.current_wave_height_m,wavePeriodS:p.current_wave_period_s,status:CASE WHEN p.current_wave_height_m IS NULL THEN 'unavailable' ELSE 'available' END} AS marineWeather,{score:p.weather_risk_score,level:p.weather_risk_level,confidence:p.weather_risk_confidence,dataCompleteness:p.weather_data_completeness,trend:p.weather_risk_trend,summary:p.weather_risk_summary,factors:w.risk_factors_json} AS risk,{max6h:w.max_risk_6h,max24h:w.max_risk_24h,average24h:w.average_risk_24h} AS forecastRisk,p.weather_updated_at AS updatedAt""",{"id":port_id})
+    rows=safe_query("""MATCH (p:Port) WHERE toUpper(coalesce(p.location_id,''))=toUpper($id) OR any(alias IN coalesce(p.location_aliases,[]) WHERE toUpper(alias)=toUpper($id)) OPTIONAL MATCH (p)-[:HAS_WEATHER_SNAPSHOT]->(w:WeatherRiskSnapshot) WITH p,w ORDER BY w.observed_at DESC LIMIT 1 RETURN coalesce(p.location_id,p.unlocode,p.code,elementId(p)) AS portId,p.name AS portName,p.country AS country,p.country_code AS countryCode,p.country_name_zh AS countryNameZh,{latitude:p.latitude,longitude:p.longitude} AS coordinates,{temperatureC:p.current_temperature_c,relativeHumidity:p.current_relative_humidity,precipitationMm:p.current_precipitation_mm,visibilityM:p.current_visibility_m,windSpeedKmh:p.current_wind_speed_kmh,windGustsKmh:p.current_wind_gusts_kmh,windDirectionDeg:p.current_wind_direction_deg,weatherCode:p.current_weather_code} AS currentWeather,{waveHeightM:p.current_wave_height_m,wavePeriodS:p.current_wave_period_s,status:CASE WHEN p.current_wave_height_m IS NULL THEN 'unavailable' ELSE 'available' END} AS marineWeather,{score:p.weather_risk_score,level:p.weather_risk_level,confidence:p.weather_risk_confidence,dataCompleteness:p.weather_data_completeness,trend:p.weather_risk_trend,summary:p.weather_risk_summary,factors:w.risk_factors_json} AS risk,{max6h:w.max_risk_6h,max24h:w.max_risk_24h,average24h:w.average_risk_24h} AS forecastRisk,p.weather_updated_at AS updatedAt""",{"id":port_id})
     if not rows: raise HTTPException(404,"Port not found")
     result=rows[0]
     factors=result.get("risk",{}).get("factors")
@@ -1197,7 +1260,7 @@ def port_weather(port_id: str) -> dict[str,Any]:
 
 @app.get("/api/ports/{port_id}/weather/history", tags=["Port Weather"])
 def port_weather_history(port_id: str, start: str | None=None, end: str | None=None, page: int=1, page_size: int=50) -> dict[str,Any]:
-    rows=safe_query("""MATCH (p:Port)-[:HAS_WEATHER_SNAPSHOT]->(w:WeatherRiskSnapshot) WHERE coalesce(p.unlocode,p.code,p['port_id'],elementId(p))=$id AND ($start IS NULL OR w.observed_at>=datetime($start)) AND ($end IS NULL OR w.observed_at<=datetime($end)) RETURN properties(w) AS snapshot ORDER BY w.observed_at DESC SKIP $skip LIMIT $limit""",{"id":port_id,"start":start,"end":end,"skip":(max(page,1)-1)*page_size,"limit":min(max(page_size,1),200)})
+    rows=safe_query("""MATCH (p:Port)-[:HAS_WEATHER_SNAPSHOT]->(w:WeatherRiskSnapshot) WHERE (toUpper(coalesce(p.location_id,''))=toUpper($id) OR any(alias IN coalesce(p.location_aliases,[]) WHERE toUpper(alias)=toUpper($id))) AND ($start IS NULL OR w.observed_at>=datetime($start)) AND ($end IS NULL OR w.observed_at<=datetime($end)) RETURN properties(w) AS snapshot ORDER BY w.observed_at DESC SKIP $skip LIMIT $limit""",{"id":port_id,"start":start,"end":end,"skip":(max(page,1)-1)*page_size,"limit":min(max(page_size,1),200)})
     return {"page":page,"pageSize":page_size,"count":len(rows),"history":[row["snapshot"] for row in rows]}
 
 

@@ -379,10 +379,12 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
         "legs": [
             {
                 "from": {
-                    "id": segment["from_id"],
+                    "id": segment.get("from_location_id") or segment["from_id"],
                     "name": str(segment.get("from_name") or segment.get("from_city") or segment["from_id"]),
                     "city": segment.get("from_city"),
                     "country": segment.get("from_country"),
+                    "countryCode": segment.get("from_country_code"),
+                    "countryNameZh": segment.get("from_country_name_zh"),
                     "lat": segment.get("from_lat"),
                     "lng": segment.get("from_lng"),
                     "coordinateSource": segment.get("from_coordinate_source") or "unavailable",
@@ -390,10 +392,12 @@ def format_route(path: list[dict[str, Any]], rank: int) -> dict[str, Any]:
                     "coordinateConfidence": segment.get("from_coordinate_confidence") or 0.0,
                 },
                 "to": {
-                    "id": segment["to_id"],
+                    "id": segment.get("to_location_id") or segment["to_id"],
                     "name": str(segment.get("to_name") or segment.get("to_city") or segment["to_id"]),
                     "city": segment.get("to_city"),
                     "country": segment.get("to_country"),
+                    "countryCode": segment.get("to_country_code"),
+                    "countryNameZh": segment.get("to_country_name_zh"),
                     "lat": segment.get("to_lat"),
                     "lng": segment.get("to_lng"),
                     "coordinateSource": segment.get("to_coordinate_source") or "unavailable",

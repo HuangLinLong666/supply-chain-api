@@ -2,6 +2,8 @@
 
 本文档说明如何使用你已经创建的 GitHub 专用仓库 `supply-chain-api` 部署公网后端 API，让前端同事通过 HTTP 接口读取 Neo4j AuraDB 中的供应链图谱数据。
 
+> 本文档主要面向后端部署与联调。交给前端同事的纯接口文档见 `docs/frontend_api_reference.md`。
+
 目标交付物不是 `localhost`，而是一个 Render 提供的公网地址，例如当前项目：
 
 ```text
@@ -25,6 +27,10 @@ GET  /api/cities
 POST /api/routes/recommend
 ```
 
+地点 ID 已统一为 `location-id-v2`。前端下拉框的 `value` 必须使用接口返回的 `locationId`，例如 `PORT-CNSHG`、`AIR-PVG`、`RAIL-CN-ALASHANKOU`，不要使用地点名称或自行拼接代码。旧 ID 仅作为后端兼容别名，完整规则见 `docs/location_id_naming.md`。
+
+`GET /api/suppliers/{supplier_id}/origins` 现在只返回能够连接出发路段的规范地点；`origins[].id` 与 `origins[].locationId` 相同。`resolutionStatus` 用于说明旧供应商起点是否成功解析，前端不得再使用旧 `EntryPoint` 的 `code`。
+
 推荐成功后，从响应直接取得：
 
 ```text
@@ -43,10 +49,22 @@ GET /api/routes/{routeId}
 
 前端还应调用 `GET /api/providers/status` 展示数据新鲜度。任何 `null`、`unavailable` 或 `stale` 都表示当前没有可用 Provider 证据，不得转换成 `0` 或 `50`。
 
+### 0.1 前后端地点 ID 契约
+
+| 用途 | 前端取值 | 前端展示 | 提交给后端 |
+|---|---|---|---|
+| 供应商 | `/api/suppliers` 的 `suppliers[].id` | `suppliers[].name` | `supplierId` |
+| 供应商起点 | `/api/suppliers/{supplier_id}/origins` 的 `origins[].locationId` | `origins[].name` | `origin` |
+| 终点 | `/api/cities` 的 `cities[].locationId` | `cities[].name` | `destination` |
+| 地图分段 | `routes[].legs[].from.id/to.id` | `from/to.name` | 无需再转换 |
+| 港口天气/AIS | 港口的 `locationId` | 港口名称 | URL 中的 `{port_id}` |
+
+前端应把 ID 当作不透明字符串：不拆分、不改写、不从名称推导。后端目前仍可解析 `CN-SHA`、`CNSHA` 等旧别名，但前端新代码、URL、缓存和持久化状态都应保存响应中的新 `locationId`。
+
 ## 1. 总体架构
 
 ```text
-前端同事的浏览器 / Next.js / React
+前端浏览器 / Next.js / React
   -> HTTPS 请求
   -> Render 上运行的 FastAPI 服务
   -> Neo4j Python Driver
@@ -63,7 +81,7 @@ AISStream.io WebSocket
 - 前端不能直接连接 AuraDB。
 - AuraDB URI、用户名、密码只放在 Render 环境变量中。
 - GitHub 仓库只放代码和 `.env.example`，不能放真实 `.env`。
-- 前端同事只需要公网 API 地址和接口文档。
+- 前端只需要公网 API 地址和接口文档。
 - `AISSTREAM_API_KEY` 只能放在后端 worker，不能放在前端或浏览器请求中。
 
 ## 2. GitHub 仓库 `supply-chain-api` 应该怎么配置
@@ -276,8 +294,8 @@ curl -X POST "http://localhost:8000/api/routes/recommend" \
   -H "Content-Type: application/json" \
   -d '{
     "supplierId":"SUP-CATL",
-    "origin":"Shanghai",
-    "destination":"Hamburg",
+    "origin":"PORT-CNSHG",
+    "destination":"PORT-DEHAM",
     "cargo":{"type":"finished_vehicle","vehicleType":"electric_vehicle","quantity":1},
     "strategy":"balanced",
     "weights":{"risk":0.5,"cost":0.3,"duration":0.2},
@@ -302,7 +320,21 @@ GET /api/cities?search=Shanghai
 GET /api/cities?search=Hamburg
 ```
 
-新接口会验证供应商的 `SHIPS_FROM` 起点。供应商存在但起点不属于它时返回 `422`，不会猜测映射。
+从上述响应中取值后，请求体对应关系为：
+
+```javascript
+const request = {
+  supplierId: selectedSupplier.id,
+  origin: selectedOrigin.locationId,
+  destination: selectedDestination.locationId,
+  strategy: "balanced",
+  limit: 5
+};
+```
+
+新接口会验证供应商的 `SHIPS_FROM` 起点。供应商存在但起点不属于它时返回 `422`，不会猜测映射。起点或终点不存在、或两者之间没有可行的有向路径时返回 `404`。
+
+`GET /api/cities` 虽然保留了 `value`，但它是搜索/展示字段，不是业务主键。提交请求时只使用 `locationId`。
 
 权重规则：
 
@@ -336,6 +368,8 @@ GET /api/cities?search=Hamburg
 - `durationEstimate`：移动、等待、海关、中转、延误、P50/P90 和数据状态。
 - `whyRecommended`、`comparisonToNext`：推荐解释和与下一名的差异。
 - `missingData`、`estimatedFields`：缺失项与估算项。
+
+`routes[].legs[].from.id` 和 `routes[].legs[].to.id` 也是 `location-id-v2`，例如 `PORT-CNSHG`。这些 ID 可直接用于地图节点关联、天气和 AIS 查询，不再是 Neo4j `elementId()`。
 
 风险缺失时 `riskScore=null`、`scoreBreakdown.subScores.risk=null`。后端不会填 50；不确定性通过 `uncertaintyPenalty` 单独显示。前端也不得把 `null` 转成 0 或 50。
 
@@ -719,8 +753,8 @@ GET /api/vessels/{mmsi}
 
 ```bash
 curl "$API_BASE_URL/health/ais"
-curl "$API_BASE_URL/api/ports/CN-SHA/traffic"
-curl "$API_BASE_URL/api/ports/SGSIN/traffic"
+curl "$API_BASE_URL/api/ports/PORT-CNSHG/traffic"
+curl "$API_BASE_URL/api/ports/PORT-SGSIN/traffic"
 curl "$API_BASE_URL/api/ais/targets/suez-canal/traffic"
 curl "$API_BASE_URL/api/vessels/259000420"
 ```
@@ -730,7 +764,7 @@ curl "$API_BASE_URL/api/vessels/259000420"
 ```json
 {
   "port": {
-    "id": "CN-SHA",
+    "id": "PORT-CNSHG",
     "name": "上海港",
     "city": "Shanghai",
     "country": "China",
@@ -850,6 +884,7 @@ https://supply-chain-frontend.vercel.app
 - 调 `/api/suppliers` 填供应商下拉框。
 - 调 `/api/suppliers/{supplier_id}/origins` 限定该供应商可用起点。
 - 调 `/api/cities` 填起终点下拉框。
+- 下拉框展示 `name`，保存和提交 `locationId`；不要保存 `value`、旧别名或 Neo4j 内部 ID。
 - 调 `POST /api/routes/recommend` 返回多条完整候选路线。
 - 使用 `routes[].legs[].from/to.lat/lng` 和 `geometry` 画地图。
 - 使用 `riskStatus`、`riskDataCompleteness`、`riskProviders`、`estimatedFields` 和 `missingData` 标明真实性。
@@ -948,6 +983,7 @@ Neo4j Browser 登录密码
 | `/health` | 返回 `status: ok` |
 | `/health/aura` | 返回 `aura: connected` |
 | `/api/graph/summary` | 返回节点和关系统计 |
+| `/api/cities` | 每个可选地点均返回 `locationId` 和 `locationIdVersion: location-id-v2` |
 | `POST /api/routes/recommend` | 返回多条带风险、成本、时效和地图分段的候选路线 |
 | `/api/providers/status` | 返回 Provider 配置、新鲜度和可用状态 |
 | `/docs` | 能打开 Swagger 文档 |
@@ -957,6 +993,7 @@ Neo4j Browser 登录密码
 
 ## 18. 配套文档
 
+- 地点 ID 规则与旧 ID 映射：`docs/location_id_naming.md`
 - 推荐请求与响应：`docs/route_recommendation.md`
 - 评分公式与缺失数据：`docs/risk_scoring.md`
 - 数据来源与真实性：`docs/data_sources.md`

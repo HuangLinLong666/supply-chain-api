@@ -14,8 +14,9 @@ from database.unified_schema import IDENTITY_CONSTRAINTS, QUERY_INDEXES, SCHEMA_
 def list_ports(port_ids: list[str] | None = None) -> list[dict[str, Any]]:
     return run_query("""
     MATCH (p:Port)
-    WITH p, coalesce(p.unlocode,p.code,p['port_id'],elementId(p)) AS port_id
+    WITH p, coalesce(p.location_id,p.unlocode,p.code,elementId(p)) AS port_id
     WHERE $port_ids IS NULL OR port_id IN $port_ids
+       OR any(alias IN coalesce(p.location_aliases,[]) WHERE alias IN $port_ids)
     RETURN elementId(p) AS element_id, port_id, p.name AS name, p.city AS city, p.country AS country,
            p.iso2 AS country_code, p.latitude AS latitude, p.longitude AS longitude,
            p.weather_updated_at AS weather_updated_at

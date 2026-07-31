@@ -42,6 +42,8 @@
 
 `Port`、`Airport`、`RailTerminal` 和 `RoadTerminal` 都使用 `TransportLocation.location_id` 的全局唯一约束，不重复创建互相冲突的地点主键体系。
 
+地点主键进一步统一为 `location-id-v2`：港口使用 `PORT-{UNLOCODE}`，机场使用 `AIR-{IATA/ICAO}`，铁路、公路、工厂和仓库使用带类型与国家码的稳定业务 ID。旧主键保存在 `location_aliases`，详细规则及迁移命令见 `docs/location_id_naming.md`。
+
 ## 3. 规范关系
 
 迁移保留旧关系，并增加以下兼容关系：

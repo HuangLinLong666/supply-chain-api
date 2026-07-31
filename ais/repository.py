@@ -73,8 +73,9 @@ class AisRepository:
             DELETE old
             WITH target,row
             OPTIONAL MATCH (port:Port)
-            WHERE replace(toUpper(toString(coalesce(port.location_id,port.unlocode,port.code,port['port_id'],''))),'-','')
-                  IN row.normalized_port_ids
+            WHERE replace(toUpper(toString(coalesce(port.location_id,''))),'-','') IN row.normalized_port_ids
+               OR any(alias IN coalesce(port.location_aliases,[])
+                      WHERE replace(toUpper(alias),'-','') IN row.normalized_port_ids)
             FOREACH (_ IN CASE WHEN port IS NULL THEN [] ELSE [1] END |
                 MERGE (target)-[:REPRESENTS_PORT]->(port)
             )
@@ -478,8 +479,9 @@ class AisRepository:
         rows = run_query(
             """
             MATCH (port:Port)
-            WHERE replace(toUpper(toString(coalesce(port.location_id,port.unlocode,port.code,port['port_id'],''))),'-','')
-                  =replace(toUpper($port_id),'-','')
+            WHERE replace(toUpper(toString(coalesce(port.location_id,''))),'-','')=replace(toUpper($port_id),'-','')
+               OR any(alias IN coalesce(port.location_aliases,[])
+                      WHERE replace(toUpper(alias),'-','')=replace(toUpper($port_id),'-',''))
             OPTIONAL MATCH (target:AisObservationTarget)-[:REPRESENTS_PORT]->(port)
             OPTIONAL MATCH (target)-[:HAS_TRAFFIC_SNAPSHOT]->(snapshot:PortTrafficSnapshot)
             WHERE snapshot.provider='AISStream.io'
@@ -487,9 +489,11 @@ class AisRepository:
               AND snapshot.calculation_status='derived_from_observed_ais'
             WITH port,target,snapshot ORDER BY snapshot.observed_at DESC
             WITH port,target,head(collect(snapshot)) AS latest
-            RETURN coalesce(port.location_id,port.unlocode,port.code,port['port_id']) AS portId,
+            RETURN coalesce(port.location_id,port.unlocode,port.code) AS portId,
                    coalesce(port.name_zh,port.name,port.name_en,port.city) AS name,
-                   port.city AS city,port.country AS country,port.latitude AS latitude,port.longitude AS longitude,
+                   port.city AS city,port.country AS country,port.country_code AS countryCode,
+                   port.country_name_zh AS countryNameZh,
+                   port.latitude AS latitude,port.longitude AS longitude,
                    target.target_id AS targetId,target.name AS targetName,properties(latest) AS snapshot
             LIMIT 1
             """,
@@ -504,6 +508,8 @@ class AisRepository:
                 "name": row.get("name"),
                 "city": row.get("city"),
                 "country": row.get("country"),
+                "countryCode": row.get("countryCode"),
+                "countryNameZh": row.get("countryNameZh"),
                 "lat": row.get("latitude"),
                 "lng": row.get("longitude"),
             },

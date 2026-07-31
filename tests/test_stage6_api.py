@@ -23,6 +23,8 @@ def test_route_graph_uses_spatial_exposure_and_rejects_cross_ocean(monkeypatch):
     assert "PASSES_THROUGH" in queries[0]
     assert "invalid_cross_ocean" in queries[0]
     assert "geometry_geojson" in queries[0]
+    assert "fromNode:TransportLocation" in queries[0]
+    assert "toNode:TransportLocation" in queries[0]
 
 
 def test_coordinate_fallback_never_uses_graph_neighbor_estimate():
@@ -64,6 +66,19 @@ def test_geography_segment_decodes_geojson(monkeypatch):
     result = main.geography_segment("SEG-1")
 
     assert result["geometry"]["type"] == "LineString"
+
+
+def test_cities_returns_location_id_as_frontend_identifier(monkeypatch):
+    captured = []
+    monkeypatch.setattr(
+        main,
+        "safe_query",
+        lambda query, parameters=None: captured.append(query) or [],
+    )
+
+    assert main.cities() == {"count": 0, "cities": []}
+    assert "AS id" in captured[0]
+    assert "location_aliases" in captured[0]
 
 
 def test_gdelt_prefers_active_passes_through_relationships():

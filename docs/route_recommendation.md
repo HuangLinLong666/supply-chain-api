@@ -42,7 +42,7 @@ GET /api/cities?search=Shanghai
 GET /api/cities?search=Hamburg
 ```
 
-起终点可传地点 ID、节点名称或城市。使用 ID 可减少同名地点歧义。
+起终点兼容地点 ID、旧别名、节点名称或城市；正式前端请求必须使用 `location-id-v2` 的 `locationId`，例如 `PORT-CNSHG` 或 `AIR-PVG`，避免同名地点歧义。完整规则见 `docs/location_id_naming.md`。
 
 ### 第四步：提交推荐请求
 

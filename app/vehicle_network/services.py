@@ -15,6 +15,7 @@ from app.vehicle_network.providers.sample_registry import SampleRegistryProvider
 from app.vehicle_network.repository import VehicleNetworkRepository
 from app.vehicle_network.scoring import calculate_mode_risk, estimate_cost, rank_routes
 from app.provider_risk import is_fresh, parse_datetime
+from database.country_identity import resolve_country_code
 
 
 logger = logging.getLogger(__name__)
@@ -51,11 +52,6 @@ class RouteGenerationService:
     def __init__(self, repository: VehicleNetworkRepository | None = None):
         self.repository = repository or VehicleNetworkRepository()
 
-    COUNTRY_CODES = {
-        "china": "CN", "united states": "US", "usa": "US", "germany": "DE", "netherlands": "NL",
-        "france": "FR", "belgium": "BE", "spain": "ES", "italy": "IT", "poland": "PL",
-        "kazakhstan": "KZ", "russia": "RU", "mexico": "MX", "canada": "CA", "brazil": "BR",
-    }
     LANDMASSES = {
         "eurasia": {"CN", "DE", "NL", "FR", "BE", "ES", "IT", "PL", "KZ", "RU", "TR"},
         "north_america": {"US", "CA", "MX"},
@@ -63,10 +59,12 @@ class RouteGenerationService:
     }
 
     def _country_code(self, location: dict[str, Any]) -> str:
-        code = str(location.get("country_code") or "").upper()
-        if code:
-            return code
-        return self.COUNTRY_CODES.get(str(location.get("country") or "").casefold(), "")
+        return resolve_country_code(
+            location.get("country_code"),
+            location.get("country"),
+            location.get("country_name_en"),
+            location.get("country_name_zh"),
+        ) or ""
 
     def _same_landmass(self, origin: dict[str, Any], destination: dict[str, Any]) -> bool:
         origin_code = self._country_code(origin)

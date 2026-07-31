@@ -413,6 +413,12 @@ def build_location_rows(
         location_id = str(current["location_id"])
         reference = dict(catalog.get(location_id) or {})
         if not reference:
+            for alias in current.get("location_aliases") or []:
+                reference = dict(catalog.get(str(alias)) or {})
+                if reference:
+                    reference["location_id"] = location_id
+                    break
+        if not reference:
             continue
         if reference.get("latitude") is None and valid_coordinate(
             current.get("latitude"), current.get("longitude")

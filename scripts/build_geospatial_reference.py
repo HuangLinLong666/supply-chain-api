@@ -18,6 +18,7 @@ from shapely.ops import unary_union
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from database.country_identity import resolve_country_code
 from database.neo4j_client import close_driver
 from geography.geometry import GEOSPATIAL_VERSION, geodesic_circle, geometry_mapping, stable_hash
 from geography.repository import list_locations
@@ -28,28 +29,6 @@ CANONICAL_PORT_CODES = {
     "CNNAN": "CNNSA",
     "CNNGB": "CNNBG",
     "CNSZX": "CNSZP",
-}
-
-COUNTRY_ALIASES = {
-    "australia": "AU",
-    "belgium": "BE",
-    "brazil": "BR",
-    "china": "CN",
-    "france": "FR",
-    "germany": "DE",
-    "hungary": "HU",
-    "japan": "JP",
-    "malaysia": "MY",
-    "mexico": "MX",
-    "netherlands": "NL",
-    "qatar": "QA",
-    "singapore": "SG",
-    "south korea": "KR",
-    "turkey": "TR",
-    "united arab emirates": "AE",
-    "united kingdom": "GB",
-    "united states": "US",
-    "united states of america": "US",
 }
 
 MIDDLE_EAST_COUNTRIES = {
@@ -200,12 +179,14 @@ def load_geonames(path: Path) -> dict[tuple[str, str], list[dict[str, Any]]]:
 
 
 def country_code(location: dict[str, Any]) -> str | None:
-    explicit = str(location.get("country_code") or "").strip().upper()
-    if len(explicit) == 2:
-        return explicit
-    alias = COUNTRY_ALIASES.get(normalize_text(location.get("country")))
-    if alias:
-        return alias
+    resolved = resolve_country_code(
+        location.get("country_code"),
+        location.get("country"),
+        location.get("country_name_en"),
+        location.get("country_name_zh"),
+    )
+    if resolved:
+        return resolved
     location_id = str(location.get("location_id") or "")
     return (
         location_id[:2].upper()

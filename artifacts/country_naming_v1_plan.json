@@ -1,0 +1,1531 @@
+{
+  "version": "iso3166-1-alpha2-cldr-v1",
+  "location_count": 102,
+  "resolvable_count": 102,
+  "changed_count": 0,
+  "unresolved_count": 0,
+  "unresolved": [],
+  "rows": [
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:148",
+      "country_code": "NL",
+      "country": "Netherlands",
+      "country_name_en": "Netherlands",
+      "country_name_zh": "荷兰",
+      "country_aliases": [
+        "NL",
+        "Netherlands",
+        "荷兰"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:138",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:141",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:146",
+      "country_code": "QA",
+      "country": "Qatar",
+      "country_name_en": "Qatar",
+      "country_name_zh": "卡塔尔",
+      "country_aliases": [
+        "QA",
+        "Qatar",
+        "卡塔尔"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:145",
+      "country_code": "AE",
+      "country": "United Arab Emirates",
+      "country_name_en": "United Arab Emirates",
+      "country_name_zh": "阿拉伯联合酋长国",
+      "country_aliases": [
+        "AE",
+        "United Arab Emirates",
+        "阿拉伯联合酋长国",
+        "uae"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:147",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:142",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:149",
+      "country_code": "TR",
+      "country": "Türkiye",
+      "country_name_en": "Türkiye",
+      "country_name_zh": "土耳其",
+      "country_aliases": [
+        "TR",
+        "Türkiye",
+        "土耳其",
+        "Turkey",
+        "turkiye",
+        "türkiye",
+        "turkey"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:150",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:151",
+      "country_code": "JP",
+      "country": "Japan",
+      "country_name_en": "Japan",
+      "country_name_zh": "日本",
+      "country_aliases": [
+        "JP",
+        "Japan",
+        "日本"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:136",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:137",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:144",
+      "country_code": "SG",
+      "country": "Singapore",
+      "country_name_en": "Singapore",
+      "country_name_zh": "新加坡",
+      "country_aliases": [
+        "SG",
+        "Singapore",
+        "新加坡"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:139",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:140",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:143",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:449",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:665",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:443",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:664",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:663",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:662",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2997",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:444",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2994",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:447",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:450",
+      "country_code": "HU",
+      "country": "Hungary",
+      "country_name_en": "Hungary",
+      "country_name_zh": "匈牙利",
+      "country_aliases": [
+        "HU",
+        "Hungary",
+        "匈牙利"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:445",
+      "country_code": "JP",
+      "country": "Japan",
+      "country_name_en": "Japan",
+      "country_name_zh": "日本",
+      "country_aliases": [
+        "JP",
+        "Japan",
+        "日本"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:446",
+      "country_code": "MX",
+      "country": "Mexico",
+      "country_name_en": "Mexico",
+      "country_name_zh": "墨西哥",
+      "country_aliases": [
+        "MX",
+        "Mexico",
+        "墨西哥"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2990",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2992",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2999",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2988",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3001",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:448",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1057",
+      "country_code": "AE",
+      "country": "United Arab Emirates",
+      "country_name_en": "United Arab Emirates",
+      "country_name_zh": "阿拉伯联合酋长国",
+      "country_aliases": [
+        "AE",
+        "United Arab Emirates",
+        "阿拉伯联合酋长国",
+        "uae"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1061",
+      "country_code": "BE",
+      "country": "Belgium",
+      "country_name_en": "Belgium",
+      "country_name_zh": "比利时",
+      "country_aliases": [
+        "BE",
+        "Belgium",
+        "比利时"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1054",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:10696",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:20",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:22",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:23",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:19",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1053",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:24",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:21",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1060",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1063",
+      "country_code": "GB",
+      "country": "United Kingdom",
+      "country_name_en": "United Kingdom",
+      "country_name_zh": "英国",
+      "country_aliases": [
+        "GB",
+        "United Kingdom",
+        "英国",
+        "uk",
+        "u.k.",
+        "britain",
+        "great britain"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3058",
+      "country_code": "JP",
+      "country": "Japan",
+      "country_name_en": "Japan",
+      "country_name_zh": "日本",
+      "country_aliases": [
+        "JP",
+        "Japan",
+        "日本"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1056",
+      "country_code": "KR",
+      "country": "South Korea",
+      "country_name_en": "South Korea",
+      "country_name_zh": "韩国",
+      "country_aliases": [
+        "KR",
+        "South Korea",
+        "韩国",
+        "south korea",
+        "republic of korea"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1058",
+      "country_code": "MY",
+      "country": "Malaysia",
+      "country_name_en": "Malaysia",
+      "country_name_zh": "马来西亚",
+      "country_aliases": [
+        "MY",
+        "Malaysia",
+        "马来西亚"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1059",
+      "country_code": "NL",
+      "country": "Netherlands",
+      "country_name_en": "Netherlands",
+      "country_name_zh": "荷兰",
+      "country_aliases": [
+        "NL",
+        "Netherlands",
+        "荷兰"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1055",
+      "country_code": "SG",
+      "country": "Singapore",
+      "country_name_en": "Singapore",
+      "country_name_zh": "新加坡",
+      "country_aliases": [
+        "SG",
+        "Singapore",
+        "新加坡"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1062",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:10697",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:28",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:27",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:29",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:25",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:26",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:190",
+      "country_code": "AE",
+      "country": "United Arab Emirates",
+      "country_name_en": "United Arab Emirates",
+      "country_name_zh": "阿拉伯联合酋长国",
+      "country_aliases": [
+        "AE",
+        "United Arab Emirates",
+        "阿拉伯联合酋长国",
+        "uae"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:57",
+      "country_code": "AE",
+      "country": "United Arab Emirates",
+      "country_name_en": "United Arab Emirates",
+      "country_name_zh": "阿拉伯联合酋长国",
+      "country_aliases": [
+        "AE",
+        "United Arab Emirates",
+        "阿拉伯联合酋长国",
+        "uae"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:192",
+      "country_code": "AU",
+      "country": "Australia",
+      "country_name_en": "Australia",
+      "country_name_zh": "澳大利亚",
+      "country_aliases": [
+        "AU",
+        "Australia",
+        "澳大利亚"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:59",
+      "country_code": "AU",
+      "country": "Australia",
+      "country_name_en": "Australia",
+      "country_name_zh": "澳大利亚",
+      "country_aliases": [
+        "AU",
+        "Australia",
+        "澳大利亚"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:193",
+      "country_code": "BR",
+      "country": "Brazil",
+      "country_name_en": "Brazil",
+      "country_name_zh": "巴西",
+      "country_aliases": [
+        "BR",
+        "Brazil",
+        "巴西"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:60",
+      "country_code": "BR",
+      "country": "Brazil",
+      "country_name_en": "Brazil",
+      "country_name_zh": "巴西",
+      "country_aliases": [
+        "BR",
+        "Brazil",
+        "巴西"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:162",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:165",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:17",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:13",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:166",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1690",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:15",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:160",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:161",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1689",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:14",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1691",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:12",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:163",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:164",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:18",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:167",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:11",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:16",
+      "country_code": "CN",
+      "country": "China",
+      "country_name_en": "China",
+      "country_name_zh": "中国",
+      "country_aliases": [
+        "CN",
+        "China",
+        "中国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:184",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1692",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1694",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:51",
+      "country_code": "DE",
+      "country": "Germany",
+      "country_name_en": "Germany",
+      "country_name_zh": "德国",
+      "country_aliases": [
+        "DE",
+        "Germany",
+        "德国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:188",
+      "country_code": "FR",
+      "country": "France",
+      "country_name_en": "France",
+      "country_name_zh": "法国",
+      "country_aliases": [
+        "FR",
+        "France",
+        "法国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:55",
+      "country_code": "FR",
+      "country": "France",
+      "country_name_en": "France",
+      "country_name_zh": "法国",
+      "country_aliases": [
+        "FR",
+        "France",
+        "法国"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:187",
+      "country_code": "GB",
+      "country": "United Kingdom",
+      "country_name_en": "United Kingdom",
+      "country_name_zh": "英国",
+      "country_aliases": [
+        "GB",
+        "United Kingdom",
+        "英国",
+        "uk",
+        "u.k.",
+        "britain",
+        "great britain"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:54",
+      "country_code": "GB",
+      "country": "United Kingdom",
+      "country_name_en": "United Kingdom",
+      "country_name_zh": "英国",
+      "country_aliases": [
+        "GB",
+        "United Kingdom",
+        "英国",
+        "uk",
+        "u.k.",
+        "britain",
+        "great britain"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:191",
+      "country_code": "JP",
+      "country": "Japan",
+      "country_name_en": "Japan",
+      "country_name_zh": "日本",
+      "country_aliases": [
+        "JP",
+        "Japan",
+        "日本"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:58",
+      "country_code": "JP",
+      "country": "Japan",
+      "country_name_en": "Japan",
+      "country_name_zh": "日本",
+      "country_aliases": [
+        "JP",
+        "Japan",
+        "日本"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:185",
+      "country_code": "NL",
+      "country": "Netherlands",
+      "country_name_en": "Netherlands",
+      "country_name_zh": "荷兰",
+      "country_aliases": [
+        "NL",
+        "Netherlands",
+        "荷兰"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:52",
+      "country_code": "NL",
+      "country": "Netherlands",
+      "country_name_en": "Netherlands",
+      "country_name_zh": "荷兰",
+      "country_aliases": [
+        "NL",
+        "Netherlands",
+        "荷兰"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:189",
+      "country_code": "SG",
+      "country": "Singapore",
+      "country_name_en": "Singapore",
+      "country_name_zh": "新加坡",
+      "country_aliases": [
+        "SG",
+        "Singapore",
+        "新加坡"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:56",
+      "country_code": "SG",
+      "country": "Singapore",
+      "country_name_en": "Singapore",
+      "country_name_zh": "新加坡",
+      "country_aliases": [
+        "SG",
+        "Singapore",
+        "新加坡"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:186",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1693",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    },
+    {
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:53",
+      "country_code": "US",
+      "country": "United States",
+      "country_name_en": "United States",
+      "country_name_zh": "美国",
+      "country_aliases": [
+        "US",
+        "United States",
+        "美国",
+        "america",
+        "u.s.",
+        "u.s.a.",
+        "usa",
+        "united states of america"
+      ],
+      "country_naming_version": "iso3166-1-alpha2-cldr-v1",
+      "changed": false
+    }
+  ],
+  "generated_at": "2026-07-31T02:56:44.712699+00:00",
+  "mode": "execute",
+  "updated_count": 102,
+  "validation": {
+    "total": 102,
+    "migrated": 102,
+    "valid_codes": 102,
+    "with_english_name": 102,
+    "with_chinese_name": 102,
+    "with_aliases": 102
+  }
+}

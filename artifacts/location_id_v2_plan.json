@@ -1,0 +1,1309 @@
+{
+  "changed_count": 99,
+  "collision_count": 0,
+  "collisions": [],
+  "execution": {
+    "ais_targets": 3,
+    "destination_id": 37,
+    "locations": 102,
+    "origin_id": 43,
+    "port_id": 0,
+    "temporary_ids": 99
+  },
+  "follow_up_alias_reference_execution": {
+    "executed_at": "2026-07-31T01:40:48.108467+00:00",
+    "destination_id_aliases_updated": 6,
+    "legacy_destination_ids_remaining": 0,
+    "note": "USLAX was a port alias rather than the old location_id; the idempotent follow-up synchronized these references to PORT-USLAX."
+  },
+  "generated_at": "2026-07-31T01:32:35.443873+00:00",
+  "kind_counts": {
+    "airport": 16,
+    "factory": 19,
+    "port": 20,
+    "rail_terminal": 5,
+    "warehouse": 42
+  },
+  "location_count": 102,
+  "mode": "execute",
+  "reference_counts": {
+    "ais_targets": 3,
+    "destination_id": 37,
+    "origin_id": 43,
+    "port_id": 0
+  },
+  "rows": [
+    {
+      "aliases": [
+        "CNSZX",
+        "CNSZP"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1053",
+      "kind": "port",
+      "new_id": "PORT-CNSZP",
+      "old_id": "CNSZX",
+      "temporary_id": "MIGRATING-C5F62B6B27264689"
+    },
+    {
+      "aliases": [
+        "CNGGZ"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1054",
+      "kind": "port",
+      "new_id": "PORT-CNGGZ",
+      "old_id": "CNGGZ",
+      "temporary_id": "MIGRATING-899789D38A5BD7FB"
+    },
+    {
+      "aliases": [
+        "SGSIN"
+      ],
+      "changed": true,
+      "country_code": "SG",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1055",
+      "kind": "port",
+      "new_id": "PORT-SGSIN",
+      "old_id": "SGSIN",
+      "temporary_id": "MIGRATING-4632E9BE9ABA0D2D"
+    },
+    {
+      "aliases": [
+        "KRPUS"
+      ],
+      "changed": true,
+      "country_code": "KR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1056",
+      "kind": "port",
+      "new_id": "PORT-KRPUS",
+      "old_id": "KRPUS",
+      "temporary_id": "MIGRATING-7B26B5DDC4829C08"
+    },
+    {
+      "aliases": [
+        "AEJEA"
+      ],
+      "changed": true,
+      "country_code": "AE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1057",
+      "kind": "port",
+      "new_id": "PORT-AEJEA",
+      "old_id": "AEJEA",
+      "temporary_id": "MIGRATING-38BFBBDADA4EBA08"
+    },
+    {
+      "aliases": [
+        "MYPKG"
+      ],
+      "changed": true,
+      "country_code": "MY",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1058",
+      "kind": "port",
+      "new_id": "PORT-MYPKG",
+      "old_id": "MYPKG",
+      "temporary_id": "MIGRATING-A7C4BD93B19AA605"
+    },
+    {
+      "aliases": [
+        "NLRTM"
+      ],
+      "changed": true,
+      "country_code": "NL",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1059",
+      "kind": "port",
+      "new_id": "PORT-NLRTM",
+      "old_id": "NLRTM",
+      "temporary_id": "MIGRATING-EE70E9F1B35D89B0"
+    },
+    {
+      "aliases": [
+        "DE-HAM",
+        "DEHAM"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1060",
+      "kind": "port",
+      "new_id": "PORT-DEHAM",
+      "old_id": "DE-HAM",
+      "temporary_id": "MIGRATING-01A64BA47C762190"
+    },
+    {
+      "aliases": [
+        "BEANR"
+      ],
+      "changed": true,
+      "country_code": "BE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1061",
+      "kind": "port",
+      "new_id": "PORT-BEANR",
+      "old_id": "BEANR",
+      "temporary_id": "MIGRATING-9C142644E7C2394B"
+    },
+    {
+      "aliases": [
+        "US-LAX",
+        "USLAX"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1062",
+      "kind": "port",
+      "new_id": "PORT-USLAX",
+      "old_id": "US-LAX",
+      "temporary_id": "MIGRATING-B5B34E2D47DC32DC"
+    },
+    {
+      "aliases": [
+        "GBFXT"
+      ],
+      "changed": true,
+      "country_code": "GB",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1063",
+      "kind": "port",
+      "new_id": "PORT-GBFXT",
+      "old_id": "GBFXT",
+      "temporary_id": "MIGRATING-45839C31004987EF"
+    },
+    {
+      "aliases": [
+        "CN-LYG",
+        "CNLYG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:10696",
+      "kind": "port",
+      "new_id": "PORT-CNLYG",
+      "old_id": "CN-LYG",
+      "temporary_id": "MIGRATING-5045B516ABBC5F91"
+    },
+    {
+      "aliases": [
+        "US-LGB",
+        "USLGB"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:10697",
+      "kind": "port",
+      "new_id": "PORT-USLGB",
+      "old_id": "US-LGB",
+      "temporary_id": "MIGRATING-4AF100A2B5B21317"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:50b1347046",
+        "warehouse:yiwu-cross-border-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:11",
+      "kind": "warehouse",
+      "new_id": "WH-CN-YIWU-CROSS-BORDER-EXPORT",
+      "old_id": "loc:warehouse:50b1347046",
+      "temporary_id": "MIGRATING-9CD21C1C4C91803C"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:f4148092fc",
+        "warehouse:shenzhen-qianhai-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:12",
+      "kind": "warehouse",
+      "new_id": "WH-CN-SHENZHEN-QIANHAI-EXPORT",
+      "old_id": "loc:warehouse:f4148092fc",
+      "temporary_id": "MIGRATING-FAD82858B7C181BE"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:a273a31ba8",
+        "warehouse:guangzhou-nansha-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:13",
+      "kind": "warehouse",
+      "new_id": "WH-CN-GUANGZHOU-NANSHA-EXPORT",
+      "old_id": "loc:warehouse:a273a31ba8",
+      "temporary_id": "MIGRATING-B39A137C8FC5E56C"
+    },
+    {
+      "aliases": [
+        "PEK"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:136",
+      "kind": "airport",
+      "new_id": "AIR-PEK",
+      "old_id": "PEK",
+      "temporary_id": "MIGRATING-B67AB20E87DCDFCD"
+    },
+    {
+      "aliases": [
+        "CN-PVG",
+        "PVG",
+        "ZSPD"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:137",
+      "kind": "airport",
+      "new_id": "AIR-PVG",
+      "old_id": "CN-PVG",
+      "temporary_id": "MIGRATING-D97AE13F3A45218B"
+    },
+    {
+      "aliases": [
+        "CAN"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:138",
+      "kind": "airport",
+      "new_id": "AIR-CAN",
+      "old_id": "CAN",
+      "temporary_id": "MIGRATING-3DDD91D7DC9E0171"
+    },
+    {
+      "aliases": [
+        "SZX"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:139",
+      "kind": "airport",
+      "new_id": "AIR-SZX",
+      "old_id": "SZX",
+      "temporary_id": "MIGRATING-D88EE2C839AF8C51"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:f92c0c431e",
+        "warehouse:shanghai-waigaoqiao-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:14",
+      "kind": "warehouse",
+      "new_id": "WH-CN-SHANGHAI-WAIGAOQIAO-EXPORT",
+      "old_id": "loc:warehouse:f92c0c431e",
+      "temporary_id": "MIGRATING-222DED2AFCD18A0C"
+    },
+    {
+      "aliases": [
+        "TFU"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:140",
+      "kind": "airport",
+      "new_id": "AIR-TFU",
+      "old_id": "TFU",
+      "temporary_id": "MIGRATING-07A6191032F69625"
+    },
+    {
+      "aliases": [
+        "CGO"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:141",
+      "kind": "airport",
+      "new_id": "AIR-CGO",
+      "old_id": "CGO",
+      "temporary_id": "MIGRATING-FB213BFB4C09F92D"
+    },
+    {
+      "aliases": [
+        "HGH"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:142",
+      "kind": "airport",
+      "new_id": "AIR-HGH",
+      "old_id": "HGH",
+      "temporary_id": "MIGRATING-2EB973F116E9EC4A"
+    },
+    {
+      "aliases": [
+        "XIY"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:143",
+      "kind": "airport",
+      "new_id": "AIR-XIY",
+      "old_id": "XIY",
+      "temporary_id": "MIGRATING-6242254AFBDF57A4"
+    },
+    {
+      "aliases": [
+        "SIN"
+      ],
+      "changed": true,
+      "country_code": "SG",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:144",
+      "kind": "airport",
+      "new_id": "AIR-SIN",
+      "old_id": "SIN",
+      "temporary_id": "MIGRATING-2205E28F6479E8BB"
+    },
+    {
+      "aliases": [
+        "DXB"
+      ],
+      "changed": true,
+      "country_code": "AE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:145",
+      "kind": "airport",
+      "new_id": "AIR-DXB",
+      "old_id": "DXB",
+      "temporary_id": "MIGRATING-6013E443567BC9CC"
+    },
+    {
+      "aliases": [
+        "DOH"
+      ],
+      "changed": true,
+      "country_code": "QA",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:146",
+      "kind": "airport",
+      "new_id": "AIR-DOH",
+      "old_id": "DOH",
+      "temporary_id": "MIGRATING-D64DC998560EE1D5"
+    },
+    {
+      "aliases": [
+        "DE-FRA",
+        "FRA",
+        "EDDF"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:147",
+      "kind": "airport",
+      "new_id": "AIR-FRA",
+      "old_id": "DE-FRA",
+      "temporary_id": "MIGRATING-88EE77C118345433"
+    },
+    {
+      "aliases": [
+        "AMS"
+      ],
+      "changed": true,
+      "country_code": "NL",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:148",
+      "kind": "airport",
+      "new_id": "AIR-AMS",
+      "old_id": "AMS",
+      "temporary_id": "MIGRATING-E8D7102CBB478202"
+    },
+    {
+      "aliases": [
+        "IST"
+      ],
+      "changed": true,
+      "country_code": "TR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:149",
+      "kind": "airport",
+      "new_id": "AIR-IST",
+      "old_id": "IST",
+      "temporary_id": "MIGRATING-858343BF5E07425C"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:3015ffa6a2",
+        "warehouse:ningbo-beilun-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:15",
+      "kind": "warehouse",
+      "new_id": "WH-CN-NINGBO-BEILUN-EXPORT",
+      "old_id": "loc:warehouse:3015ffa6a2",
+      "temporary_id": "MIGRATING-5EA8D5A88917C594"
+    },
+    {
+      "aliases": [
+        "LAX"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:150",
+      "kind": "airport",
+      "new_id": "AIR-LAX",
+      "old_id": "LAX",
+      "temporary_id": "MIGRATING-ECECF248D1E35CE5"
+    },
+    {
+      "aliases": [
+        "NRT"
+      ],
+      "changed": true,
+      "country_code": "JP",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:151",
+      "kind": "airport",
+      "new_id": "AIR-NRT",
+      "old_id": "NRT",
+      "temporary_id": "MIGRATING-E5F84B3F8A71513D"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:36abcca8db",
+        "warehouse:zhengzhou-airport-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:16",
+      "kind": "warehouse",
+      "new_id": "WH-CN-ZHENGZHOU-AIRPORT-EXPORT",
+      "old_id": "loc:warehouse:36abcca8db",
+      "temporary_id": "MIGRATING-911B172023134777"
+    },
+    {
+      "aliases": [
+        "PEK~7da2cc48",
+        "PEK"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:160",
+      "kind": "warehouse",
+      "new_id": "WH-CN-PEK",
+      "old_id": "PEK~7da2cc48",
+      "temporary_id": "MIGRATING-FC99A3D5759D4F88"
+    },
+    {
+      "aliases": [
+        "PVG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:161",
+      "kind": "warehouse",
+      "new_id": "WH-CN-PVG",
+      "old_id": "PVG",
+      "temporary_id": "MIGRATING-75652CA1456630E4"
+    },
+    {
+      "aliases": [
+        "CAN~b051f1df",
+        "CAN"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:162",
+      "kind": "warehouse",
+      "new_id": "WH-CN-CAN",
+      "old_id": "CAN~b051f1df",
+      "temporary_id": "MIGRATING-14F99CDED33C47FE"
+    },
+    {
+      "aliases": [
+        "SZX~4fb843a7",
+        "SZX"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:163",
+      "kind": "warehouse",
+      "new_id": "WH-CN-SZX",
+      "old_id": "SZX~4fb843a7",
+      "temporary_id": "MIGRATING-4A815464E428E069"
+    },
+    {
+      "aliases": [
+        "TFU~ae7f24ad",
+        "TFU"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:164",
+      "kind": "warehouse",
+      "new_id": "WH-CN-TFU",
+      "old_id": "TFU~ae7f24ad",
+      "temporary_id": "MIGRATING-FA973C1241DE5B2D"
+    },
+    {
+      "aliases": [
+        "CGO~84fa5d28",
+        "CGO"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:165",
+      "kind": "warehouse",
+      "new_id": "WH-CN-CGO",
+      "old_id": "CGO~84fa5d28",
+      "temporary_id": "MIGRATING-CACCF497517D50AE"
+    },
+    {
+      "aliases": [
+        "HGH~43e20e1d",
+        "HGH"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:166",
+      "kind": "warehouse",
+      "new_id": "WH-CN-HGH",
+      "old_id": "HGH~43e20e1d",
+      "temporary_id": "MIGRATING-BA428051B718AFB4"
+    },
+    {
+      "aliases": [
+        "XIY~7aa1f75d",
+        "XIY"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:167",
+      "kind": "warehouse",
+      "new_id": "WH-CN-XIY",
+      "old_id": "XIY~7aa1f75d",
+      "temporary_id": "MIGRATING-45687FD461A2EF8B"
+    },
+    {
+      "aliases": [
+        "WH-CN-SHANGHAI"
+      ],
+      "changed": false,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1689",
+      "kind": "warehouse",
+      "new_id": "WH-CN-SHANGHAI",
+      "old_id": "WH-CN-SHANGHAI",
+      "temporary_id": "MIGRATING-79D455B9328ACE41"
+    },
+    {
+      "aliases": [
+        "WH-CN-NINGBO"
+      ],
+      "changed": false,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1690",
+      "kind": "warehouse",
+      "new_id": "WH-CN-NINGBO",
+      "old_id": "WH-CN-NINGBO",
+      "temporary_id": "MIGRATING-3433F975010E3DDA"
+    },
+    {
+      "aliases": [
+        "WH-CN-SHENZHEN"
+      ],
+      "changed": false,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1691",
+      "kind": "warehouse",
+      "new_id": "WH-CN-SHENZHEN",
+      "old_id": "WH-CN-SHENZHEN",
+      "temporary_id": "MIGRATING-B4B6173CE04C259D"
+    },
+    {
+      "aliases": [
+        "WH-EU-DUISBURG"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1692",
+      "kind": "warehouse",
+      "new_id": "WH-DE-EU-DUISBURG",
+      "old_id": "WH-EU-DUISBURG",
+      "temporary_id": "MIGRATING-7BC1139951211881"
+    },
+    {
+      "aliases": [
+        "WH-NA-LA"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1693",
+      "kind": "warehouse",
+      "new_id": "WH-US-NA-LA",
+      "old_id": "WH-NA-LA",
+      "temporary_id": "MIGRATING-CD20BE2A9161BA41"
+    },
+    {
+      "aliases": [
+        "WH-EU-HAMBURG"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:1694",
+      "kind": "warehouse",
+      "new_id": "WH-DE-EU-HAMBURG",
+      "old_id": "WH-EU-HAMBURG",
+      "temporary_id": "MIGRATING-77E843F37EA58DD3"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:43befd21cc",
+        "warehouse:chengdu-qingbaijiang-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:17",
+      "kind": "warehouse",
+      "new_id": "WH-CN-CHENGDU-QINGBAIJIANG-EXPORT",
+      "old_id": "loc:warehouse:43befd21cc",
+      "temporary_id": "MIGRATING-FA8EFE5F44961578"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:0720d2bb98",
+        "warehouse:xi-an-chanba-export-warehouse"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:18",
+      "kind": "warehouse",
+      "new_id": "WH-CN-XI-AN-CHANBA-EXPORT",
+      "old_id": "loc:warehouse:0720d2bb98",
+      "temporary_id": "MIGRATING-D2A956FBB395C70E"
+    },
+    {
+      "aliases": [
+        "DE-AWH"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:184",
+      "kind": "warehouse",
+      "new_id": "WH-DE-AWH",
+      "old_id": "DE-AWH",
+      "temporary_id": "MIGRATING-4D517E842CC44C95"
+    },
+    {
+      "aliases": [
+        "NL-AWH"
+      ],
+      "changed": true,
+      "country_code": "NL",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:185",
+      "kind": "warehouse",
+      "new_id": "WH-NL-AWH",
+      "old_id": "NL-AWH",
+      "temporary_id": "MIGRATING-ECBBBA2E86E1A92E"
+    },
+    {
+      "aliases": [
+        "US-AWH"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:186",
+      "kind": "warehouse",
+      "new_id": "WH-US-AWH",
+      "old_id": "US-AWH",
+      "temporary_id": "MIGRATING-4D9CF63ED62E703B"
+    },
+    {
+      "aliases": [
+        "GB-AWH"
+      ],
+      "changed": true,
+      "country_code": "GB",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:187",
+      "kind": "warehouse",
+      "new_id": "WH-GB-AWH",
+      "old_id": "GB-AWH",
+      "temporary_id": "MIGRATING-53A792AB84CD86A3"
+    },
+    {
+      "aliases": [
+        "FR-AWH"
+      ],
+      "changed": true,
+      "country_code": "FR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:188",
+      "kind": "warehouse",
+      "new_id": "WH-FR-AWH",
+      "old_id": "FR-AWH",
+      "temporary_id": "MIGRATING-810BBF7F75FF6D99"
+    },
+    {
+      "aliases": [
+        "SG-AWH"
+      ],
+      "changed": true,
+      "country_code": "SG",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:189",
+      "kind": "warehouse",
+      "new_id": "WH-SG-AWH",
+      "old_id": "SG-AWH",
+      "temporary_id": "MIGRATING-3EC8A460F044289A"
+    },
+    {
+      "aliases": [
+        "CN-SHA",
+        "CNSHA",
+        "CNSHG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:19",
+      "kind": "port",
+      "new_id": "PORT-CNSHG",
+      "old_id": "CN-SHA",
+      "temporary_id": "MIGRATING-FCD6BAF541310EE8"
+    },
+    {
+      "aliases": [
+        "AE-AWH"
+      ],
+      "changed": true,
+      "country_code": "AE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:190",
+      "kind": "warehouse",
+      "new_id": "WH-AE-AWH",
+      "old_id": "AE-AWH",
+      "temporary_id": "MIGRATING-95DAB51868B4A4B2"
+    },
+    {
+      "aliases": [
+        "JP-AWH"
+      ],
+      "changed": true,
+      "country_code": "JP",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:191",
+      "kind": "warehouse",
+      "new_id": "WH-JP-AWH",
+      "old_id": "JP-AWH",
+      "temporary_id": "MIGRATING-D4D88295943DCA37"
+    },
+    {
+      "aliases": [
+        "AU-AWH"
+      ],
+      "changed": true,
+      "country_code": "AU",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:192",
+      "kind": "warehouse",
+      "new_id": "WH-AU-AWH",
+      "old_id": "AU-AWH",
+      "temporary_id": "MIGRATING-80FF5328FECE9DF8"
+    },
+    {
+      "aliases": [
+        "BR-AWH"
+      ],
+      "changed": true,
+      "country_code": "BR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:193",
+      "kind": "warehouse",
+      "new_id": "WH-BR-AWH",
+      "old_id": "BR-AWH",
+      "temporary_id": "MIGRATING-48A5D88EB8C37949"
+    },
+    {
+      "aliases": [
+        "CNNGB",
+        "CNNBG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:20",
+      "kind": "port",
+      "new_id": "PORT-CNNBG",
+      "old_id": "CNNGB",
+      "temporary_id": "MIGRATING-344B0AFECEB0240B"
+    },
+    {
+      "aliases": [
+        "CNYTN"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:21",
+      "kind": "port",
+      "new_id": "PORT-CNYTN",
+      "old_id": "CNYTN",
+      "temporary_id": "MIGRATING-C0B88B8AD097E5B3"
+    },
+    {
+      "aliases": [
+        "CNNAN",
+        "CNNSA"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:22",
+      "kind": "port",
+      "new_id": "PORT-CNNSA",
+      "old_id": "CNNAN",
+      "temporary_id": "MIGRATING-F5850A5AD4EF9885"
+    },
+    {
+      "aliases": [
+        "CNQDG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:23",
+      "kind": "port",
+      "new_id": "PORT-CNQDG",
+      "old_id": "CNQDG",
+      "temporary_id": "MIGRATING-777BDC29A0505365"
+    },
+    {
+      "aliases": [
+        "CNTXG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:24",
+      "kind": "port",
+      "new_id": "PORT-CNTXG",
+      "old_id": "CNTXG",
+      "temporary_id": "MIGRATING-955F071976B564AC"
+    },
+    {
+      "aliases": [
+        "XI'AN_INTERNATIONAL_PORT"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:25",
+      "kind": "rail_terminal",
+      "new_id": "RAIL-CN-XI-AN-INTERNATIONAL-PORT",
+      "old_id": "XI'AN_INTERNATIONAL_PORT",
+      "temporary_id": "MIGRATING-DE838148DC5B257E"
+    },
+    {
+      "aliases": [
+        "ZHENGZHOU_RAILWAY_CONTAINER_CENTER"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:26",
+      "kind": "rail_terminal",
+      "new_id": "RAIL-CN-ZHENGZHOU",
+      "old_id": "ZHENGZHOU_RAILWAY_CONTAINER_CENTER",
+      "temporary_id": "MIGRATING-41EB5C009A717822"
+    },
+    {
+      "aliases": [
+        "CHONGQING_TUANJIECUN_RAILWAY_STATION"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:27",
+      "kind": "rail_terminal",
+      "new_id": "RAIL-CN-CHONGQING-TUANJIECUN",
+      "old_id": "CHONGQING_TUANJIECUN_RAILWAY_STATION",
+      "temporary_id": "MIGRATING-0C88C49C5A59EAD1"
+    },
+    {
+      "aliases": [
+        "ALASHANKOU_RAILWAY_PORT"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:28",
+      "kind": "rail_terminal",
+      "new_id": "RAIL-CN-ALASHANKOU",
+      "old_id": "ALASHANKOU_RAILWAY_PORT",
+      "temporary_id": "MIGRATING-2E4706B0493895C1"
+    },
+    {
+      "aliases": [
+        "KHORGOS_RAILWAY_PORT"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:29",
+      "kind": "rail_terminal",
+      "new_id": "RAIL-CN-KHORGOS",
+      "old_id": "KHORGOS_RAILWAY_PORT",
+      "temporary_id": "MIGRATING-38B4E3D2B08B03FE"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-GIGAFACTORY-TEXAS"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2988",
+      "kind": "factory",
+      "new_id": "FAC-US-TSLA-GIGAFACTORY-TEXAS",
+      "old_id": "SEC-TSLA-GIGAFACTORY-TEXAS",
+      "temporary_id": "MIGRATING-5DB8F1C6BE7DB3BB"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-FREMONT"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2990",
+      "kind": "factory",
+      "new_id": "FAC-US-TSLA-FREMONT",
+      "old_id": "SEC-TSLA-FREMONT",
+      "temporary_id": "MIGRATING-1CB63017AB3D44E0"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-GIGAFACTORY-NEVADA"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2992",
+      "kind": "factory",
+      "new_id": "FAC-US-TSLA-GIGAFACTORY-NEVADA",
+      "old_id": "SEC-TSLA-GIGAFACTORY-NEVADA",
+      "temporary_id": "MIGRATING-7C7CBCAF7602D0D6"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-GIGAFACTORY-BERLIN"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2994",
+      "kind": "factory",
+      "new_id": "FAC-DE-TSLA-GIGAFACTORY-BERLIN",
+      "old_id": "SEC-TSLA-GIGAFACTORY-BERLIN",
+      "temporary_id": "MIGRATING-DB3963872BDC5D8F"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-MEGAFACTORY-SHANGHAI"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2997",
+      "kind": "factory",
+      "new_id": "FAC-CN-TSLA-MEGAFACTORY-SHANGHAI",
+      "old_id": "SEC-TSLA-MEGAFACTORY-SHANGHAI",
+      "temporary_id": "MIGRATING-BE32D3ADB1F89610"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-GIGAFACTORY-NEW-YORK"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:2999",
+      "kind": "factory",
+      "new_id": "FAC-US-TSLA-GIGAFACTORY-NEW-YORK",
+      "old_id": "SEC-TSLA-GIGAFACTORY-NEW-YORK",
+      "temporary_id": "MIGRATING-B037ABA0ED188E51"
+    },
+    {
+      "aliases": [
+        "SEC-TSLA-MEGAFACTORY-LATHROP"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3001",
+      "kind": "factory",
+      "new_id": "FAC-US-TSLA-MEGAFACTORY-LATHROP",
+      "old_id": "SEC-TSLA-MEGAFACTORY-LATHROP",
+      "temporary_id": "MIGRATING-C17EDFC8345994AB"
+    },
+    {
+      "aliases": [
+        "JPYOK"
+      ],
+      "changed": true,
+      "country_code": "JP",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:3058",
+      "kind": "port",
+      "new_id": "PORT-JPYOK",
+      "old_id": "JPYOK",
+      "temporary_id": "MIGRATING-78B2F56A5115D4F6"
+    },
+    {
+      "aliases": [
+        "FAC-BYD-SZ"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:443",
+      "kind": "factory",
+      "new_id": "FAC-CN-BYD-SZ",
+      "old_id": "FAC-BYD-SZ",
+      "temporary_id": "MIGRATING-A1F5225C02A9FDC6"
+    },
+    {
+      "aliases": [
+        "FAC-TSLA-SH"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:444",
+      "kind": "factory",
+      "new_id": "FAC-CN-TSLA-SH",
+      "old_id": "FAC-TSLA-SH",
+      "temporary_id": "MIGRATING-2822AA8C572159A4"
+    },
+    {
+      "aliases": [
+        "FAC-TYT-JP"
+      ],
+      "changed": true,
+      "country_code": "JP",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:445",
+      "kind": "factory",
+      "new_id": "FAC-JP-TYT-TOYOTA-CITY",
+      "old_id": "FAC-TYT-JP",
+      "temporary_id": "MIGRATING-0F51D5E3E5B36ACD"
+    },
+    {
+      "aliases": [
+        "FAC-TYT-MX"
+      ],
+      "changed": true,
+      "country_code": "MX",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:446",
+      "kind": "factory",
+      "new_id": "FAC-MX-TYT-APASEO-EL-GRANDE",
+      "old_id": "FAC-TYT-MX",
+      "temporary_id": "MIGRATING-AFB68B9C8AF358A6"
+    },
+    {
+      "aliases": [
+        "FAC-VW-DE"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:447",
+      "kind": "factory",
+      "new_id": "FAC-DE-VW-ZWICKAU",
+      "old_id": "FAC-VW-DE",
+      "temporary_id": "MIGRATING-A98F178AAC30FCCD"
+    },
+    {
+      "aliases": [
+        "FAC-VW-US"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:448",
+      "kind": "factory",
+      "new_id": "FAC-US-VW-CHATTANOOGA",
+      "old_id": "FAC-VW-US",
+      "temporary_id": "MIGRATING-45F2CF915BACFFAF"
+    },
+    {
+      "aliases": [
+        "FAC-BMW-CN"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:449",
+      "kind": "factory",
+      "new_id": "FAC-CN-BMW-SHENYANG",
+      "old_id": "FAC-BMW-CN",
+      "temporary_id": "MIGRATING-1A7BE3715F34D7FC"
+    },
+    {
+      "aliases": [
+        "FAC-BMW-HU"
+      ],
+      "changed": true,
+      "country_code": "HU",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:450",
+      "kind": "factory",
+      "new_id": "FAC-HU-BMW-DEBRECEN",
+      "old_id": "FAC-BMW-HU",
+      "temporary_id": "MIGRATING-C73F53B3820D6137"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:65aa7aa833",
+        "warehouse:germany-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "DE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:51",
+      "kind": "warehouse",
+      "new_id": "WH-DE-OVERSEAS",
+      "old_id": "loc:warehouse:65aa7aa833",
+      "temporary_id": "MIGRATING-EB8C49E90730B40F"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:3101a34fad",
+        "warehouse:netherlands-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "NL",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:52",
+      "kind": "warehouse",
+      "new_id": "WH-NL-OVERSEAS",
+      "old_id": "loc:warehouse:3101a34fad",
+      "temporary_id": "MIGRATING-581ECC491BB958D2"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:2d053e4cb7",
+        "warehouse:united-states-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "US",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:53",
+      "kind": "warehouse",
+      "new_id": "WH-US-OVERSEAS",
+      "old_id": "loc:warehouse:2d053e4cb7",
+      "temporary_id": "MIGRATING-0352E0AA96612CEB"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:117c05747f",
+        "warehouse:united-kingdom-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "GB",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:54",
+      "kind": "warehouse",
+      "new_id": "WH-GB-OVERSEAS",
+      "old_id": "loc:warehouse:117c05747f",
+      "temporary_id": "MIGRATING-7AB964D304F62D2A"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:82c16e6873",
+        "warehouse:france-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "FR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:55",
+      "kind": "warehouse",
+      "new_id": "WH-FR-OVERSEAS",
+      "old_id": "loc:warehouse:82c16e6873",
+      "temporary_id": "MIGRATING-FCAE99D356B24246"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:e05bb6dd33",
+        "warehouse:singapore-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "SG",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:56",
+      "kind": "warehouse",
+      "new_id": "WH-SG-OVERSEAS",
+      "old_id": "loc:warehouse:e05bb6dd33",
+      "temporary_id": "MIGRATING-D06FDA105745F98F"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:4d3b310e82",
+        "warehouse:united-arab-emirates-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "AE",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:57",
+      "kind": "warehouse",
+      "new_id": "WH-AE-OVERSEAS",
+      "old_id": "loc:warehouse:4d3b310e82",
+      "temporary_id": "MIGRATING-A52ADDE7AFB5A727"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:deac8dbf58",
+        "warehouse:japan-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "JP",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:58",
+      "kind": "warehouse",
+      "new_id": "WH-JP-OVERSEAS",
+      "old_id": "loc:warehouse:deac8dbf58",
+      "temporary_id": "MIGRATING-10BF3F98C7F6C5B5"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:d859b83a8d",
+        "warehouse:australia-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "AU",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:59",
+      "kind": "warehouse",
+      "new_id": "WH-AU-OVERSEAS",
+      "old_id": "loc:warehouse:d859b83a8d",
+      "temporary_id": "MIGRATING-8A808782F7284F9F"
+    },
+    {
+      "aliases": [
+        "loc:warehouse:7793773812",
+        "warehouse:brazil-overseas-warehouse"
+      ],
+      "changed": true,
+      "country_code": "BR",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:60",
+      "kind": "warehouse",
+      "new_id": "WH-BR-OVERSEAS",
+      "old_id": "loc:warehouse:7793773812",
+      "temporary_id": "MIGRATING-61672032D11DC3FC"
+    },
+    {
+      "aliases": [
+        "FAC-SAIC-LG"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:662",
+      "kind": "factory",
+      "new_id": "FAC-CN-SAIC-LG",
+      "old_id": "FAC-SAIC-LG",
+      "temporary_id": "MIGRATING-F7AE94A92644240C"
+    },
+    {
+      "aliases": [
+        "FAC-GEELY-NB"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:663",
+      "kind": "factory",
+      "new_id": "FAC-CN-GEELY-NB",
+      "old_id": "FAC-GEELY-NB",
+      "temporary_id": "MIGRATING-9EA80EF6EB85F5C7"
+    },
+    {
+      "aliases": [
+        "FAC-CATL-ND"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:664",
+      "kind": "factory",
+      "new_id": "FAC-CN-CATL-ND",
+      "old_id": "FAC-CATL-ND",
+      "temporary_id": "MIGRATING-9F9F3F2947CD92B7"
+    },
+    {
+      "aliases": [
+        "FAC-BOSCH-SZ"
+      ],
+      "changed": true,
+      "country_code": "CN",
+      "element_id": "4:7d366176-8bfa-4487-95a3-b7b387cf8eb9:665",
+      "kind": "factory",
+      "new_id": "FAC-CN-BOSCH-SZ",
+      "old_id": "FAC-BOSCH-SZ",
+      "temporary_id": "MIGRATING-D8C4245C37A9162D"
+    }
+  ],
+  "unchanged_count": 3,
+  "validation": {
+    "duplicates": [],
+    "migrated": 102,
+    "temporary_ids": 0,
+    "total": 102,
+    "valid_format": 102,
+    "with_aliases": 102
+  },
+  "version": "location-id-v2"
+}
