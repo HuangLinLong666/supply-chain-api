@@ -24,7 +24,7 @@ def test_no_provider_signal_produces_unavailable_not_neutral_default():
     assert result["data_completeness"] == 0
 
 
-def test_sea_risk_uses_only_available_weather_and_geopolitical_signals():
+def test_risk_uses_only_available_war_and_natural_disaster_signals():
     signals = build_segment_signals(
         "sea",
         news_score=0.6,
@@ -33,30 +33,27 @@ def test_sea_risk_uses_only_available_weather_and_geopolitical_signals():
         weather_provider="Open-Meteo",
     )
     result = calculate_provider_risk("sea", signals, load_strategy())
-    expected = (60 * 0.18 + 40 * 0.22) / (0.18 + 0.22)
+    expected = (60 * 0.40 + 40 * 0.35) / (0.40 + 0.35)
     assert result["score_100"] == round(expected, 2)
-    assert result["data_completeness"] == 0.4
+    assert result["data_completeness"] == 0.75
     assert result["status"] == "partial"
     assert set(result["providers"]) == {"GDELT", "Open-Meteo"}
 
 
 def test_signal_without_provider_is_ignored():
-    signals = {"weather": {"score": 80, "status": "available", "provider": None}}
+    signals = {"natural_disaster": {"score": 80, "status": "available", "provider": None}}
     result = calculate_provider_risk("road", signals, load_strategy())
     assert result["score"] is None
-    assert "weather" in result["missing_factors"]
+    assert "natural_disaster" in result["missing_factors"]
 
 
-def test_missing_ais_does_not_create_fake_port_congestion_risk():
+def test_only_three_supported_factors_are_returned():
     signals = build_segment_signals("sea")
     result = calculate_provider_risk("sea", signals, load_strategy())
-    congestion = next(factor for factor in result["factors"] if factor["key"] == "port_congestion")
-    assert congestion["score"] is None
-    assert congestion["status"] == "unavailable"
-    assert congestion["provider"] is None
+    assert [factor["key"] for factor in result["factors"]] == ["war", "natural_disaster", "trade_policy"]
 
 
-def test_real_ais_congestion_affects_sea_only():
+def test_ais_congestion_is_observable_but_not_part_of_three_factor_score():
     sea_signals = build_segment_signals(
         "sea",
         congestion_score=72,
@@ -67,10 +64,8 @@ def test_real_ais_congestion_affects_sea_only():
         congestion_evidence=["aisstream:port-shanghai:20260726T1200Z"],
     )
     sea_result = calculate_provider_risk("sea", sea_signals, load_strategy())
-    assert sea_result["score_100"] == 72
-    assert sea_result["data_completeness"] == 0.2
-    assert sea_result["providers"] == ["AISStream.io"]
-    assert sea_result["evidence"] == ["aisstream:port-shanghai:20260726T1200Z"]
+    assert sea_result["score_100"] is None
+    assert sea_result["providers"] == []
 
     rail_signals = build_segment_signals(
         "rail",
@@ -80,10 +75,10 @@ def test_real_ais_congestion_affects_sea_only():
     assert "port_congestion" not in rail_signals
 
 
-def test_news_is_not_mapped_to_road_without_a_supported_dimension():
+def test_war_news_is_supported_for_road_rerouting():
     signals = build_segment_signals("road", news_score=90, news_provider="GDELT")
-    assert signals == {}
-    assert calculate_provider_risk("road", signals, load_strategy())["score"] is None
+    assert set(signals) == {"war"}
+    assert calculate_provider_risk("road", signals, load_strategy())["score_100"] == 90
 
 
 def test_database_properties_keep_missing_values_null():

@@ -12,6 +12,11 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 GDELT_SCORING_VERSION = "gdelt-event-cluster-v3"
+DECISION_FACTOR_CATEGORIES = {
+    "war": {"conflict"},
+    "natural_disaster": {"natural_disaster"},
+    "trade_policy": {"sanction", "trade_policy", "tariff"},
+}
 TRACKING_PARAMETERS = {
     "fbclid",
     "gclid",
@@ -372,6 +377,29 @@ def freshness_weight(seen_at: str, *, now: datetime, half_life_hours: float) -> 
     return 0.5 ** (age_hours / half_life_hours)
 
 
+def score_decision_factors(clusters: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    factors: dict[str, dict[str, Any]] = {}
+    for factor_key, categories in DECISION_FACTOR_CATEGORIES.items():
+        matching = [cluster for cluster in clusters if cluster.get("event_category") in categories]
+        if not matching:
+            continue
+        severities = sorted((float(cluster.get("effective_severity") or 0.0) for cluster in matching), reverse=True)
+        top_mean = sum(severities[:3]) / min(3, len(severities))
+        score = min(1.0, 0.7 * severities[0] + 0.3 * top_mean)
+        domains = {domain for cluster in matching for domain in cluster.get("domains") or [] if domain}
+        cluster_coverage = min(1.0, len(matching) / 3)
+        source_diversity = min(1.0, len(domains) / 3)
+        confidence = min(0.95, 0.45 + 0.3 * cluster_coverage + 0.2 * source_diversity)
+        factors[factor_key] = {
+            "score": round(score, 4),
+            "confidence": round(confidence, 4),
+            "cluster_ids": sorted(str(cluster["cluster_id"]) for cluster in matching),
+            "observed_at": max(str(cluster["last_seen"]) for cluster in matching),
+            "categories": sorted(categories),
+        }
+    return factors
+
+
 def score_zone(
     articles: list[dict[str, Any]],
     *,
@@ -407,6 +435,7 @@ def score_zone(
         weight = freshness_weight(cluster["last_seen"], now=reference, half_life_hours=freshness_half_life_hours)
         cluster["freshness_weight"] = round(weight, 4)
         cluster["effective_severity"] = round(float(cluster["severity"]) * weight, 4)
+    decision_factors = score_decision_factors(clusters)
     if not scoreable:
         return {
             "score": None,
@@ -420,6 +449,7 @@ def score_zone(
             "cluster_count": len(clusters),
             "rejected_counts": dict(rejected),
             "category_counts": dict(Counter(item["event_category"] for item in prepared)),
+            "decision_factors": decision_factors,
             "scoring_version": GDELT_SCORING_VERSION,
             "source_credibility_status": "unavailable",
         }
@@ -444,6 +474,7 @@ def score_zone(
         "cluster_count": len(clusters),
         "rejected_counts": dict(rejected),
         "category_counts": dict(Counter(item["event_category"] for item in prepared)),
+        "decision_factors": decision_factors,
         "scoring_version": GDELT_SCORING_VERSION,
         "source_credibility_status": "unavailable",
     }

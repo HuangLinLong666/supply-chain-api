@@ -537,7 +537,7 @@ python scripts/migrate_geospatial_data.py \
 
 阶段 7 新增独立后端消费者，并把订阅范围固定为上海港、新加坡港、鹿特丹港和苏伊士运河附近海域。无需提前提供 MMSI：worker 会按边界框接收位置和静态资料消息。
 
-Neo4j 不长期保存全部高频坐标。每个 MMSI 只保留最新 `Vessel` 与一条覆盖更新的 `VesselObservation`，并按 60 分钟窗口生成幂等 `PortTrafficSnapshot`。只有真实、未过期 AIS 快照会进入海运 `port_congestion`；铁路、公路和空运不会使用该因子。
+Neo4j 不长期保存全部高频坐标。每个 MMSI 只保留最新 `Vessel` 与一条覆盖更新的 `VesselObservation`，并按 60 分钟窗口生成幂等 `PortTrafficSnapshot`。AIS 拥堵继续作为独立观察信息返回，但当前三因子路线模型不把它加入 `riskScore`。
 
 新增前端查询：
 
@@ -552,7 +552,7 @@ Neo4j 不长期保存全部高频坐标。每个 MMSI 只保留最新 `Vessel` �
 
 ## 26. 阶段 8 统一成本、时效与推荐
 
-阶段 8 新增 `POST /api/routes/recommend`。阶段 9 加固后的当前评分版本为 `route-recommendation-v1.2`；接口支持货物数量、五种策略、三目标权重、风险/成本/P90 时效/运输方式/风险区等硬约束，并在约束筛选后稳定排序。
+阶段 8 新增 `POST /api/routes/recommend`。当前评分版本为 `route-recommendation-v1.3-three-factor`；接口支持货物数量、五种策略、三目标权重、风险/成本/P90 时效/运输方式/风险区等硬约束，并在约束筛选后稳定排序。路线风险仅使用战争、自然灾害、关税/政策三个 Provider 支持的因子。
 
 成本优先读取数量匹配且带 Provider 的 `CostObservation`；否则运行明确标为 `estimated` 的每车公里费率 fallback。时效优先读取可验证观测；否则返回估算 P50/P90，等待、海关和中转没有 Provider 时保持 `null`。
 
@@ -567,6 +567,7 @@ Neo4j 不长期保存全部高频坐标。每个 MMSI 只保留最新 `Vessel` �
 - `GET /api/suppliers/{supplier_id}/origins`
 - `GET /api/recommendations/{snapshot_id}`
 - `GET /api/routes/{route_id}`
+- `GET /api/methodology`
 
 旧 `GET /api/routes/recommend` 保留并在 OpenAPI 标记 deprecated。算法、请求示例、约束语义、响应字段和当前 AuraDB 验证结果见 `docs/route_recommendation.md`；评分公式见 `docs/risk_scoring.md`。
 

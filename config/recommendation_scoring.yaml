@@ -1,4 +1,4 @@
-scoring_version: route-recommendation-v1.2
+scoring_version: route-recommendation-v1.3-three-factor
 
 strategy_weights:
   min_risk: {risk: 1.0, cost: 0.0, duration: 0.0}
@@ -66,7 +66,7 @@ duration_model:
 candidate_generation:
   per_objective_limit: 30
   maximum_pool_size: 120
-  high_news_risk_threshold: 0.60
+  high_dynamic_risk_threshold: 0.60
 
 snapshot:
   retention_days: 30

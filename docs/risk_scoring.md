@@ -1,6 +1,23 @@
 # 路径推荐评分说明
 
-> 当前版本：`route-recommendation-v1.2`
+> 当前版本：`route-recommendation-v1.3-three-factor`
+
+## 0. 当前路线风险只使用三个因子
+
+| 因子 | 权重 | Provider | 输入 |
+|---|---:|---|---|
+| 战争与武装冲突 `war` | 0.40 | GDELT | `conflict` 事件簇 |
+| 自然灾害与极端天气 `natural_disaster` | 0.35 | GDELT、Open-Meteo | `natural_disaster` 事件簇和沿路线天气采样 |
+| 关税与政策调整 `trade_policy` | 0.25 | GDELT | `sanction`、`trade_policy`、`tariff` 事件簇 |
+
+单路段风险使用可用因子的加权平均：
+
+```text
+segmentRisk = Σ(availableFactorScore × factorWeight)
+            / Σ(availableFactorWeight)
+```
+
+缺失因子保持 `null`，不会填入默认分；`dataCompleteness` 等于可用因子权重之和。路线风险是已知路段风险的算术平均。海盗、拥堵、班期、基础设施、供应商等数据当前不参与路线 `riskScore`。
 
 ## 1. 三类输入
 
@@ -64,7 +81,7 @@ finalScore = clip(baseScore - uncertaintyPenalty, 0, 100)
 - `maxRiskScore` 在风险未知时判定为无法验证，候选被拒绝；
 - `requireKnownRisk=true` 会拒绝所有 `riskScore=null` 的路线；
 - 没有风险上限时，未知风险路线仍可返回，但会因风险贡献为 0 和不确定性扣分而降低排名；
-- 没有真实 Provider 的海盗、边境、基础设施和班期风险不会加入 `riskScore`。
+- 当前仅允许战争、自然灾害、关税/政策三个因子加入 `riskScore`；其他数据即使存在，也只作为独立观察信息。
 
 ## 6. 稳定排序
 
@@ -112,7 +129,7 @@ finalScore = clip(baseScore - uncertaintyPenalty, 0, 100)
 - AIS 港口流量快照默认 90 分钟有效；
 - API 查询时会再次检查 `expiresAt`；
 - 已过期数据转为 `unavailable/stale`，不会继续进入风险分；
-- 没有真实 Provider 的海盗、边境、基础设施、班期等维度继续缺失。
+- AIS 拥堵、海盗、边境、基础设施、班期等维度不会加入当前三因子模型。
 
 前端可通过 `GET /api/providers/status` 展示最后更新时间，并根据 `riskFactors[].observedAt/expiresAt` 标记单个风险因子的时效。
 

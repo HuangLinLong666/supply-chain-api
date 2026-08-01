@@ -65,7 +65,7 @@ def route_segment(
     duration: float = 5,
     risk: float | None = 0.2,
     provider: str | None = "Open-Meteo",
-    factor_key: str = "weather",
+    factor_key: str = "natural_disaster",
     missing_factors: list[str] | None = None,
     observed_cost: float | None = None,
     feasibility_status: str = "estimated_routable",
@@ -124,6 +124,30 @@ def route_segment(
         "news_risk_score": news_risk_score,
         "news_risk_zones": list(news_risk_zones or []),
     }
+    if provider == "GDELT" and risk is not None:
+        row.update(
+            news_risk_provider="GDELT",
+            news_risk_expires_at=(NOW + timedelta(hours=2)).isoformat(),
+            news_risk_factors_json=json.dumps(
+                {
+                    "war": {
+                        "score": news_risk_score or risk,
+                        "confidence": 0.8,
+                        "evidence": [f"evidence:{segment_id}"],
+                        "observedAt": NOW.isoformat(),
+                    }
+                }
+            ),
+        )
+    elif provider == "Open-Meteo" and risk is not None:
+        row.update(
+            route_weather_risk=risk,
+            route_weather_provider="Open-Meteo",
+            route_weather_updated_at=NOW.isoformat(),
+            route_weather_expires_at=(NOW + timedelta(hours=2)).isoformat(),
+            route_weather_confidence=0.8,
+            route_weather_evidence=[f"evidence:{segment_id}"],
+        )
     if observed_cost is not None:
         row["cost_observation"] = {
             "observation_id": f"cost:{segment_id}",
@@ -184,7 +208,9 @@ def test_03_providerless_risk_is_removed_before_scoring():
     route = result["routes"][0]
     assert route["riskScore"] is None
     assert route["scoreBreakdown"]["subScores"]["risk"] is None
-    assert "provider_backed_risk" in route["missingData"]
+    assert "war" in route["missingData"]
+    assert "natural_disaster" in route["missingData"]
+    assert "trade_policy" in route["missingData"]
 
 
 def test_04_weather_change_reorders_recommendations():
@@ -216,7 +242,7 @@ def test_05_gdelt_high_risk_zone_triggers_reroute():
             duration=2,
             risk=0.8,
             provider="GDELT",
-            factor_key="geopolitical",
+            factor_key="war",
             news_risk_score=0.9,
             news_risk_zones=["red-sea"],
         ),
@@ -246,7 +272,7 @@ def test_05b_reroute_selects_lowest_risk_safe_alternative():
             duration=2,
             risk=0.8,
             provider="GDELT",
-            factor_key="geopolitical",
+            factor_key="war",
             news_risk_score=0.9,
             news_risk_zones=["red-sea"],
         ),
@@ -266,10 +292,26 @@ def test_05b_reroute_selects_lowest_risk_safe_alternative():
 
     assert first_leg_ids(result) == ["SAFE-1", "SAFE-2"]
     assert result["dynamicRouting"]["rerouted"] is True
-    assert result["routes"][0]["whyRecommended"][0].startswith("原首选路线超过新闻风险阈值")
+    assert result["routes"][0]["whyRecommended"][0].startswith("原首选路线超过动态风险阈值")
 
 
-def test_06_missing_ais_never_creates_congestion_risk():
+def test_05c_extreme_weather_can_trigger_cross_mode_reroute():
+    result = RecommendationEngine().recommend(
+        [
+            route_segment("STORM-SEA", risk=0.9, distance=100, duration=2),
+            route_segment("SAFE-AIR", mode="air", risk=0.1, distance=800, duration=1),
+        ],
+        {"A"},
+        {"B"},
+        SUPPLIER,
+        recommendation_request("min_cost", auto_reroute=True),
+    )
+
+    assert first_leg_ids(result) == ["SAFE-AIR"]
+    assert result["dynamicRouting"] == {"rerouted": True, "avoidedZones": [], "fallbackUsed": False}
+
+
+def test_06_missing_ais_does_not_add_a_fourth_risk_factor():
     provider_risk = calculate_provider_risk("sea", build_segment_signals("sea"), load_strategy())
     result = RecommendationEngine().recommend(
         [route_segment("NO-AIS", risk=None, provider=None, missing_factors=["port_congestion"])],
@@ -279,15 +321,13 @@ def test_06_missing_ais_never_creates_congestion_risk():
         recommendation_request(),
     )
     route = result["routes"][0]
-    congestion = next(item for item in route["riskFactors"] if item["key"] == "port_congestion")
     assert provider_risk["score"] is None
-    assert congestion["status"] == "unavailable"
-    assert congestion["provider"] is None
+    assert {item["key"] for item in route["riskFactors"]} == {"war", "natural_disaster", "trade_policy"}
     assert route["legs"][0]["aisCongestionScore"] is None
     assert route["legs"][0]["aisCongestionStatus"] == "unavailable"
 
 
-def test_07_valid_ais_congestion_changes_sea_route_ranking():
+def test_07_valid_ais_congestion_is_visible_but_not_used_by_three_factor_model():
     def ais_segment(segment_id: str, score: float) -> dict:
         risk = calculate_provider_risk(
             "sea",
@@ -334,11 +374,9 @@ def test_07_valid_ais_congestion_changes_sea_route_ranking():
         recommendation_request(),
     )
     route = result["routes"][0]
-    congestion = next(item for item in route["riskFactors"] if item["key"] == "port_congestion")
-    assert first_leg_ids(result) == ["AIS-LOW"]
-    assert congestion["status"] == "available"
-    assert congestion["provider"] == "AISStream.io"
-    assert route["legs"][0]["aisCongestionScore"] == 10
+    assert route["riskScore"] is None
+    assert {item["key"] for item in route["riskFactors"]} == {"war", "natural_disaster", "trade_policy"}
+    assert route["legs"][0]["aisCongestionScore"] in {10, 90}
 
 
 def test_08_all_four_strategies_produce_distinct_rankings():
@@ -423,7 +461,7 @@ def test_10_every_returned_node_has_name_and_coordinate_status():
 
 def test_11_every_risk_factor_has_status_and_valid_source_semantics():
     result = RecommendationEngine().recommend(
-        [route_segment("RISK-METADATA", risk=0.25, missing_factors=["piracy"])],
+        [route_segment("RISK-METADATA", risk=0.25)],
         {"A"},
         {"B"},
         SUPPLIER,
@@ -433,10 +471,7 @@ def test_11_every_risk_factor_has_status_and_valid_source_semantics():
     assert factors
     assert all(factor["status"] in {"available", "partial", "unavailable"} for factor in factors)
     assert all(factor["provider"] for factor in factors if factor["status"] in {"available", "partial"})
-    piracy = next(factor for factor in factors if factor["key"] == "piracy")
-    assert piracy["score"] is None
-    assert piracy["provider"] is None
-    assert piracy["status"] == "unavailable"
+    assert {factor["key"] for factor in factors} == {"war", "natural_disaster", "trade_policy"}
 
 
 def test_12_cleanup_reexecution_is_idempotent_and_preserves_realtime(monkeypatch):

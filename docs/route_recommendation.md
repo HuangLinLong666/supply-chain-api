@@ -1,6 +1,6 @@
 # 统一路径推荐接口（阶段 8—10）
 
-> 接口版本：`route-recommendation-v1.2`  
+> 接口版本：`route-recommendation-v1.3-three-factor`
 > 主接口：`POST /api/routes/recommend`  
 > 配置：`config/recommendation_scoring.yaml`、`config/vehicle_rates.yaml`
 
@@ -16,6 +16,7 @@
 6. 成本和时效返回区间、状态、置信度、公式和输入快照；
 7. 每次请求写入 `RecommendationSnapshot`，可回读当时的完整输入和结果；
 8. 旧 GET 接口继续存在，但 OpenAPI 已标记为 `deprecated`。
+9. 路线风险收敛为战争、自然灾害、关税/政策三个可审计因子；计算方法可通过 `GET /api/methodology` 读取。
 
 ## 2. 前端推荐调用顺序
 
@@ -180,6 +181,16 @@ finalScore = max(0, baseScore - uncertaintyPenalty)
 
 详细公式见 `docs/risk_scoring.md`。
 
+前端需要展示公式时调用：
+
+```http
+GET /api/methodology?strategy=min_risk
+GET /api/methodology?strategy=min_cost
+GET /api/methodology?strategy=balanced
+```
+
+该接口只返回当前策略对应的用户可读公式，不返回模型版本、归一化边界或完整后端配置。
+
 ## 8. 关键响应字段
 
 | 字段 | 用途 |
@@ -258,6 +269,8 @@ GET /api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg
 这 3 个快照是阶段 8 的 AuraDB 冒烟调用记录，不是运输 Provider 观测，也不会参与风险计算；它们会按 30 天 TTL 到期。
 
 阶段 9 将当前代码版本提升到 `route-recommendation-v1.2`：Provider 缺失的旧风险值会在进入推荐前强制改为 unavailable，所有返回端点都会提供非空名称和 `coordinateStatus`。本次阶段 9 仅做只读 AuraDB 验证，没有新增快照；验证结果见 `docs/stage9_test_validation.md`。
+
+当前版本已提升为 `route-recommendation-v1.3-three-factor`：路线风险只计算战争、自然灾害、关税/政策；三者都可能在达到阈值后触发跨运输方式自动改道。AIS 拥堵等旧维度继续保留独立观测接口，但不再进入路线综合风险。
 
 ## 13. 阶段 10 前端接入模板
 

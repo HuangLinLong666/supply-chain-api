@@ -85,6 +85,7 @@ def test_segment_recalculation_uses_active_gdelt_and_is_idempotent():
     row = segment(
         {
             "news_risk_score": 0.72,
+            "news_risk_factors_json": '{"war":{"score":0.72,"confidence":0.8,"evidence":["cluster-war"],"observedAt":"2026-07-26T11:00:00+00:00"}}',
             "news_risk_updated_at": "2026-07-26T11:00:00+00:00",
             "news_risk_expires_at": "2026-07-26T18:00:00+00:00",
             "riskScore": 0.5,
@@ -150,7 +151,7 @@ def test_route_weather_snapshot_property_evidence_survives_recalculation():
     )
     assert update is not None
     assert update["result"]["score_100"] == 64
-    assert update["signals"]["weather"]["evidence"] == ["route-weather-one"]
+    assert update["signals"]["natural_disaster"]["evidence"] == ["route-weather-one"]
 
 
 def test_sanitized_clear_row_is_not_selected_again():

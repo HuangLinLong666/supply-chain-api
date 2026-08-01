@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
+from app.provider_risk import build_segment_signals, calculate_provider_risk
 from app.recommendation.config import load_recommendation_settings
 from app.recommendation.models import (
     RecommendationRequest,
@@ -14,6 +15,7 @@ from app.recommendation.models import (
     RecommendationWeights,
 )
 from app.route_optimizer import format_route, k_shortest_paths
+from app.vehicle_network.core import load_strategy
 
 
 VALID_MODES = {"road", "rail", "sea", "air"}
@@ -134,31 +136,7 @@ class RecommendationEngine:
             segment = dict(original)
             segment["mode"] = mode
             segment["canonical_mode"] = mode
-            risk_providers = {
-                str(provider).strip()
-                for provider in segment.get("risk_providers") or []
-                if str(provider).strip()
-            }
-            for details in parsed_mapping(segment.get("risk_breakdown")).values():
-                factor = parsed_mapping(details)
-                provider = str(factor.get("provider") or "").strip()
-                if provider:
-                    risk_providers.add(provider)
-                risk_providers.update(
-                    str(item).strip()
-                    for item in factor.get("providers") or []
-                    if str(item).strip()
-                )
-            if optional_float(segment.get("risk_score")) is not None and not risk_providers:
-                segment["risk_score"] = None
-                segment["risk_status"] = "unavailable"
-                segment["risk_data_completeness"] = 0.0
-                segment["risk_confidence"] = None
-                segment["risk_missing_factors"] = sorted(
-                    set(str(item) for item in segment.get("risk_missing_factors") or [])
-                    | {"provider_backed_risk"}
-                )
-            segment["risk_providers"] = sorted(risk_providers)
+            self._apply_three_factor_risk(segment)
             distance = first_positive(
                 segment.get("geometry_distance_km"),
                 segment.get("distance_km"),
@@ -179,6 +157,44 @@ class RecommendationEngine:
             prepared.append(segment)
         return prepared
 
+    def _apply_three_factor_risk(self, segment: dict[str, Any]) -> None:
+        news_factors = parsed_mapping(segment.get("news_risk_factors_json"))
+        signals = build_segment_signals(
+            segment.get("mode"),
+            news_provider=segment.get("news_risk_provider") if news_factors else None,
+            news_expires_at=segment.get("news_risk_expires_at"),
+            news_factor_scores={key: value.get("score") for key, value in news_factors.items() if isinstance(value, dict)},
+            news_factor_confidences={key: value.get("confidence") for key, value in news_factors.items() if isinstance(value, dict)},
+            news_factor_evidence={key: list(value.get("evidence") or []) for key, value in news_factors.items() if isinstance(value, dict)},
+            news_factor_observed_at={key: value.get("observedAt") for key, value in news_factors.items() if isinstance(value, dict)},
+            weather_score=segment.get("route_weather_risk"),
+            weather_provider=segment.get("route_weather_provider"),
+            weather_observed_at=segment.get("route_weather_updated_at"),
+            weather_expires_at=segment.get("route_weather_expires_at"),
+            weather_confidence=segment.get("route_weather_confidence"),
+            weather_evidence=segment.get("route_weather_evidence") or [],
+        )
+        result = calculate_provider_risk(segment.get("mode"), signals, load_strategy())
+        segment["risk_score"] = result["score"]
+        segment["risk_status"] = result["status"]
+        segment["risk_data_completeness"] = result["data_completeness"]
+        segment["risk_confidence"] = result["confidence"]
+        segment["risk_missing_factors"] = result["missing_factors"]
+        segment["risk_providers"] = result["providers"]
+        segment["risk_breakdown"] = {
+            factor["key"]: {
+                "value": round(float(factor["score"]) / 100, 6) if factor["score"] is not None else None,
+                "status": factor["status"],
+                "provider": factor["provider"],
+                "providers": factor.get("providers") or [],
+                "observedAt": factor["observedAt"],
+                "expiresAt": factor["expiresAt"],
+                "confidence": factor["confidence"],
+                "evidence": factor["evidence"],
+            }
+            for factor in result["factors"]
+        }
+
     def recommend(
         self,
         segments: list[dict[str, Any]],
@@ -198,20 +214,20 @@ class RecommendationEngine:
             ]
 
         baseline_paths = self._candidate_paths(prepared, origin_ids, destination_ids, request, weights)
-        threshold = float(self.settings["candidate_generation"]["high_news_risk_threshold"])
-        high_news_segments = {
+        threshold = float(self.settings["candidate_generation"]["high_dynamic_risk_threshold"])
+        high_risk_segments = {
             str(segment["segment_id"])
             for segment in prepared
-            if float(segment.get("news_risk_score") or 0.0) >= threshold
+            if segment.get("risk_score") is not None and float(segment["risk_score"]) >= threshold
         }
-        baseline_high_news_segments = {
+        baseline_high_risk_segments = {
             str(segment["segment_id"])
             for segment in (baseline_paths[0] if baseline_paths else [])
-            if float(segment.get("news_risk_score") or 0.0) >= threshold
+            if segment.get("risk_score") is not None and float(segment["risk_score"]) >= threshold
         }
-        reroute_requested = bool(request.auto_reroute and baseline_high_news_segments)
+        reroute_requested = bool(request.auto_reroute and baseline_high_risk_segments)
         safe_segments = [
-            segment for segment in prepared if str(segment["segment_id"]) not in high_news_segments
+            segment for segment in prepared if str(segment["segment_id"]) not in high_risk_segments
         ]
         safe_paths = (
             self._candidate_paths(safe_segments, origin_ids, destination_ids, request, weights)
@@ -259,7 +275,7 @@ class RecommendationEngine:
         rerouted = bool(
             selected
             and request.auto_reroute
-            and avoided_zones
+            and baseline_high_risk_segments
             and not fallback_used
             and baseline_signature != selected_signature
         )
@@ -599,7 +615,6 @@ class RecommendationEngine:
         route["id"] = stable_route_id(path)
         route["name"] = self._route_name(path)
         route["_segment_ids"] = list(route_signature(path))
-        self._apply_supplier_risk(route, supplier)
         route_cost = self._aggregate_cost(path, request)
         route_duration = self._aggregate_duration(path)
         route["costEstimate"] = route_cost
@@ -870,7 +885,7 @@ class RecommendationEngine:
             route["rank"] = index
             route["whyRecommended"] = [
                 (
-                    f"原首选路线超过新闻风险阈值，改道候选按风险最低优先排名第 {index}"
+                    f"原首选路线超过动态风险阈值，改道候选按风险最低优先排名第 {index}"
                     if risk_first_reroute
                     else f"按 {request.strategy.value} 策略排名第 {index}"
                 ),
@@ -973,7 +988,7 @@ class RecommendationEngine:
             {
                 str(zone)
                 for segment in path
-                if float(segment.get("news_risk_score") or 0.0) >= threshold
+                if segment.get("risk_score") is not None and float(segment["risk_score"]) >= threshold
                 for zone in segment.get("news_risk_zones") or []
             }
         )

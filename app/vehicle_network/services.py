@@ -161,15 +161,6 @@ class RouteGenerationService:
         return max(values) if values else None
 
     def _mode_signals(self, mode: str, origin: dict[str, Any], destination: dict[str, Any]) -> dict[str, float | None]:
-        news = self._provider_risk_value(
-            origin,
-            destination,
-            value_fields=("news_risk_score",),
-            provider_fields=("news_risk_provider", "news_source"),
-            provider_markers=("gdelt",),
-            observed_field="news_risk_updated_at",
-            max_age_hours=6,
-        )
         weather = self._provider_risk_value(
             origin,
             destination,
@@ -179,28 +170,9 @@ class RouteGenerationService:
             observed_field="weather_updated_at",
             max_age_hours=6,
         )
-        port_congestion = self._provider_risk_value(
-            origin,
-            destination,
-            value_fields=("congestion_score_100", "congestion_score", "congestionRisk"),
-            provider_fields=("traffic_provider", "congestion_provider", "port_congestion_provider", "congestion_source"),
-            provider_markers=("aisstream", "official", "port authority", "project44", "fourkites", "marinetraffic", "portcast"),
-            observed_field="traffic_observed_at",
-            expires_field="traffic_expires_at",
-            max_age_hours=2,
-        )
-        airport_capacity = self._provider_risk_value(
-            origin,
-            destination,
-            value_fields=("congestion_score", "congestionRisk"),
-            provider_fields=("congestion_provider", "congestion_source"),
-            provider_markers=("official", "airport authority", "project44", "fourkites"),
-        )
         profiles = {
-            "sea": {"weather": weather, "piracy": None, "port_congestion": port_congestion, "geopolitical": news, "sanctions": None, "schedule_reliability": None},
-            "rail": {"border_customs": None, "geopolitical": news, "infrastructure": None, "weather": weather, "schedule_reliability": None, "sanctions": None},
-            "road": {"traffic": None, "border_customs": None, "road_security": None, "weather": weather, "regulatory": None, "schedule_reliability": None},
-            "air": {"weather": weather, "airspace_conflict": news, "airport_capacity": airport_capacity, "schedule_reliability": None, "sanctions": None, "cargo_handling": None},
+            mode_name: {"war": None, "natural_disaster": weather, "trade_policy": None}
+            for mode_name in ("sea", "rail", "road", "air")
         }
         return profiles[mode]
 

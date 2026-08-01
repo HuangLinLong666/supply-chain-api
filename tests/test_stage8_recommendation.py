@@ -48,14 +48,18 @@ def segment(segment_id: str, mode: str, distance: float, duration: float, risk: 
         "risk_status": "available" if risk is not None else "unavailable",
         "risk_data_completeness": 1.0 if risk is not None else 0.0,
         "risk_confidence": 0.9 if risk is not None else None,
-        "risk_missing_factors": [] if risk is not None else ["weather"],
+        "risk_missing_factors": [] if risk is not None else ["war", "natural_disaster", "trade_policy"],
         "risk_providers": [provider] if provider else [],
         "risk_breakdown": json.dumps(
-            {"weather_risk": {"value": risk, "provider": provider, "evidence": [f"evidence-{segment_id}"]}}
+            {"natural_disaster": {"value": risk, "provider": provider, "evidence": [f"evidence-{segment_id}"]}}
             if risk is not None
             else {}
         ),
         "spatial_exposures": [],
+        "route_weather_risk": risk,
+        "route_weather_provider": provider,
+        "route_weather_confidence": 0.9 if risk is not None else None,
+        "route_weather_evidence": [f"evidence-{segment_id}"] if risk is not None else [],
     }
 
 

@@ -6,9 +6,12 @@ from datetime import datetime, timezone
 from typing import Any
 
 
-PROVIDER_RISK_VERSION = "provider-risk-v1"
+PROVIDER_RISK_VERSION = "provider-risk-v2-three-factor"
 
 FACTOR_LABELS = {
+    "war": "战争与武装冲突",
+    "natural_disaster": "自然灾害与极端天气",
+    "trade_policy": "关税与政策调整",
     "weather": "天气与自然条件",
     "piracy": "海盗与海上安全",
     "port_congestion": "港口拥堵",
@@ -26,9 +29,10 @@ FACTOR_LABELS = {
 }
 
 NEWS_FACTOR_BY_MODE = {
-    "sea": "geopolitical",
-    "rail": "geopolitical",
-    "air": "airspace_conflict",
+    "sea": "war",
+    "rail": "war",
+    "road": "war",
+    "air": "war",
 }
 
 
@@ -79,6 +83,10 @@ def build_segment_signals(
     news_expires_at: Any = None,
     news_confidence: Any = None,
     news_evidence: list[str] | None = None,
+    news_factor_scores: dict[str, Any] | None = None,
+    news_factor_confidences: dict[str, Any] | None = None,
+    news_factor_evidence: dict[str, list[str]] | None = None,
+    news_factor_observed_at: dict[str, Any] | None = None,
     weather_score: Any = None,
     weather_provider: str | None = None,
     weather_observed_at: Any = None,
@@ -94,29 +102,41 @@ def build_segment_signals(
 ) -> dict[str, dict[str, Any]]:
     canonical_mode = str(mode or "").casefold()
     signals: dict[str, dict[str, Any]] = {}
-    news_factor = NEWS_FACTOR_BY_MODE.get(canonical_mode)
-    normalized_news = normalize_score_100(news_score)
-    if news_factor and normalized_news is not None and news_provider:
-        signals[news_factor] = {
+    factor_scores = dict(news_factor_scores or {})
+    legacy_news_factor = NEWS_FACTOR_BY_MODE.get(canonical_mode)
+    if not factor_scores and legacy_news_factor and news_score is not None:
+        factor_scores[legacy_news_factor] = news_score
+    for factor_key in ("war", "natural_disaster", "trade_policy"):
+        normalized_news = normalize_score_100(factor_scores.get(factor_key))
+        if normalized_news is None or not news_provider:
+            continue
+        signals[factor_key] = {
             "score": normalized_news,
             "provider": news_provider,
-            "observed_at": str(news_observed_at) if news_observed_at is not None else None,
+            "providers": [news_provider],
+            "observed_at": str((news_factor_observed_at or {}).get(factor_key) or news_observed_at)
+            if (news_factor_observed_at or {}).get(factor_key) is not None or news_observed_at is not None
+            else None,
             "expires_at": str(news_expires_at) if news_expires_at is not None else None,
-            "confidence": normalize_score_100(news_confidence),
-            "evidence": list(news_evidence or []),
+            "confidence": normalize_score_100((news_factor_confidences or {}).get(factor_key, news_confidence)),
+            "evidence": list((news_factor_evidence or {}).get(factor_key) or news_evidence or []),
             "status": "available",
         }
     normalized_weather = normalize_score_100(weather_score)
     if canonical_mode in {"sea", "rail", "road", "air"} and normalized_weather is not None and weather_provider:
-        signals["weather"] = {
+        weather_signal = {
             "score": normalized_weather,
             "provider": weather_provider,
+            "providers": [weather_provider],
             "observed_at": str(weather_observed_at) if weather_observed_at is not None else None,
             "expires_at": str(weather_expires_at) if weather_expires_at is not None else None,
             "confidence": normalize_score_100(weather_confidence),
             "evidence": list(weather_evidence or []),
             "status": "available",
         }
+        current_disaster = signals.get("natural_disaster")
+        if current_disaster is None or normalized_weather > float(current_disaster["score"]):
+            signals["natural_disaster"] = weather_signal
     normalized_congestion = normalize_score_100(congestion_score)
     if canonical_mode == "sea" and normalized_congestion is not None and congestion_provider:
         signals["port_congestion"] = {
@@ -148,16 +168,24 @@ def calculate_provider_risk(mode: str | None, signals: dict[str, dict[str, Any]]
     for key, raw_weight in weights.items():
         weight = float(raw_weight)
         signal = signals.get(key) or {}
+        signal_providers = {
+            str(item).strip()
+            for item in signal.get("providers") or []
+            if str(item).strip()
+        }
         provider = str(signal.get("provider") or "").strip()
+        if provider:
+            signal_providers.add(provider)
         score = normalize_score_100(signal.get("score"))
-        available = signal.get("status") == "available" and bool(provider) and score is not None
+        available = signal.get("status") == "available" and bool(signal_providers) and score is not None
         factor = {
             "key": key,
             "label": FACTOR_LABELS.get(key, key),
             "weight": weight,
             "score": score if available else None,
             "status": "available" if available else "unavailable",
-            "provider": provider or None,
+            "provider": sorted(signal_providers)[0] if signal_providers else None,
+            "providers": sorted(signal_providers),
             "observedAt": signal.get("observed_at") if available else None,
             "expiresAt": signal.get("expires_at") if available else None,
             "confidence": None,
@@ -166,7 +194,7 @@ def calculate_provider_risk(mode: str | None, signals: dict[str, dict[str, Any]]
         if available:
             weighted_score += score * weight
             used_weight += weight
-            providers.add(provider)
+            providers.update(signal_providers)
             evidence.update(str(item) for item in factor["evidence"] if item)
             if factor["observedAt"]:
                 observed_values.append(str(factor["observedAt"]))
@@ -231,6 +259,7 @@ def database_risk_properties(result: dict[str, Any], recalculated_at: datetime) 
             "score100": factor["score"],
             "status": factor["status"],
             "provider": factor["provider"],
+            "providers": factor.get("providers") or ([factor["provider"]] if factor["provider"] else []),
             "weight": factor["weight"],
             "observedAt": factor["observedAt"],
             "expiresAt": factor["expiresAt"],

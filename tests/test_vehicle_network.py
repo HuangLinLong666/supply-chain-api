@@ -27,10 +27,10 @@ def test_cost_range_keeps_formula_snapshot():
 
 
 def test_risk_weighting_and_level():
-    risk = calculate_risk({"news": 90, "weather": 70, "congestion": 60, "sanctions": 90, "schedule_reliability": 50}, load_strategy())
+    risk = calculate_risk({"war": 90, "natural_disaster": 70, "trade_policy": 80}, load_strategy())
     assert risk.risk_score >= 60
     assert risk.risk_level in {"high", "critical"}
-    assert len(risk.risk_factors) == 5
+    assert len(risk.risk_factors) == 3
 
 
 def test_hybrid_ranking_prefers_safer_route_when_other_values_equal():
@@ -88,27 +88,26 @@ def test_transpacific_port_route_rejects_rail_and_road():
     assert {item["mode"] for item in rejected} == {"rail", "road"}
 
 
-def test_sea_and_rail_use_different_risk_factors():
+def test_all_modes_use_the_same_three_auditable_risk_factors():
     strategy = load_strategy()
-    sea = calculate_mode_risk("sea", {"weather": 50, "piracy": 80, "port_congestion": 40, "geopolitical": 30, "sanctions": 10, "schedule_reliability": 35}, strategy)
-    rail = calculate_mode_risk("rail", {"border_customs": 60, "geopolitical": 30, "infrastructure": 20, "weather": 50, "schedule_reliability": 35, "sanctions": 10}, strategy)
-    assert any("海盗" in factor for factor in sea.risk_factors)
-    assert any("边境与海关" in factor for factor in rail.risk_factors)
-    assert sea.risk_factors != rail.risk_factors
+    signals = {"war": 30, "natural_disaster": 50, "trade_policy": 10}
+    sea = calculate_mode_risk("sea", signals, strategy)
+    rail = calculate_mode_risk("rail", signals, strategy)
+    assert sea.risk_score == rail.risk_score
+    assert len(sea.risk_factors) == 3
 
 
 def test_missing_provider_signals_do_not_join_risk_calculation():
     strategy = load_strategy()
     risk = calculate_mode_risk(
         "sea",
-        {"weather": 40, "piracy": None, "port_congestion": 60, "geopolitical": None, "sanctions": None, "schedule_reliability": None},
+        {"war": None, "natural_disaster": 40, "trade_policy": None},
         strategy,
     )
-    expected = (40 * 0.22 + 60 * 0.20) / (0.22 + 0.20)
-    assert risk.risk_score == round(expected, 2)
-    assert all("海盗" not in factor for factor in risk.risk_factors)
-    assert "海盗与海上安全" in risk.missing_factors
-    assert risk.data_completeness == 0.42
+    assert risk.risk_score == 40
+    assert "战争与武装冲突" in risk.missing_factors
+    assert "关税与政策调整" in risk.missing_factors
+    assert risk.data_completeness == 0.35
 
 
 def test_all_missing_signals_return_unknown_not_low_risk():

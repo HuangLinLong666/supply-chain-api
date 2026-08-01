@@ -240,24 +240,41 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
         if zone_results[zone_id].get("score") is not None
         and zone_results[zone_id].get("status", "available") == "available"
     ]
-    highest = max(active_results, key=lambda item: float(item[1]["score"]), default=None)
-    news_risk = highest[1]["score"] if highest else None
-    news_confidence = highest[1].get("confidence") if highest else None
+    decision_factor_candidates: dict[str, list[dict[str, Any]]] = {
+        "war": [],
+        "natural_disaster": [],
+        "trade_policy": [],
+    }
+    for _, result in active_results:
+        for factor_key, factor in (result.get("decision_factors") or {}).items():
+            if factor_key in decision_factor_candidates and factor.get("score") is not None:
+                decision_factor_candidates[factor_key].append(factor)
+    selected_factors = {
+        factor_key: max(candidates, key=lambda item: float(item["score"]))
+        for factor_key, candidates in decision_factor_candidates.items()
+        if candidates
+    }
+    news_factor_scores = {key: value["score"] for key, value in selected_factors.items()}
+    news_factor_confidences = {key: value.get("confidence") for key, value in selected_factors.items()}
+    news_factor_evidence = {key: list(value.get("cluster_ids") or []) for key, value in selected_factors.items()}
+    news_factor_observed_at = {key: value.get("observed_at") for key, value in selected_factors.items()}
+    highest_factor = max(selected_factors.values(), key=lambda item: float(item["score"]), default=None)
+    news_risk = highest_factor["score"] if highest_factor else None
+    news_confidence = highest_factor.get("confidence") if highest_factor else None
     active_zone_ids = [zone_id for zone_id, _ in active_results]
     cluster_ids = sorted(
         {
-            str(cluster["cluster_id"])
-            for _, result in active_results
-            for cluster in result.get("clusters") or []
-            if cluster.get("cluster_id") and cluster.get("event_category") != "other"
+            str(cluster_id)
+            for factor in selected_factors.values()
+            for cluster_id in factor.get("cluster_ids") or []
+            if cluster_id
         }
     )
     cluster_observed_at = max(
         (
-            str(cluster["last_seen"])
-            for _, result in active_results
-            for cluster in result.get("clusters") or []
-            if cluster.get("last_seen") and cluster.get("event_category") != "other"
+            str(factor["observed_at"])
+            for factor in selected_factors.values()
+            if factor.get("observed_at")
         ),
         default=now.isoformat(),
     )
@@ -283,11 +300,15 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
     signals = build_segment_signals(
         segment.get("mode"),
         news_score=news_risk,
-        news_provider="GDELT" if highest else None,
-        news_observed_at=cluster_observed_at if highest else None,
-        news_expires_at=expires_at.isoformat() if highest else None,
+        news_provider="GDELT" if selected_factors else None,
+        news_observed_at=cluster_observed_at if selected_factors else None,
+        news_expires_at=expires_at.isoformat() if selected_factors else None,
         news_confidence=news_confidence,
         news_evidence=cluster_ids,
+        news_factor_scores=news_factor_scores,
+        news_factor_confidences=news_factor_confidences,
+        news_factor_evidence=news_factor_evidence,
+        news_factor_observed_at=news_factor_observed_at,
         weather_score=segment.get("route_weather_risk") if weather_active else None,
         weather_provider=segment.get("route_weather_provider") if weather_active else None,
         weather_observed_at=weather_updated_at if weather_active else None,
@@ -309,6 +330,7 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
         SET s.news_risk_score=$news_risk,s.news_risk_provider=$news_provider,
             s.news_risk_confidence=$news_confidence,s.news_risk_zones=$active_zones,
             s.news_risk_cluster_ids=$cluster_ids,
+            s.news_risk_factors_json=$news_risk_factors_json,
             s.news_risk_status=CASE WHEN $news_provider IS NULL THEN 'unavailable' ELSE 'available' END,
             s.news_risk_updated_at=CASE WHEN $news_provider IS NULL THEN null ELSE datetime($updated_at) END,
             s.news_risk_expires_at=CASE WHEN $news_provider IS NULL THEN null ELSE datetime($expires_at) END,
@@ -323,11 +345,24 @@ def apply_segment_overlay(segment: dict[str, Any], zone_results: dict[str, dict[
     """, {
         "element_id": segment["element_id"],
         "news_risk": news_risk,
-        "news_provider": "GDELT" if highest else None,
+        "news_provider": "GDELT" if selected_factors else None,
         "news_confidence": news_confidence,
         "active_zones": active_zone_ids,
         "exposed_zones": exposed,
         "cluster_ids": cluster_ids,
+        "news_risk_factors_json": json.dumps(
+            {
+                key: {
+                    "score": news_factor_scores[key],
+                    "confidence": news_factor_confidences.get(key),
+                    "evidence": news_factor_evidence.get(key, []),
+                    "observedAt": news_factor_observed_at.get(key),
+                }
+                for key in sorted(news_factor_scores)
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
         "updated_at": now.isoformat(),
         "expires_at": expires_at.isoformat(),
         "risk_properties": risk_properties,

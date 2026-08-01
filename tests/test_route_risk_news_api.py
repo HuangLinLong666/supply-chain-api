@@ -17,10 +17,11 @@ def route_snapshot():
                         "riskStatus": "available",
                         "riskFactors": [
                             {
-                                "key": "news",
+                                "key": "war",
                                 "score": 72,
                                 "status": "available",
                                 "provider": "GDELT",
+                                "providers": ["GDELT"],
                                 "evidence": ["cluster-1"],
                                 "affectedLegIds": ["SEG-SEA-1"],
                             }
@@ -101,6 +102,7 @@ def test_route_risk_news_returns_clickable_evidence_and_affected_legs(monkeypatc
     assert result["routeId"] == "route-1"
     assert result["riskScoreEvidence"]["routeRiskScore"] == 58
     assert result["riskScoreEvidence"]["newsFactorScore"] == 72
+    assert result["riskScoreEvidence"]["newsFactors"][0]["key"] == "war"
     assert result["riskScoreEvidence"]["articleLevelAllocation"] == "not_available"
     assert result["riskScoreEvidence"]["scoreBasis"] == "recommendation_snapshot"
     assert result["affectedLegs"][0]["newsRiskScore"] == 72.0

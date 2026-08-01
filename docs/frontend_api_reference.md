@@ -27,6 +27,7 @@ Swagger=https://supply-chain-api-kyiy.onrender.com/docs
 | 选择供应商起点 | `GET /api/suppliers/{supplier_id}/origins` | 只返回该供应商能够使用的出发地点 |
 | 选择终点 | `GET /api/cities` | 获取路线网络中的可选地点 |
 | 查询推荐路径 | `POST /api/routes/recommend` | 返回多条完整候选路径并完成排序 |
+| 查看计算方法 | `GET /api/methodology` | 返回风险、成本、综合评分和自动改道公式 |
 | 查看历史推荐 | `GET /api/recommendations/{snapshotId}` | 回读一次完整推荐结果 |
 | 查看单条路线 | `GET /api/routes/{routeId}` | 回读某条候选路线 |
 | 查看路线风险新闻 | `GET /api/routes/{routeId}/risk-news` | 返回影响该路线的新闻、链接、风险区和分段 |
@@ -154,6 +155,24 @@ GET /api/cities?search=Hamburg&limit=200
 
 ## 5. 路线推荐接口
 
+### 5.0 获取计算方法
+
+```http
+GET /api/methodology?strategy=min_risk
+GET /api/methodology?strategy=min_cost
+GET /api/methodology?strategy=balanced
+```
+
+前端只在用户需要查看说明时，根据当前选择的推荐策略调用一次：
+
+| 用户选择 | `strategy` | 返回内容 |
+|---|---|---|
+| 风险优先 | `min_risk` | 风险公式、三个风险因子及权重 |
+| 成本优先 | `min_cost` | 成本公式、币种和估算说明 |
+| 综合优先 | `balanced` | 综合公式及风险/成本/时效权重 |
+
+响应只包含 `strategy`、`title`、`formula` 和当前公式必要的少量字段。模型版本、归一化边界、完整费率表和自动改道配置不再返回给普通前端用户。
+
 ### 5.1 提交推荐请求
 
 ```http
@@ -229,7 +248,29 @@ Content-Type: application/json
 | `requireKnownRisk` | 为 `true` 时排除风险未知的候选 |
 | `maxHops` | 最大分段数，范围 `1-20` |
 
-### 5.5 推荐响应
+### 5.5 自动风险改道
+
+`autoReroute` 只是控制是否启用实时新闻风险改道，不表示无条件排除红海、苏伊士或其他海运路线。
+
+当前规则：
+
+1. 后端先按照用户选择的 `strategy` 计算原首选路线。
+2. 只有原首选路线中至少一个路段的三因子综合 `riskScore` 达到后端阈值时才触发改道。当前阈值为 `0.60`，对应前端字段 `60/100`；战争、自然灾害、关税/政策均可触发。
+3. 触发后，后端排除达到该阈值的高新闻风险路段，重新搜索可行的海运、铁路、公路和空运候选。
+4. 安全候选不再按原成本或时效策略优先，而是按路线综合 `riskScore` 从低到高排序；同风险时再参考综合分、成本和时效。
+5. 如果不存在不经过高风险路段的可行路线，后端保留原路线，并返回 `fallbackUsed=true`，避免错误地返回“无路线”。
+
+前端根据 `dynamicRouting` 展示改道状态：
+
+| 字段 | 含义 |
+|---|---|
+| `rerouted` | `true` 表示原首选路线超过动态风险阈值，并已切换到其他路线 |
+| `avoidedZones` | 本次自动改道避开的风险区，例如 `red-sea` |
+| `fallbackUsed` | `true` 表示发现高风险，但没有安全可行替代路线，最终仍使用原候选 |
+
+当发生自动改道时，`routes[].whyRecommended[0]` 会说明“原首选路线超过动态风险阈值，改道候选按风险最低优先”。设置 `autoReroute=false` 可关闭上述自动行为，但 `constraints.avoidedZoneIds`、`maxRiskScore` 等用户硬约束仍然有效。
+
+### 5.6 推荐响应
 
 顶层关键字段：
 
@@ -264,7 +305,7 @@ Content-Type: application/json
 | `durationDays` | P50 预估时效 |
 | `distanceKm` | 总距离 |
 | `tags` | 例如“风险最优”“成本最优”“含海运” |
-| `finalScore` | 最终排序分，越低越优 |
+| `finalScore` | 常规策略的最终效用分，越高越优；自动风险改道触发后以 `riskScore` 最低优先 |
 | `riskFactors` | 风险维度、Provider、证据和受影响分段 |
 | `legs` | 路线地图分段 |
 | `costEstimate` | 成本区间、置信度、组成和估算假设 |
@@ -274,6 +315,16 @@ Content-Type: application/json
 | `comparisonToNext` | 与下一名的差异 |
 | `missingData` | 缺失的真实数据 |
 | `estimatedFields` | 使用估算值的字段 |
+
+`routes[].riskFactors` 当前固定使用以下三个业务键；前端应按 `key` 绑定图标和颜色，但显示名称优先使用后端返回的 `label`：
+
+| `key` | 中文含义 | 主要数据源 |
+|---|---|---|
+| `war` | 战争与武装冲突 | GDELT `conflict` 事件 |
+| `natural_disaster` | 自然灾害与极端天气 | GDELT `natural_disaster`、Open-Meteo |
+| `trade_policy` | 关税与政策调整 | GDELT `sanction/trade_policy/tariff` 事件 |
+
+海盗、拥堵、班期、基础设施等数据仍可通过独立接口观察，但当前不进入路线 `riskScore`。供应商风险也不再混入路线风险；供应商自身状态仍可从 `/api/suppliers` 查看。
 
 地图使用 `legs[]`：
 
@@ -386,7 +437,11 @@ GET /api/routes/{routeId}/risk-news?active_only=true&limit=50
 
 `articleLevelAllocation=not_available` 表示新闻事件簇确实参与新闻风险因子，但后端不伪造“某单篇文章单独贡献了总分的 12%”这类无法审计的数字。
 
+`riskScoreEvidence.newsFactors` 返回本路线中由 GDELT 支持的 `war`、`natural_disaster`、`trade_policy` 因子。前端可按因子分组展示证据，不应再查找旧的 `news`、`geopolitical` 或 `airspace_conflict` 键。
+
 `scoreBasis=recommendation_snapshot` 表示路线总分使用推荐当时的快照；`active_only=true` 时新闻列表则按调用接口当时的事件簇 TTL 筛选。因此当新闻后来过期时，历史 RiskScore 仍然可回读，但当前有效新闻列表可以为空。
+
+前端必须使用当前实际展示或选中的 `routes[].id` 查询该接口。自动改道后返回的铁路、公路或空运路线如果没有关联有效 GDELT 事件，`events=[]` 是正常结果；不能继续使用被避开的旧海运路线 ID，也不能把全局 `/api/risk/news` 的新闻当成当前路线证据。
 
 ## 7. 实时风险与数据新鲜度
 

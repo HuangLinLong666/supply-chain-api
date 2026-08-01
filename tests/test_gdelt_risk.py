@@ -73,13 +73,26 @@ def test_segment_overlay_uses_provider_score_without_neutral_base(monkeypatch):
     monkeypatch.setattr("gdelt.repository.run_query", lambda query, parameters=None: writes.append((query, parameters)) or [])
     apply_segment_overlay(
         {"element_id": "segment-1", "mode": "sea"},
-        {"red-sea": {"score": 0.8, "confidence": 0.7}},
+        {
+            "red-sea": {
+                "score": 0.8,
+                "confidence": 0.7,
+                "decision_factors": {
+                    "war": {
+                        "score": 0.8,
+                        "confidence": 0.7,
+                        "cluster_ids": ["cluster-war"],
+                        "observed_at": "2026-07-26T12:00:00+00:00",
+                    }
+                },
+            }
+        },
         ["red-sea"],
         3,
     )
     properties = writes[0][1]["risk_properties"]
     assert properties["provider_risk_score"] == 0.8
-    assert properties["provider_risk_data_completeness"] == 0.18
+    assert properties["provider_risk_data_completeness"] == 0.4
     assert properties["provider_risk_providers"] == ["GDELT"]
 
 
@@ -97,6 +110,21 @@ def test_tariff_news_increases_severity():
     score, terms = article_severity({"title": "New tariffs imposed on shipping route"})
     assert score == 0.55
     assert "tariffs" in terms
+
+
+def test_zone_scoring_separates_three_decision_factors():
+    now = datetime(2026, 7, 26, 12, tzinfo=timezone.utc)
+    result = score_zone(
+        [
+            {"url": "https://one.example/war", "domain": "one.example", "title": "War closes shipping lane", "seendate": "20260726T120000Z"},
+            {"url": "https://two.example/flood", "domain": "two.example", "title": "Flood closes rail corridor", "seendate": "20260726T120000Z"},
+            {"url": "https://three.example/tariff", "domain": "three.example", "title": "New tariffs imposed", "seendate": "20260726T120000Z"},
+        ],
+        now=now,
+    )
+
+    assert set(result["decision_factors"]) == {"war", "natural_disaster", "trade_policy"}
+    assert all(factor["cluster_ids"] for factor in result["decision_factors"].values())
 
 
 def test_future_or_missing_timestamp_is_not_scored_as_current_news():

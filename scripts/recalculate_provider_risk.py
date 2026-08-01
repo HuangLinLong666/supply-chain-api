@@ -192,13 +192,40 @@ def active_news_signal(segment: dict[str, Any], now: datetime) -> dict[str, Any]
     if not zones or expires_at is None or expires_at <= now:
         return {}
     zone_confidences = [zone.get("confidence") for zone in zones if zone.get("confidence") is not None]
+    factor_payload = properties.get("news_risk_factors_json")
+    if isinstance(factor_payload, str):
+        try:
+            factor_payload = json.loads(factor_payload)
+        except json.JSONDecodeError:
+            factor_payload = {}
+    factor_payload = factor_payload if isinstance(factor_payload, dict) else {}
     return {
-        "news_score": properties.get("news_risk_score"),
+        "news_score": None,
         "news_provider": "GDELT",
         "news_observed_at": properties.get("news_risk_updated_at"),
         "news_expires_at": properties.get("news_risk_expires_at"),
         "news_confidence": properties.get("news_risk_confidence") if properties.get("news_risk_confidence") is not None else max(zone_confidences, default=None),
         "news_evidence": sorted({str(zone["zone_id"]) for zone in zones}),
+        "news_factor_scores": {
+            key: value.get("score")
+            for key, value in factor_payload.items()
+            if isinstance(value, dict) and value.get("score") is not None
+        },
+        "news_factor_confidences": {
+            key: value.get("confidence")
+            for key, value in factor_payload.items()
+            if isinstance(value, dict) and value.get("confidence") is not None
+        },
+        "news_factor_evidence": {
+            key: list(value.get("evidence") or [])
+            for key, value in factor_payload.items()
+            if isinstance(value, dict)
+        },
+        "news_factor_observed_at": {
+            key: value.get("observedAt")
+            for key, value in factor_payload.items()
+            if isinstance(value, dict) and value.get("observedAt") is not None
+        },
     }
 
 

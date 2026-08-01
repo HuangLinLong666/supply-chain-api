@@ -31,16 +31,21 @@ def estimate_cost(legs: list[Any], rates: dict[str, Any]) -> CostRange:
 
 
 def calculate_risk(signals: dict[str, float | None], strategy: Any, evidence_refs: list[str] | None = None) -> RiskResult:
-    """按配置权重聚合新闻、天气、拥堵、制裁和时刻可靠性风险。"""
+    """按配置权重聚合战争、自然灾害和关税/政策风险。"""
     aliases = {
-        "news_weight": "news", "weather_weight": "weather", "congestion_weight": "congestion",
-        "sanctions_weight": "sanctions", "schedule_reliability_weight": "schedule_reliability",
+        "war_weight": "war",
+        "natural_disaster_weight": "natural_disaster",
+        "trade_policy_weight": "trade_policy",
     }
     weighted = 0.0
     used_weight = 0.0
     factors = []
     missing = []
-    labels = {"news": "新闻事件", "weather": "天气海况", "congestion": "拥堵", "sanctions": "制裁禁运", "schedule_reliability": "时刻可靠性"}
+    labels = {
+        "war": "战争与武装冲突",
+        "natural_disaster": "自然灾害与极端天气",
+        "trade_policy": "关税与政策调整",
+    }
     for weight_key, signal_key in aliases.items():
         weight = float(strategy.risk_weights[weight_key])
         raw_value = signals.get(signal_key)
@@ -75,6 +80,7 @@ def calculate_risk(signals: dict[str, float | None], strategy: Any, evidence_ref
 
 
 MODE_RISK_LABELS = {
+    "war": "战争与武装冲突", "natural_disaster": "自然灾害与极端天气", "trade_policy": "关税与政策调整",
     "weather": "天气与自然条件", "piracy": "海盗与海上安全", "port_congestion": "港口拥堵",
     "geopolitical": "地缘政治与冲突", "sanctions": "制裁与禁运", "schedule_reliability": "班期可靠性",
     "border_customs": "边境与海关", "infrastructure": "铁路基础设施", "traffic": "道路拥堵",

@@ -32,6 +32,7 @@ from weather.service import update_ports
 from gdelt.config import GdeltSettings
 from gdelt.service import update_news_risk
 from app.vehicle_network.api import router as vehicle_network_router
+from app.vehicle_network.core import load_strategy
 from ais.api import router as ais_router
 
 
@@ -130,6 +131,50 @@ def aura_health() -> dict[str, str]:
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"status": "ok", "aura": "connected"}
+
+
+@app.get(
+    "/api/methodology",
+    tags=["Model Transparency"],
+    summary="Get the formula for one frontend recommendation strategy",
+)
+def methodology(
+    strategy: Literal["min_risk", "min_cost", "balanced"] = Query(
+        ...,
+        description="Formula to display for the selected recommendation strategy",
+    ),
+) -> dict[str, Any]:
+    settings = load_recommendation_settings()
+    if strategy == "min_risk":
+        risk_strategy = load_strategy()
+        weights = risk_strategy.mode_risk_weights["sea"]
+        return {
+            "strategy": strategy,
+            "title": "风险优先计算公式",
+            "formula": "路段风险 = Σ(可用风险因子分数 × 因子权重) ÷ Σ(可用因子权重)；路线风险 = 已知路段风险的平均值",
+            "factors": [
+                {"key": "war", "label": "战争与武装冲突", "weight": weights["war"]},
+                {"key": "natural_disaster", "label": "自然灾害与极端天气", "weight": weights["natural_disaster"]},
+                {"key": "trade_policy", "label": "关税与政策调整", "weight": weights["trade_policy"]},
+            ],
+            "note": "风险分越低越优；缺失因子不填默认分，只使用有真实 Provider 的因子。",
+        }
+    if strategy == "min_cost":
+        return {
+            "strategy": strategy,
+            "title": "成本优先计算公式",
+            "formula": "总成本 = 距离 × 运输方式每车公里费率 × 数量 × 货物系数 + 燃油附加费 + 装卸费 + 电动车附加费 + 可用关税",
+            "currency": settings["cost_model"].get("currency", "USD"),
+            "note": "优先使用带 Provider 的真实成本观测；没有观测时才使用内部估算。成本越低越优。",
+        }
+    weights = settings["strategy_weights"]["balanced"]
+    return {
+        "strategy": strategy,
+        "title": "综合优先计算公式",
+        "formula": "综合分 = 风险效用 × 风险权重 + 成本效用 × 成本权重 + 时效效用 × 时效权重 - 数据不确定性扣分",
+        "weights": weights,
+        "note": "综合分越高越优；当前同时考虑风险、成本、时效和数据完整度。",
+    }
 
 
 @app.get("/api/graph/summary")
@@ -473,7 +518,13 @@ def route_graph_segments() -> list[dict[str, Any]]:
                THEN segment.risk_breakdown END AS risk_breakdown,
           CASE WHEN segment.news_risk_expires_at > datetime() THEN coalesce(segment.news_risk_score,0.0) ELSE 0.0 END AS news_risk_score,
           CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_zones ELSE [] END AS news_risk_zones,
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_provider END AS news_risk_provider,
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_factors_json END AS news_risk_factors_json,
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_confidence END AS news_risk_confidence,
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_updated_at END AS news_risk_updated_at,
+          CASE WHEN segment.news_risk_expires_at > datetime() THEN segment.news_risk_expires_at END AS news_risk_expires_at,
           CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_risk END AS route_weather_risk,
+          CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_provider END AS route_weather_provider,
           CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_status ELSE 'unavailable' END AS route_weather_status,
           CASE WHEN segment.route_weather_expires_at > datetime() THEN segment.route_weather_confidence END AS route_weather_confidence,
           segment.route_weather_data_completeness AS route_weather_data_completeness,
@@ -1562,15 +1613,20 @@ def recommended_route_risk_news(
         {"leg_ids": leg_ids, "active_only": active_only, "category": category, "limit": limit},
     ) if leg_ids else []
 
-    news_factor = next(
-        (
-            factor
-            for factor in route.get("riskFactors", [])
-            if isinstance(factor, dict) and factor.get("key") in {"news", "news_risk"}
-        ),
-        None,
-    ) or {}
-    scoring_cluster_ids = {str(item) for item in news_factor.get("evidence") or [] if item}
+    news_factors = [
+        factor
+        for factor in route.get("riskFactors", [])
+        if isinstance(factor, dict)
+        and factor.get("key") in {"war", "natural_disaster", "trade_policy"}
+        and "GDELT" in ({str(item) for item in factor.get("providers") or []} | {str(factor.get("provider") or "")})
+    ]
+    news_factor = max(news_factors, key=lambda item: float(item.get("score") or 0.0), default={})
+    scoring_cluster_ids = {
+        str(item)
+        for factor in news_factors
+        for item in factor.get("evidence") or []
+        if item
+    }
     leg_by_id = {str(leg["id"]): leg for leg in legs}
     affected_legs: dict[str, dict[str, Any]] = {}
     zones: dict[str, dict[str, Any]] = {}
@@ -1694,6 +1750,7 @@ def recommended_route_risk_news(
         "riskScoreEvidence": {
             "routeRiskScore": route.get("riskScore"),
             "routeRiskStatus": route.get("riskStatus"),
+            "newsFactors": news_factors,
             "newsFactorScore": news_factor.get("score"),
             "newsFactorStatus": news_factor.get("status") or "unavailable",
             "provider": news_factor.get("provider"),
