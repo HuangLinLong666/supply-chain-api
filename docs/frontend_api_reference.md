@@ -48,6 +48,8 @@ RAIL-CN-ALASHANKOU        阿拉山口铁路场站
 - 下拉框展示 `name`，`value` 使用 `locationId`。
 - 推荐请求的 `origin`、`destination` 必须使用接口返回的 `locationId`。
 - 不要根据城市名自行拼接 ID，也不要拆分或改写 ID。
+- 不要将展示用的 `city` 或 `name` 作为推荐请求值；例如 `Shanghai` 会同时对应浦东机场、上海港和仓库。
+- 收到 `422` 且 `detail.code=ambiguous_location` 时，清空地图上的旧路线并让用户重选具体地点，不得继续显示上次结果或 mock 路线。
 - `CN-SHA` 等旧 ID 仅供后端兼容；前端新代码、URL 和缓存只保存新版 ID。
 - `routes[].legs[].from.id` 和 `to.id` 也是新版地点 ID，不是 Neo4j 内部 ID。
 
@@ -582,7 +584,7 @@ NEXT_PUBLIC_API_BASE_URL=https://supply-chain-api-kyiy.onrender.com
 |---|---|---|
 | `400` | 起终点相同等无效请求 | 提示用户修改条件 |
 | `404` | 供应商/地点/路线不存在，或没有可行路径 | 展示 `detail` 并允许重新选择 |
-| `422` | 字段校验失败、权重不等于 1、起点不属于供应商 | 读取 `detail` 定位表单字段 |
+| `422` | 字段校验失败、权重不等于 1、起点不属于供应商或地点名称有歧义 | 读取 `detail`；`ambiguous_location` 需清空旧路线并重选地点 |
 | `500` | 后端内部错误 | 提示稍后重试，保留请求参数 |
 | `503` | 数据库或外部服务暂不可用 | 显示服务暂不可用 |
 

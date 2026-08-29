@@ -226,6 +226,62 @@ def test_supplier_origin_filter_rejects_unrelated_city_nodes():
     ) == {"SHANGHAI-NODE"}
 
 
+def test_city_match_with_multiple_location_ids_is_rejected():
+    segments = [
+        {
+            "from_id": "PORT-NODE",
+            "from_name": "Shanghai Port",
+            "from_city": "Shanghai",
+            "from_location_id": "PORT-CNSHG",
+            "from_labels": ["Port", "TransportLocation"],
+            "to_id": "DESTINATION",
+            "to_location_id": "AIR-FRA",
+        },
+        {
+            "from_id": "AIRPORT-NODE",
+            "from_name": "Shanghai Pudong International Airport",
+            "from_city": "Shanghai",
+            "from_location_id": "AIR-PVG",
+            "from_labels": ["Airport", "TransportLocation"],
+            "to_id": "DESTINATION",
+            "to_location_id": "AIR-FRA",
+        },
+    ]
+    matches = main.matching_node_ids(segments, "Shanghai")
+    with pytest.raises(main.HTTPException) as error:
+        main.ensure_unambiguous_location_match("origin", "Shanghai", segments, matches)
+    assert error.value.status_code == 422
+    assert error.value.detail["code"] == "ambiguous_location"
+    assert {item["locationId"] for item in error.value.detail["matches"]} == {"PORT-CNSHG", "AIR-PVG"}
+
+
+def test_exact_airport_location_id_is_not_expanded_to_same_city_port():
+    segments = [
+        {
+            "from_id": "PORT-NODE",
+            "from_city": "Shanghai",
+            "from_location_id": "PORT-CNSHG",
+            "to_id": "DESTINATION",
+        },
+        {
+            "from_id": "AIRPORT-NODE",
+            "from_city": "Shanghai",
+            "from_location_id": "AIR-PVG",
+            "to_id": "DESTINATION",
+        },
+    ]
+    assert main.matching_node_ids(segments, "AIR-PVG") == {"AIRPORT-NODE"}
+
+
+def test_mode_must_match_endpoint_location_types():
+    invalid_sea = segment("INVALID-SEA", "sea", 100, 3.0, 0.2)
+    invalid_sea.update(from_labels=["Airport", "TransportLocation"], to_labels=["Airport", "TransportLocation"])
+    valid_air = segment("VALID-AIR", "air", 100, 1.0, 0.2)
+    valid_air.update(from_labels=["Airport", "TransportLocation"], to_labels=["Airport", "TransportLocation"])
+    prepared = RecommendationEngine().prepare_segments([invalid_sea, valid_air], recommendation_request())
+    assert [item["segment_id"] for item in prepared] == ["VALID-AIR"]
+
+
 def test_openapi_has_new_post_and_deprecated_get_contracts():
     operation = main.app.openapi()["paths"]["/api/routes/recommend"]
     assert operation["get"]["deprecated"] is True

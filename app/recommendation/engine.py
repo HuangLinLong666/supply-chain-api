@@ -133,6 +133,12 @@ class RecommendationEngine:
                 continue
             if str(original.get("feasibility_status") or "") == "invalid_cross_ocean":
                 continue
+            from_labels = {str(label) for label in original.get("from_labels") or []}
+            to_labels = {str(label) for label in original.get("to_labels") or []}
+            if mode == "sea" and from_labels and to_labels and not ({"Port"} <= from_labels and {"Port"} <= to_labels):
+                continue
+            if mode == "air" and from_labels and to_labels and not ({"Airport"} <= from_labels and {"Airport"} <= to_labels):
+                continue
             segment = dict(original)
             segment["mode"] = mode
             segment["canonical_mode"] = mode

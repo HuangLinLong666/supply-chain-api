@@ -579,6 +579,55 @@ def matching_node_ids(segments: list[dict[str, Any]], value: str) -> set[str]:
     return exact_matches or partial_matches
 
 
+def location_match_options(
+    segments: list[dict[str, Any]],
+    node_ids: set[str],
+) -> list[dict[str, str | None]]:
+    options: dict[str, dict[str, str | None]] = {}
+    for segment in segments:
+        for prefix in ("from", "to"):
+            node_id = str(segment[f"{prefix}_id"])
+            if node_id not in node_ids or node_id in options:
+                continue
+            labels = {str(label) for label in segment.get(f"{prefix}_labels") or []}
+            location_type = next(
+                (label for label in ("Port", "Airport", "RailTerminal", "Warehouse", "Factory") if label in labels),
+                None,
+            )
+            options[node_id] = {
+                "locationId": str(segment.get(f"{prefix}_location_id") or node_id),
+                "name": str(segment.get(f"{prefix}_name") or "") or None,
+                "city": str(segment.get(f"{prefix}_city") or "") or None,
+                "type": location_type,
+            }
+    return sorted(options.values(), key=lambda item: str(item["locationId"]))
+
+
+def ensure_unambiguous_location_match(
+    field: str,
+    value: str,
+    segments: list[dict[str, Any]],
+    node_ids: set[str],
+) -> None:
+    options = location_match_options(segments, node_ids)
+    location_ids = {str(option["locationId"]) for option in options}
+    if len(location_ids) <= 1:
+        return
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "code": "ambiguous_location",
+            "field": field,
+            "value": value,
+            "message": (
+                f"{field} {value!r} matched multiple route locations. "
+                "Submit the locationId returned by the location dropdown API instead of a city or display name."
+            ),
+            "matches": options,
+        },
+    )
+
+
 def without_high_news_risk(segments: list[dict[str, Any]], threshold: float = 0.6) -> tuple[list[dict[str, Any]], list[str]]:
     blocked = [segment for segment in segments if float(segment.get("news_risk_score") or 0.0) >= threshold]
     blocked_zones = sorted({zone for segment in blocked for zone in segment.get("news_risk_zones", [])})
@@ -965,6 +1014,8 @@ def recommend_routes_post(payload: RecommendationRequest) -> RecommendationRespo
         raise HTTPException(status_code=404, detail=f"Origin {payload.origin!r} was not found in the route network")
     if not destination_ids:
         raise HTTPException(status_code=404, detail=f"Destination {payload.destination!r} was not found in the route network")
+    ensure_unambiguous_location_match("origin", payload.origin, segments, matched_origin_ids)
+    ensure_unambiguous_location_match("destination", payload.destination, segments, destination_ids)
     if not supplier.get("shippingOrigins"):
         raise HTTPException(
             status_code=422,

@@ -106,8 +106,8 @@ class RecommendationConstraints(ApiModel):
 
 class RecommendationRequest(ApiModel):
     supplier_id: str = Field(min_length=1, description="供应商 ID 或名称")
-    origin: str = Field(min_length=1, description="起点 ID、节点名称或城市")
-    destination: str = Field(min_length=1, description="终点 ID、节点名称或城市")
+    origin: str = Field(min_length=1, description="起点 locationId；名称仅在能唯一解析时兼容")
+    destination: str = Field(min_length=1, description="终点 locationId；名称仅在能唯一解析时兼容")
     cargo: CargoRequest
     strategy: RecommendationStrategy = RecommendationStrategy.BALANCED
     weights: RecommendationWeights | None = None
