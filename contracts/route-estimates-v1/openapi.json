@@ -1,0 +1,62 @@
+{
+  "info": {
+    "description": "Frozen service-to-service contract for Freightos public marketplace route-level estimates.",
+    "title": "Supply Chain Route Estimates API",
+    "version": "route-estimates-v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/route-estimates/v1": {
+      "post": {
+        "operationId": "route_estimate_v1",
+        "parameters": [
+          {
+            "description": "Server-side service token; never expose to a browser or URL.",
+            "in": "header",
+            "name": "X-Route-Estimate-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./request.schema.json"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./response.schema.json"
+                }
+              }
+            },
+            "description": "Estimate status is available, partial, unsupported, unavailable, or expired."
+          },
+          "401": {
+            "description": "Missing or invalid service token."
+          },
+          "413": {
+            "description": "Request body exceeds 16 KiB."
+          },
+          "422": {
+            "description": "Malformed JSON, duplicate or unknown field, invalid cargo, or non-unique audited port identity."
+          },
+          "503": {
+            "description": "Production authentication is not configured or the location registry is unavailable."
+          }
+        },
+        "summary": "Get a route-level public marketplace cost and transit range"
+      }
+    }
+  },
+  "x-contract-baseline": "40e7cde4ac7476b44bb3406d5730a42fbbd9197c"
+}

@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "ContainerType": {
+      "enum": [
+        "20ft",
+        "40ft",
+        "40hc"
+      ],
+      "title": "ContainerType",
+      "type": "string"
+    },
+    "RouteEstimateCargo": {
+      "additionalProperties": false,
+      "properties": {
+        "containerType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContainerType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grossWeightKg": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 100000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grossweightkg"
+        },
+        "heightCm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heightcm"
+        },
+        "lengthCm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 3000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lengthcm"
+        },
+        "quantity": {
+          "description": "Freightos load-unit count",
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "shipmentMethod": {
+          "$ref": "#/$defs/ShipmentMethod"
+        },
+        "volumeM3": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volumem3"
+        },
+        "widthCm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Widthcm"
+        }
+      },
+      "required": [
+        "quantity",
+        "shipmentMethod"
+      ],
+      "title": "RouteEstimateCargo",
+      "type": "object"
+    },
+    "ShipmentMethod": {
+      "enum": [
+        "container",
+        "lcl",
+        "roro"
+      ],
+      "title": "ShipmentMethod",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cargo": {
+      "$ref": "#/$defs/RouteEstimateCargo"
+    },
+    "contractVersion": {
+      "const": "route-estimates-v1",
+      "title": "Contractversion",
+      "type": "string"
+    },
+    "destinationPortId": {
+      "maxLength": 10,
+      "pattern": "^PORT-[A-Z]{2}[A-Z0-9]{3}$",
+      "title": "Destinationportid",
+      "type": "string"
+    },
+    "originPortId": {
+      "maxLength": 10,
+      "pattern": "^PORT-[A-Z]{2}[A-Z0-9]{3}$",
+      "title": "Originportid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contractVersion",
+    "originPortId",
+    "destinationPortId",
+    "cargo"
+  ],
+  "title": "RouteEstimateRequest",
+  "type": "object"
+}

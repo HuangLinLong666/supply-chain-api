@@ -192,6 +192,10 @@ estimatedFields
 
 ## 5. 尚未接入、不能假装真实的数据
 
+### 5.1 Freightos 公共市场估算
+
+`POST /api/route-estimates/v1` 已接入 Freightos Public Marketplace Shipping Estimates API（Beta），只返回公共市场成本和时效区间。该结果明确标记为 Provider estimate，不是承运人报价、合同价格、舱位或到达承诺，也不写入 Neo4j。当前推荐主接口尚未自动消费该结果；完整边界见 `docs/integrations/freightos-route-estimates-v1.md`。
+
 | 缺口 | 当前行为 | 推荐后续数据 |
 |---|---|---|
 | 船公司/航空/铁路实际报价 | 使用公式估算，Provider 为空 | 船公司、货代、航空货运或铁路运营方报价 API |

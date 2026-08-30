@@ -1,0 +1,32 @@
+{
+  "contractVersion": "route-estimates-v1",
+  "status": "unavailable",
+  "provider": "Freightos",
+  "providerProduct": "Public Marketplace Shipping Estimates API (Beta)",
+  "retrievedAt": "2026-08-30T03:00:00Z",
+  "cacheExpiresAt": null,
+  "providerValidUntil": null,
+  "currency": null,
+  "costRange": {
+    "min": null,
+    "max": null
+  },
+  "transitTimeRange": {
+    "minDays": null,
+    "maxDays": null
+  },
+  "rankingCostUsd": null,
+  "rankingDurationDays": null,
+  "rankingPolicy": "conservative-upper-bound-v1",
+  "attributionLabel": "Shipping estimate powered by Freightos",
+  "attributionUrl": "https://ship.freightos.com",
+  "requestFingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "responseSha256": null,
+  "missingData": [
+    "provider_estimate"
+  ],
+  "assumptions": [
+    "Provider 请求失败；未返回或复用过期估算"
+  ],
+  "cacheStatus": "miss"
+}

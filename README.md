@@ -87,6 +87,7 @@ uvicorn app.main:app --reload
 - 整车网络健康检查：`http://127.0.0.1:8000/api/v1/health`
 - 原有服务健康检查：`http://127.0.0.1:8000/health`
 - 路径推荐主接口：`POST http://127.0.0.1:8000/api/routes/recommend`
+- Freightos 公共市场估算：`POST http://127.0.0.1:8000/api/route-estimates/v1`
 
 ## 6. 使用 Docker 启动 Neo4j 和 API
 
@@ -397,6 +398,8 @@ python -m pytest -q
 ```
 
 测试覆盖距离计算、费用区间、风险权重、混合排序、GDELT 聚类、天气沿线采样、AIS 解析与聚合、地理交叉、跨洋路线拦截、迁移幂等性、TTL 和 API 返回。以当前 `pytest -q` 输出数量为准。
+
+Freightos 公共市场接口只返回参考估算区间，不是承运商报价。服务端认证、缓存、限流、RoRo 不支持和署名要求见 `docs/integrations/freightos-route-estimates-v1.md`。
 
 ## 19. 常见报错
 

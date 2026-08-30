@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "CostRange": {
+      "additionalProperties": false,
+      "properties": {
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        }
+      },
+      "title": "CostRange",
+      "type": "object"
+    },
+    "EstimateStatus": {
+      "enum": [
+        "available",
+        "partial",
+        "unsupported",
+        "unavailable",
+        "expired"
+      ],
+      "title": "EstimateStatus",
+      "type": "string"
+    },
+    "TransitTimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "maxDays": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxdays"
+        },
+        "minDays": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mindays"
+        }
+      },
+      "title": "TransitTimeRange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    },
+    "attributionLabel": {
+      "default": "Shipping estimate powered by Freightos",
+      "title": "Attributionlabel",
+      "type": "string"
+    },
+    "attributionUrl": {
+      "default": "https://ship.freightos.com",
+      "title": "Attributionurl",
+      "type": "string"
+    },
+    "cacheExpiresAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cacheexpiresat"
+    },
+    "cacheStatus": {
+      "default": "miss",
+      "enum": [
+        "hit",
+        "miss",
+        "expired"
+      ],
+      "title": "Cachestatus",
+      "type": "string"
+    },
+    "contractVersion": {
+      "const": "route-estimates-v1",
+      "default": "route-estimates-v1",
+      "title": "Contractversion",
+      "type": "string"
+    },
+    "costRange": {
+      "$ref": "#/$defs/CostRange"
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currency"
+    },
+    "missingData": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missingdata",
+      "type": "array"
+    },
+    "provider": {
+      "default": "Freightos",
+      "title": "Provider",
+      "type": "string"
+    },
+    "providerProduct": {
+      "default": "Public Marketplace Shipping Estimates API (Beta)",
+      "title": "Providerproduct",
+      "type": "string"
+    },
+    "providerValidUntil": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Providervaliduntil"
+    },
+    "rankingCostUsd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rankingcostusd"
+    },
+    "rankingDurationDays": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rankingdurationdays"
+    },
+    "rankingPolicy": {
+      "default": "conservative-upper-bound-v1",
+      "title": "Rankingpolicy",
+      "type": "string"
+    },
+    "requestFingerprint": {
+      "title": "Requestfingerprint",
+      "type": "string"
+    },
+    "responseSha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Responsesha256"
+    },
+    "retrievedAt": {
+      "title": "Retrievedat",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/EstimateStatus"
+    },
+    "transitTimeRange": {
+      "$ref": "#/$defs/TransitTimeRange"
+    }
+  },
+  "required": [
+    "status",
+    "retrievedAt",
+    "costRange",
+    "transitTimeRange",
+    "requestFingerprint"
+  ],
+  "title": "RouteEstimateResponse",
+  "type": "object"
+}

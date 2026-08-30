@@ -33,6 +33,7 @@ from gdelt.config import GdeltSettings
 from gdelt.service import update_news_risk
 from app.vehicle_network.api import router as vehicle_network_router
 from app.vehicle_network.core import load_strategy
+from app.route_estimates import router as route_estimates_router
 from ais.api import router as ais_router
 
 
@@ -71,6 +72,7 @@ app.add_middleware(
 
 app.include_router(vehicle_network_router)
 app.include_router(ais_router)
+app.include_router(route_estimates_router)
 
 
 @app.middleware("http")
