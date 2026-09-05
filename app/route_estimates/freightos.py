@@ -7,7 +7,7 @@ import logging
 import random
 import time
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import httpx
 
@@ -20,8 +20,20 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 MAX_PROVIDER_RESPONSE_BYTES = 1_048_576
 
 
+ProviderOutcome = Literal[
+    "timeout",
+    "network",
+    "http_4xx",
+    "http_5xx",
+    "invalid_response",
+    "unavailable",
+]
+
+
 class FreightosProviderError(RuntimeError):
-    pass
+    def __init__(self, message: str, outcome: ProviderOutcome = "unavailable"):
+        super().__init__(message)
+        self.outcome = outcome
 
 
 @dataclass(frozen=True)
@@ -99,14 +111,14 @@ def _modes(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def parse_freightos_response(payload: Any, expected_mode: str) -> FreightosEstimate:
     if not isinstance(payload, dict):
-        raise FreightosProviderError("Provider 返回的 JSON 结构无效")
+        raise FreightosProviderError("Provider 返回的 JSON 结构无效", "invalid_response")
     modes = _modes(payload)
     selected = next(
         (item for item in modes if str(item.get("mode") or "").casefold() == expected_mode.casefold()),
         modes[0] if len(modes) == 1 else None,
     )
     if selected is None:
-        raise FreightosProviderError("Provider 没有返回匹配的运输方式")
+        raise FreightosProviderError("Provider 没有返回匹配的运输方式", "invalid_response")
     price = selected.get("price") if isinstance(selected.get("price"), dict) else {}
     minimum_money = price.get("min", {}).get("moneyAmount", {}) if isinstance(price.get("min"), dict) else {}
     maximum_money = price.get("max", {}).get("moneyAmount", {}) if isinstance(price.get("max"), dict) else {}
@@ -114,18 +126,18 @@ def parse_freightos_response(payload: Any, expected_mode: str) -> FreightosEstim
     maximum_currency = maximum_money.get("currency") if isinstance(maximum_money, dict) else None
     currency = str(minimum_currency or maximum_currency).upper() if minimum_currency or maximum_currency else None
     if minimum_currency and maximum_currency and str(minimum_currency).upper() != str(maximum_currency).upper():
-        raise FreightosProviderError("Provider 成本区间币种不一致")
+        raise FreightosProviderError("Provider 成本区间币种不一致", "invalid_response")
     transit = selected.get("transitTimes") if isinstance(selected.get("transitTimes"), dict) else {}
     cost_min = optional_number(minimum_money.get("amount") if isinstance(minimum_money, dict) else None)
     cost_max = optional_number(maximum_money.get("amount") if isinstance(maximum_money, dict) else None)
     transit_min = optional_number(transit.get("min"))
     transit_max = optional_number(transit.get("max"))
     if cost_min is not None and cost_max is not None and cost_min > cost_max:
-        raise FreightosProviderError("Provider 成本区间上下限无效")
+        raise FreightosProviderError("Provider 成本区间上下限无效", "invalid_response")
     if transit_min is not None and transit_max is not None and transit_min > transit_max:
-        raise FreightosProviderError("Provider 时效区间上下限无效")
+        raise FreightosProviderError("Provider 时效区间上下限无效", "invalid_response")
     if cost_min is None and cost_max is None and transit_min is None and transit_max is None:
-        raise FreightosProviderError("Provider 未返回可用成本或时效区间")
+        raise FreightosProviderError("Provider 未返回可用成本或时效区间", "invalid_response")
     return FreightosEstimate(
         currency=currency,
         cost_min=cost_min,
@@ -168,13 +180,13 @@ class FreightosPublicProvider:
                     try:
                         declared_size = int(content_length) if content_length is not None else None
                     except ValueError as exc:
-                        raise FreightosProviderError("Provider Content-Length 无效") from exc
+                        raise FreightosProviderError("Provider Content-Length 无效", "invalid_response") from exc
                     if (declared_size is not None and declared_size > MAX_PROVIDER_RESPONSE_BYTES) or len(response.content) > MAX_PROVIDER_RESPONSE_BYTES:
-                        raise FreightosProviderError("Provider 响应超过 1 MiB 安全上限")
+                        raise FreightosProviderError("Provider 响应超过 1 MiB 安全上限", "invalid_response")
                     try:
                         payload = response.json()
                     except ValueError as exc:
-                        raise FreightosProviderError("Provider 返回非 JSON 响应") from exc
+                        raise FreightosProviderError("Provider 返回非 JSON 响应", "invalid_response") from exc
                     expected_mode = str(parameters["mode"])
                     result = parse_freightos_response(payload, expected_mode)
                     logger.info(
@@ -197,4 +209,16 @@ class FreightosPublicProvider:
             fingerprint[:16],
             type(last_error).__name__,
         )
-        raise FreightosProviderError("Freightos 公共估算当前不可用") from last_error
+        outcome: ProviderOutcome
+        if isinstance(last_error, FreightosProviderError):
+            outcome = last_error.outcome
+        elif isinstance(last_error, httpx.TimeoutException):
+            outcome = "timeout"
+        elif isinstance(last_error, httpx.NetworkError):
+            outcome = "network"
+        elif isinstance(last_error, httpx.HTTPStatusError):
+            status_code = last_error.response.status_code
+            outcome = "http_4xx" if 400 <= status_code < 500 else "http_5xx" if status_code >= 500 else "invalid_response"
+        else:
+            outcome = "unavailable"
+        raise FreightosProviderError("Freightos 公共估算当前不可用", outcome) from last_error

@@ -26,6 +26,7 @@ from app.route_estimates.models import (
     ShipmentMethod,
     TransitTimeRange,
 )
+from app.route_estimates.telemetry import record_route_estimate_stage
 
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,10 @@ class RouteEstimateService:
     async def estimate(self, payload: RouteEstimateRequest) -> RouteEstimateResponse:
         request_id = uuid4().hex
         if payload.cargo.shipment_method == ShipmentMethod.RORO:
+            record_route_estimate_stage("location_resolution", "not_reached")
+            record_route_estimate_stage("provider_cache", "not_reached")
+            record_route_estimate_stage("provider_call", "not_called")
+            record_route_estimate_stage("provider_call", "unsupported")
             fingerprint = request_fingerprint(payload.origin_port_id, payload.destination_port_id, payload.model_dump(mode="json", by_alias=True))
             return self._empty_response(
                 EstimateStatus.UNSUPPORTED,
@@ -74,8 +79,22 @@ class RouteEstimateService:
                 missing_data=["freightos_marketplace_roro"],
                 assumptions=["Freightos 公共市场端点明确不支持 RoRo；请求未被改写为集装箱"],
             )
-        origin = resolve_port_unlocode(payload.origin_port_id, self.query)
-        destination = resolve_port_unlocode(payload.destination_port_id, self.query)
+        try:
+            origin = resolve_port_unlocode(payload.origin_port_id, self.query)
+            destination = resolve_port_unlocode(payload.destination_port_id, self.query)
+        except LocationResolutionError as exc:
+            outcome = {
+                "unknown_port": "unknown_port",
+                "ambiguous_port": "ambiguous_port",
+                "invalid_location_identity": "invalid_identity",
+                "missing_canonical_unlocode": "missing_unlocode",
+            }.get(exc.code, "unavailable")
+            record_route_estimate_stage("location_resolution", outcome)
+            raise
+        except RuntimeError:
+            record_route_estimate_stage("location_resolution", "unavailable")
+            raise
+        record_route_estimate_stage("location_resolution", "completed")
         parameters = build_freightos_parameters(origin, destination, payload.cargo)
         fingerprint = request_fingerprint(origin, destination, parameters)
         lock, expired_before_lock = await self._prepare_lock(fingerprint)
@@ -83,6 +102,8 @@ class RouteEstimateService:
             cached, expired_while_waiting = await self._cached(fingerprint)
             expired = expired_before_lock or expired_while_waiting
             if cached is not None:
+                record_route_estimate_stage("provider_cache", "hit")
+                record_route_estimate_stage("provider_call", "not_called")
                 logger.info(
                     "route_estimate request_id=%s provider=Freightos status=%s elapsed_ms=0 cache=hit fingerprint=%s",
                     request_id,
@@ -90,7 +111,9 @@ class RouteEstimateService:
                     fingerprint[:16],
                 )
                 return cached
+            record_route_estimate_stage("provider_cache", "expired" if expired else "miss")
             if await self._circuit_is_open():
+                record_route_estimate_stage("provider_call", "circuit_open")
                 return self._empty_response(
                     EstimateStatus.EXPIRED if expired else EstimateStatus.UNAVAILABLE,
                     fingerprint,
@@ -99,6 +122,7 @@ class RouteEstimateService:
                     assumptions=["Provider 熔断期间未返回或复用过期估算"],
                 )
             if not await self._consume_rate_budget():
+                record_route_estimate_stage("provider_call", "rate_limited")
                 return self._empty_response(
                     EstimateStatus.EXPIRED if expired else EstimateStatus.UNAVAILABLE,
                     fingerprint,
@@ -106,9 +130,11 @@ class RouteEstimateService:
                     missing_data=["provider_hourly_rate_budget"],
                     assumptions=["已达到本进程每小时 100 次的公共端点保护上限"],
                 )
+            record_route_estimate_stage("provider_call", "called")
             try:
                 estimate = await self.provider.estimate(parameters, request_id, fingerprint)
-            except FreightosProviderError:
+            except FreightosProviderError as exc:
+                record_route_estimate_stage("provider_call", exc.outcome)
                 await self._record_failure()
                 return self._empty_response(
                     EstimateStatus.EXPIRED if expired else EstimateStatus.UNAVAILABLE,
@@ -123,6 +149,7 @@ class RouteEstimateService:
             has_cost = estimate.cost_min is not None or estimate.cost_max is not None
             has_duration = estimate.transit_min_days is not None or estimate.transit_max_days is not None
             status = EstimateStatus.AVAILABLE if has_cost and has_duration else EstimateStatus.PARTIAL
+            record_route_estimate_stage("provider_call", status.value)
             missing = []
             if not has_cost:
                 missing.append("costRange")

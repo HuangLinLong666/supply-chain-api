@@ -11,6 +11,7 @@ from app.route_estimates.config import RouteEstimateSettings
 from app.route_estimates.locations import LocationResolutionError
 from app.route_estimates.models import RouteEstimateRequest, RouteEstimateResponse
 from app.route_estimates.service import RouteEstimateService
+from app.route_estimates.telemetry import record_route_estimate_stage, route_estimate_telemetry
 from database.neo4j_client import run_query
 
 
@@ -60,10 +61,16 @@ async def parse_request(request: Request) -> RouteEstimateRequest:
 
 
 def authorize(request: Request, supplied_token: str | None) -> None:
-    settings = RouteEstimateSettings()
+    try:
+        settings = RouteEstimateSettings()
+    except (TypeError, ValueError):
+        record_route_estimate_stage("authentication", "configuration_unavailable")
+        raise
     if settings.service_token:
         if supplied_token is None or not secrets.compare_digest(supplied_token, settings.service_token):
+            record_route_estimate_stage("authentication", "rejected")
             raise HTTPException(status_code=401, detail="Invalid or missing route estimate service token")
+        record_route_estimate_stage("authentication", "accepted")
         return
     client_host = request.client.host if request.client else ""
     local_hosts = {"127.0.0.1", "::1", "localhost", "testclient"}
@@ -72,7 +79,9 @@ def authorize(request: Request, supplied_token: str | None) -> None:
         and settings.allow_local_unauthenticated
         and client_host in local_hosts
     ):
+        record_route_estimate_stage("authentication", "accepted")
         return
+    record_route_estimate_stage("authentication", "configuration_unavailable")
     raise HTTPException(status_code=503, detail="Route estimate service authentication is not configured")
 
 
@@ -111,11 +120,22 @@ async def route_estimate(
     request: Request,
     x_route_estimate_token: str | None = Header(default=None, include_in_schema=False),
 ) -> RouteEstimateResponse:
-    authorize(request, x_route_estimate_token)
-    payload = await parse_request(request)
-    try:
-        return await get_service().estimate(payload)
-    except LocationResolutionError as exc:
-        raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)}) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail="Location registry is unavailable") from exc
+    with route_estimate_telemetry():
+        record_route_estimate_stage("request_received", "completed")
+        try:
+            authorize(request, x_route_estimate_token)
+            payload = await parse_request(request)
+            try:
+                response = await get_service().estimate(payload)
+            except LocationResolutionError as exc:
+                raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)}) from exc
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail="Location registry is unavailable") from exc
+        except HTTPException as exc:
+            outcome = "service_unavailable" if exc.status_code >= 500 else "client_error"
+            record_route_estimate_stage("response_mapping", outcome)
+            record_route_estimate_stage("completed", outcome)
+            raise
+        record_route_estimate_stage("response_mapping", "completed")
+        record_route_estimate_stage("completed", "completed")
+        return response

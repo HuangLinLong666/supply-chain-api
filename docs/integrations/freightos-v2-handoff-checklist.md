@@ -190,3 +190,51 @@ tests/test_freightos_route_estimates.py
 - 当前缓存与限流仅在单进程内有效。
 - `/api/routes/recommend` 尚未接入该估算；这属于后续独立 v2 任务。
 - Freightos Beta 和商业使用条款仍需上线前复核。
+
+## 10. 最小脱敏阶段遥测纯 fixture 实施记录
+
+批次：`freightos-route-estimates-v1-redacted-stage-telemetry-fixture-v1`
+
+计划 SHA-256：
+`e35bf7bacded7ae9435c7c118128e72b39e2d4d64ac167971f75268d1e33f5a9`
+
+实施范围符合授权：新增 2 个文件、修改 4 个文件、删除 0 个文件。新增
+`app/route_estimates/telemetry.py` 和 `tests/test_route_estimate_telemetry.py`；修改
+`api.py`、`service.py`、`freightos.py` 以及本交接文档。
+
+遥测仅记录 `request_received`、`authentication`、`location_resolution`、
+`provider_cache`、`provider_call`、`response_mapping` 和 `completed` 阶段。每条新遥测
+只有 `event`、`stage`、`outcome`、`elapsedBucket` 四个字段；阶段和结果均使用
+固定枚举。不记录请求体、货物、Token、URL/URI、requestId、fingerprint、
+错误文本/堆栈、Provider 响应或环境值。
+
+Provider 失败只附加受限分类：`timeout`、`network`、`http_4xx`、`http_5xx`、
+`invalid_response` 或 `unavailable`。固定上游、超时、重试、退避、禁止重定向、
+响应大小、认证、地点查询、缓存、限流、熔断、HTTP 状态、响应契约、
+署名和 fail-soft 业务语义均未改变。
+
+写后 SHA-256：
+
+- `app/route_estimates/api.py`：`175262538d4f1e86d475324b231726f708c7abcacfea075adcdb66a3398774f2`
+- `app/route_estimates/service.py`：`25e8c9b397cb006117f3a9aef81cd5054365257d870280a948a233b119d50fe5`
+- `app/route_estimates/freightos.py`：`8a86ae2286a7bc103c89345309d02ec9328f165e1e44f3d8856f2b532a676e7b`
+- `app/route_estimates/telemetry.py`：`195a76ce3cd355859f379ec4fe3daee1616ced5b83f84ee1881ad1811ebc84ce`
+- `tests/test_route_estimate_telemetry.py`：`5988716968c5f1e71d364a86ea8335485b8856ea10b21fd825c277ffb69bc41a`
+
+验证结果：
+
+- `python -m pytest -q tests/test_route_estimate_telemetry.py`：18 passed。
+- `python -m pytest -q tests/test_freightos_route_estimates.py`：32 passed。
+- `python -m pytest -q`：237 passed。
+- `python -m compileall -q app`：首次因受控环境不允许在仓库
+  `__pycache__` 写临时字节码而未执行完；将 `PYTHONPYCACHEPREFIX` 指向系统
+  临时目录后等价复跑通过，没有产生仓库文件。
+- `git diff --check`：通过。
+
+本批测试使用 fake query、fake provider、`MockTransport`、`caplog` 和
+fail-closed 网络保护。真实网络调用 0、数据库读写 0、部署 0、环境变量修改 0、
+契约修改 0、v2 修改 0、提交 0、推送 0、停止生产请求 0、停止 timer 0。
+
+本批只证明纯 fixture 阶段分类、时延分桶和脱敏输出已完成，不代表 v2、
+supply-chain-api 或 Freightos 真实链路已联通。下一次 Development 真实请求必须使用
+独立的禁止重放计划并重新获得明确授权。
