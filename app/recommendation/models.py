@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -90,6 +90,10 @@ class RecommendationConstraints(ApiModel):
     max_cost_usd: float | None = Field(default=None, gt=0)
     max_duration_days: float | None = Field(default=None, gt=0)
     allowed_modes: list[TransportMode] = Field(default_factory=lambda: list(TransportMode))
+    required_modes: list[TransportMode] = Field(
+        default_factory=list,
+        description="Every returned route must contain each listed mode at least once",
+    )
     avoided_zone_ids: list[str] = Field(default_factory=list)
     min_data_completeness: float | None = Field(default=None, ge=0, le=1)
     require_known_risk: bool = False
@@ -100,12 +104,19 @@ class RecommendationConstraints(ApiModel):
         if not self.allowed_modes:
             raise ValueError("allowedModes 不能为空")
         self.allowed_modes = list(dict.fromkeys(self.allowed_modes))
+        self.required_modes = list(dict.fromkeys(self.required_modes))
+        if not set(self.required_modes).issubset(set(self.allowed_modes)):
+            raise ValueError("requiredModes 必须是 allowedModes 的子集")
         self.avoided_zone_ids = list(dict.fromkeys(item.strip() for item in self.avoided_zone_ids if item.strip()))
         return self
 
 
 class RecommendationRequest(ApiModel):
-    supplier_id: str = Field(min_length=1, description="供应商 ID 或名称")
+    supplier_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="可选供应商 ID 或名称；仅用于供应商起点校验和风险上下文",
+    )
     origin: str = Field(min_length=1, description="起点 locationId；名称仅在能唯一解析时兼容")
     destination: str = Field(min_length=1, description="终点 locationId；名称仅在能唯一解析时兼容")
     cargo: CargoRequest
@@ -117,6 +128,10 @@ class RecommendationRequest(ApiModel):
 
     @model_validator(mode="after")
     def validate_request(self) -> RecommendationRequest:
+        if self.supplier_id is not None:
+            self.supplier_id = self.supplier_id.strip()
+            if not self.supplier_id:
+                raise ValueError("supplierId 提供时不能为空")
         if self.origin.strip().casefold() == self.destination.strip().casefold():
             raise ValueError("origin 和 destination 不能相同")
         if self.strategy == RecommendationStrategy.CUSTOM and self.weights is None:
@@ -256,10 +271,23 @@ class RecommendedRoute(FlexibleApiModel):
     estimated_fields: list[str] = Field(default_factory=list)
 
 
+class DynamicRouteSummary(ApiModel):
+    route_id: str
+    risk_score: float | None = None
+    cost_usd: float | None = None
+    duration_days: float | None = None
+
+
 class DynamicRoutingResponse(ApiModel):
     rerouted: bool = False
     avoided_zones: list[str] = Field(default_factory=list)
     fallback_used: bool = False
+    previous_route_id: str | None = None
+    reason_codes: list[str] = Field(default_factory=list)
+    risk_snapshot_id: str | None = None
+    changed_at: datetime | None = None
+    previous_route: DynamicRouteSummary | None = None
+    new_route: DynamicRouteSummary | None = None
 
 
 class RejectedCandidate(ApiModel):
@@ -267,10 +295,17 @@ class RejectedCandidate(ApiModel):
     reasons: list[str]
 
 
+class SupplierContext(ApiModel):
+    status: Literal["resolved", "not_provided", "unmapped", "unavailable"] = "unavailable"
+    supplier_id: str | None = None
+    risk_status: Literal["available", "partial", "unavailable"] = "unavailable"
+
+
 class RecommendationResponse(ApiModel):
     snapshot_id: str
     scoring_version: str
     generated_at: datetime
+    supplier_context: SupplierContext = Field(default_factory=SupplierContext)
     query: dict[str, Any]
     resolved_weights: RecommendationWeights
     normalization: NormalizationMetadata

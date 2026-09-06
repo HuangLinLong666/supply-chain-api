@@ -257,11 +257,9 @@ def test_05_gdelt_high_risk_zone_triggers_reroute():
         recommendation_request("min_cost", auto_reroute=True),
     )
     assert first_leg_ids(result) == ["CAPE-1", "CAPE-2"]
-    assert result["dynamicRouting"] == {
-        "rerouted": True,
-        "avoidedZones": ["red-sea"],
-        "fallbackUsed": False,
-    }
+    assert result["dynamicRouting"]["rerouted"] is True
+    assert result["dynamicRouting"]["avoidedZones"] == ["red-sea"]
+    assert result["dynamicRouting"]["fallbackUsed"] is False
 
 
 def test_05b_reroute_selects_lowest_risk_safe_alternative():
@@ -308,7 +306,58 @@ def test_05c_extreme_weather_can_trigger_cross_mode_reroute():
     )
 
     assert first_leg_ids(result) == ["SAFE-AIR"]
-    assert result["dynamicRouting"] == {"rerouted": True, "avoidedZones": [], "fallbackUsed": False}
+    assert result["dynamicRouting"]["rerouted"] is True
+    assert result["dynamicRouting"]["avoidedZones"] == []
+    assert result["dynamicRouting"]["fallbackUsed"] is False
+
+
+def test_hormuz_risk_change_reroutes_to_real_road_alternative_and_preserves_deltas():
+    low_hormuz = [
+        route_segment(
+            "HORMUZ-SEA", distance=100, duration=2, risk=0.0, provider="GDELT",
+            factor_key="war", news_risk_score=0.0, news_risk_zones=["hormuz-strait"],
+        ),
+        route_segment("ROAD-ALT", mode="road", distance=900, duration=8, risk=0.0),
+    ]
+    low = RecommendationEngine().recommend(
+        low_hormuz, {"A"}, {"B"}, SUPPLIER, recommendation_request("min_cost", auto_reroute=True)
+    )
+    assert first_leg_ids(low) == ["HORMUZ-SEA"]
+    assert low["dynamicRouting"]["rerouted"] is False
+
+    high_hormuz = [dict(item) for item in low_hormuz]
+    high_hormuz[0].update(
+        route_weather_risk=None,
+        route_weather_provider=None,
+        news_risk_score=0.95,
+        news_risk_provider="GDELT",
+        news_risk_zones=["hormuz-strait"],
+        news_risk_factors_json='{"war":{"score":95,"confidence":0.9,"evidence":["hormuz-cluster"],"observedAt":"2026-09-06T00:00:00Z"}}',
+        news_risk_expires_at="2999-09-06T03:00:00Z",
+        news_risk_updated_at="2026-09-06T00:00:00Z",
+    )
+    high = RecommendationEngine().recommend(
+        high_hormuz, {"A"}, {"B"}, SUPPLIER, recommendation_request("min_cost", auto_reroute=True)
+    )
+    assert first_leg_ids(high) == ["ROAD-ALT"]
+    assert high["dynamicRouting"]["rerouted"] is True
+    assert high["dynamicRouting"]["avoidedZones"] == ["hormuz-strait"]
+    assert high["dynamicRouting"]["previousRoute"]["routeId"] != high["dynamicRouting"]["newRoute"]["routeId"]
+    assert high["dynamicRouting"]["riskSnapshotId"].startswith("risk-")
+
+
+def test_hormuz_without_safe_alternative_sets_explicit_fallback_warning():
+    risky = route_segment(
+        "HORMUZ-ONLY", distance=100, duration=2, risk=0.9, provider="GDELT",
+        factor_key="war", news_risk_score=0.95, news_risk_zones=["hormuz-strait"],
+    )
+    result = RecommendationEngine().recommend(
+        [risky], {"A"}, {"B"}, SUPPLIER, recommendation_request("min_cost", auto_reroute=True)
+    )
+    assert first_leg_ids(result) == ["HORMUZ-ONLY"]
+    assert result["dynamicRouting"]["fallbackUsed"] is True
+    assert result["dynamicRouting"]["rerouted"] is False
+    assert result["dynamicRouting"]["reasonCodes"] == ["HIGH_RISK_ROUTE_NO_SAFE_ALTERNATIVE"]
 
 
 def test_06_missing_ais_does_not_add_a_fourth_risk_factor():
@@ -430,7 +479,8 @@ def test_09_supplier_cannot_use_unrelated_origin(monkeypatch):
     with pytest.raises(HTTPException) as error:
         main.recommend_routes_post(request)
     assert error.value.status_code == 422
-    assert "not linked to supplier" in error.value.detail
+    assert error.value.detail["code"] == "supplier_origin_mismatch"
+    assert "not linked to the supplied supplier" in error.value.detail["message"]
 
 
 def test_10_every_returned_node_has_name_and_coordinate_status():

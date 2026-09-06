@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -280,6 +281,77 @@ def test_mode_must_match_endpoint_location_types():
     valid_air.update(from_labels=["Airport", "TransportLocation"], to_labels=["Airport", "TransportLocation"])
     prepared = RecommendationEngine().prepare_segments([invalid_sea, valid_air], recommendation_request())
     assert [item["segment_id"] for item in prepared] == ["VALID-AIR"]
+
+
+def test_required_modes_are_enforced_during_candidate_generation_and_constraints():
+    road = segment("ROAD-A-M", "road", 100, 1.0, 0.2)
+    road.update(to_id="M", to_name="中转港")
+    sea = segment("SEA-M-B", "sea", 500, 5.0, 0.2)
+    sea.update(from_id="M", from_name="中转港")
+    sea_only = segment("SEA-A-B", "sea", 450, 4.0, 0.2)
+    request = recommendation_request(
+        constraints={"allowedModes": ["road", "sea"], "requiredModes": ["road", "sea"]}
+    )
+
+    result = RecommendationEngine().recommend(
+        [road, sea, sea_only],
+        {"A"},
+        {"B"},
+        supplier_without_risk(),
+        request,
+    )
+
+    assert result["routes"]
+    assert all({leg["mode"] for leg in route["legs"]} == {"road", "sea"} for route in result["routes"])
+
+
+def test_required_modes_must_be_allowed():
+    with pytest.raises(ValidationError, match="requiredModes"):
+        recommendation_request(
+            constraints={"allowedModes": ["sea"], "requiredModes": ["road", "sea"]}
+        )
+
+
+def test_route_recommendation_token_is_required_when_configured(monkeypatch):
+    monkeypatch.setenv("ROUTE_RECOMMENDATION_TOKEN", "route-token-test")
+    with pytest.raises(main.HTTPException) as error:
+        main.require_route_recommendation_token(None)
+    assert error.value.status_code == 401
+    main.require_route_recommendation_token("route-token-test")
+
+
+def test_production_fails_closed_when_route_recommendation_token_is_missing(monkeypatch):
+    monkeypatch.delenv("ROUTE_RECOMMENDATION_TOKEN", raising=False)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    with pytest.raises(main.HTTPException) as error:
+        main.require_route_recommendation_token(None)
+    assert error.value.status_code == 503
+
+
+def test_authenticated_gdelt_monitor_update_can_wait_for_fresh_snapshot(monkeypatch):
+    monkeypatch.setattr(main, "GdeltSettings", lambda: SimpleNamespace(admin_token="gdelt-test"))
+    monkeypatch.setattr(
+        main,
+        "update_news_risk",
+        lambda dry_run, zone_ids=None: {
+            "updatedAt": "2026-09-06T00:00:00Z",
+            "zonesUpdated": 1,
+            "segmentsExposed": 2,
+            "failures": [],
+        },
+    )
+    result = main.trigger_gdelt_update(
+        main.GdeltUpdateRequest(waitForCompletion=True),
+        main.BackgroundTasks(),
+        "gdelt-test",
+    )
+    assert result == {
+        "status": "completed",
+        "updatedAt": "2026-09-06T00:00:00Z",
+        "zonesUpdated": 1,
+        "segmentsExposed": 2,
+        "failureCount": 0,
+    }
 
 
 def test_openapi_has_new_post_and_deprecated_get_contracts():

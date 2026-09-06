@@ -72,6 +72,25 @@ def stable_route_id(path: list[dict[str, Any]]) -> str:
     return f"route-{digest}"
 
 
+def risk_snapshot_id(segments: list[dict[str, Any]]) -> str | None:
+    observations = sorted({
+        "|".join(
+            (
+                str(segment.get("segment_id") or ""),
+                str(segment.get("news_risk_updated_at") or ""),
+                str(segment.get("news_risk_expires_at") or ""),
+                str(segment.get("news_risk_score") or ""),
+            )
+        )
+        for segment in segments
+        if segment.get("news_risk_provider") and segment.get("news_risk_expires_at")
+    })
+    if not observations:
+        return None
+    digest = hashlib.sha256("\n".join(observations).encode("utf-8")).hexdigest()[:20]
+    return f"risk-{digest}"
+
+
 def timestamp_is_active(value: Any) -> bool:
     if value is None or value == "":
         return True
@@ -85,6 +104,21 @@ def timestamp_is_active(value: Any) -> bool:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed > datetime.now(timezone.utc)
+
+
+def supplier_risk_is_active(supplier: dict[str, Any] | None) -> bool:
+    if supplier is None:
+        return False
+    score = optional_float(supplier.get("riskScore"))
+    return bool(
+        supplier.get("riskStatus") in {"available", "partial"}
+        and score is not None
+        and 0 <= score <= 100
+        and supplier.get("riskProviders")
+        and supplier.get("riskEvidence")
+        and supplier.get("riskExpiresAt")
+        and timestamp_is_active(supplier.get("riskExpiresAt"))
+    )
 
 
 class RecommendationEngine:
@@ -206,7 +240,7 @@ class RecommendationEngine:
         segments: list[dict[str, Any]],
         origin_ids: set[str],
         destination_ids: set[str],
-        supplier: dict[str, Any],
+        supplier: dict[str, Any] | None,
         request: RecommendationRequest,
     ) -> dict[str, Any]:
         weights = self.resolved_weights(request)
@@ -252,8 +286,12 @@ class RecommendationEngine:
                 "includedSegments": [],
                 "dynamicRouting": {
                     "rerouted": False,
-                    "avoidedZones": [],
+                    "avoidedZones": self._high_risk_zones(baseline_paths[0], threshold) if fallback_used else [],
                     "fallbackUsed": fallback_used,
+                    "previousRouteId": stable_route_id(baseline_paths[0]) if baseline_paths else None,
+                    "reasonCodes": ["HIGH_RISK_ROUTE_NO_SAFE_ALTERNATIVE"] if fallback_used else [],
+                    "riskSnapshotId": risk_snapshot_id(prepared),
+                    "changedAt": None,
                 },
             }
 
@@ -274,6 +312,11 @@ class RecommendationEngine:
         self._decorate_rankings(selected, request, risk_first_reroute=risk_first_reroute)
 
         baseline_signature = route_signature(baseline_paths[0]) if baseline_paths else ()
+        baseline_route = (
+            self._score_route(self._build_route(baseline_paths[0], supplier, request), weights, request)
+            if baseline_paths
+            else None
+        )
         selected_signature = tuple(selected[0].pop("_segment_ids", [])) if selected else ()
         for route in selected[1:]:
             route.pop("_segment_ids", None)
@@ -304,8 +347,18 @@ class RecommendationEngine:
             ],
             "dynamicRouting": {
                 "rerouted": rerouted,
-                "avoidedZones": avoided_zones if rerouted else [],
+                "avoidedZones": avoided_zones if reroute_requested else [],
                 "fallbackUsed": fallback_used,
+                "previousRouteId": stable_route_id(baseline_paths[0]) if reroute_requested else None,
+                "reasonCodes": (
+                    ["ACTIVE_RISK_THRESHOLD_EXCEEDED", "ALTERNATIVE_ROUTE_SELECTED"]
+                    if rerouted
+                    else ["HIGH_RISK_ROUTE_NO_SAFE_ALTERNATIVE"] if fallback_used else []
+                ),
+                "riskSnapshotId": risk_snapshot_id(prepared),
+                "changedAt": datetime.now(timezone.utc).isoformat() if rerouted else None,
+                "previousRoute": self._dynamic_route_summary(baseline_route) if reroute_requested else None,
+                "newRoute": self._dynamic_route_summary(selected[0]) if selected and reroute_requested else None,
             },
         }
 
@@ -340,6 +393,10 @@ class RecommendationEngine:
                 per_objective_limit,
                 request.constraints.max_hops,
             ):
+                required_modes = {mode.value for mode in request.constraints.required_modes}
+                path_modes = {str(segment.get("mode") or "") for segment in path}
+                if required_modes and not required_modes.issubset(path_modes):
+                    continue
                 signature = route_signature(path)
                 if signature in signatures:
                     continue
@@ -348,6 +405,17 @@ class RecommendationEngine:
                 if len(paths) >= maximum_pool_size:
                     return paths
         return paths
+
+    @staticmethod
+    def _dynamic_route_summary(route: dict[str, Any] | None) -> dict[str, Any] | None:
+        if route is None:
+            return None
+        return {
+            "routeId": route["id"],
+            "riskScore": route.get("riskScore"),
+            "costUsd": route.get("cost"),
+            "durationDays": route.get("durationDays"),
+        }
 
     def _segment_cost_estimate(
         self,
@@ -614,7 +682,7 @@ class RecommendationEngine:
     def _build_route(
         self,
         path: list[dict[str, Any]],
-        supplier: dict[str, Any],
+        supplier: dict[str, Any] | None,
         request: RecommendationRequest,
     ) -> dict[str, Any]:
         route = format_route(path, 1)
@@ -636,6 +704,8 @@ class RecommendationEngine:
             leg["costEstimate"] = segment["_cost_estimate"]
             leg["durationEstimate"] = segment["_duration_estimate"]
         self._complete_risk_factor_metadata(route, path)
+        if supplier is not None and supplier_risk_is_active(supplier):
+            self._apply_supplier_risk(route, supplier)
         route["missingData"] = self._missing_data(route)
         route["estimatedFields"] = self._estimated_fields(route)
         route["avoidedRiskZones"] = []
@@ -708,27 +778,21 @@ class RecommendationEngine:
         supplier_score = optional_float(supplier.get("riskScore")) if provider_list else None
         if supplier_score is not None and supplier_score <= 1.0:
             supplier_score *= 100.0
-        supplier_completeness = bounded(float(supplier.get("riskDataCompleteness") or 0.0)) if supplier_score is not None else 0.0
+        supplier_completeness = bounded(optional_float(supplier.get("riskDataCompleteness")) or 0.0)
+        supplier_confidence = optional_float(supplier.get("riskConfidence"))
+        if supplier_confidence is not None and not 0 <= supplier_confidence <= 1:
+            supplier_confidence = None
         route_score = optional_float(route.get("riskScore"))
         route_completeness = bounded(float(route.get("riskDataCompleteness") or 0.0))
         if supplier_score is not None and route_score is not None:
             route["riskScore"] = round(0.2 * supplier_score + 0.8 * route_score, 2)
             route["riskDataCompleteness"] = round(0.2 * supplier_completeness + 0.8 * route_completeness, 4)
             route["riskStatus"] = "available" if supplier.get("riskStatus") == "available" and route.get("riskStatus") == "available" else "partial"
-        elif route_score is not None:
-            route["riskDataCompleteness"] = round(0.8 * route_completeness, 4)
-            route["riskStatus"] = "partial"
-            route["riskMissingFactors"] = sorted(set(route.get("riskMissingFactors") or []) | {"supplier_risk"})
         elif supplier_score is not None:
             route["riskScore"] = round(supplier_score, 2)
             route["riskDataCompleteness"] = round(0.2 * supplier_completeness, 4)
             route["riskStatus"] = "partial"
             route["riskMissingFactors"] = sorted(set(route.get("riskMissingFactors") or []) | {"route_risk"})
-        else:
-            route["riskScore"] = None
-            route["riskDataCompleteness"] = 0.0
-            route["riskStatus"] = "unavailable"
-            route["riskMissingFactors"] = sorted(set(route.get("riskMissingFactors") or []) | {"supplier_risk", "route_risk"})
         route["riskProviders"] = sorted(set(route.get("riskProviders") or []) | set(provider_list))
         route["riskFactors"].insert(
             0,
@@ -739,7 +803,9 @@ class RecommendationEngine:
                 "status": supplier.get("riskStatus") if supplier_score is not None else "unavailable",
                 "provider": provider_list[0] if provider_list else None,
                 "providers": provider_list,
-                "confidence": supplier_completeness if supplier_score is not None else 0.0,
+                "observedAt": supplier.get("riskObservedAt"),
+                "expiresAt": supplier.get("riskExpiresAt"),
+                "confidence": supplier_confidence,
                 "affectedLegIds": [],
                 "evidence": supplier.get("riskEvidence") or [],
                 "detail": supplier.get("riskExplanation") or "供应商暂无可验证风险 Provider",
@@ -826,6 +892,9 @@ class RecommendationEngine:
         allowed = {mode.value for mode in constraints.allowed_modes}
         if not modes.issubset(allowed):
             reasons.append(f"包含 allowedModes 之外的运输方式: {sorted(modes - allowed)}")
+        required = {mode.value for mode in constraints.required_modes}
+        if not required.issubset(modes):
+            reasons.append(f"缺少 requiredModes 要求的运输方式: {sorted(required - modes)}")
         risk_score = optional_float(route.get("riskScore"))
         if constraints.require_known_risk and risk_score is None:
             reasons.append("requireKnownRisk=true，但路线没有可验证风险数据")

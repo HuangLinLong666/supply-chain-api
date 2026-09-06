@@ -87,6 +87,8 @@ uvicorn app.main:app --reload
 - 整车网络健康检查：`http://127.0.0.1:8000/api/v1/health`
 - 原有服务健康检查：`http://127.0.0.1:8000/health`
 - 路径推荐主接口：`POST http://127.0.0.1:8000/api/routes/recommend`
+
+生产环境必须设置 `ROUTE_RECOMMENDATION_TOKEN`，调用方通过 `X-Route-Recommendation-Token` 发送同一服务令牌。未配置令牌的生产实例会以 503 关闭推荐接口；开发环境可在未配置时运行本地测试。令牌不得放入浏览器、URL 或日志。
 - Freightos 公共市场估算：`POST http://127.0.0.1:8000/api/route-estimates/v1`
 
 ## 6. 使用 Docker 启动 Neo4j 和 API
@@ -172,26 +174,28 @@ review_status=pending
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/routes/recommend" \
   -H "Content-Type: application/json" \
+  -H "X-Route-Recommendation-Token: $ROUTE_RECOMMENDATION_TOKEN" \
   -d '{
-    "supplierId":"SUP-CATL",
     "origin":"Shanghai",
     "destination":"Hamburg",
     "cargo":{"type":"finished_vehicle","vehicleType":"electric_vehicle","quantity":1},
     "strategy":"balanced",
     "weights":{"risk":0.5,"cost":0.3,"duration":0.2},
-    "constraints":{"allowedModes":["road","rail","sea"],"maxHops":12},
+    "constraints":{"allowedModes":["road","sea"],"requiredModes":["road","sea"],"maxHops":12},
     "limit":5,
     "autoReroute":true
   }'
 ```
 
-先用以下接口取得供应商、供应商允许的发货起点和城市：
+`supplierId` 是可选的供应商风险上下文。未提供时，`origin` 是权威起点，系统不会查询、猜测或创建供应商；提供时才需要先取得真实供应商及其允许的发货起点：
 
 ```bash
 curl "http://127.0.0.1:8000/api/suppliers?search=CATL"
 curl "http://127.0.0.1:8000/api/suppliers/SUP-CATL/origins"
 curl "http://127.0.0.1:8000/api/cities?search=Shanghai"
 ```
+
+无供应商的成功响应返回 `supplierContext.status=not_provided`。提供供应商后仍严格校验 `SHIPS_FROM`；不存在返回 `supplier_not_found`，无起点映射或起点不匹配返回结构化 `422`。供应商风险只有在状态、Provider、证据和有效期均有效时参与评分，缺失或过期保持 `unavailable`，不会填入默认分。
 
 支持的排序策略：
 
@@ -202,6 +206,8 @@ curl "http://127.0.0.1:8000/api/cities?search=Shanghai"
 - `custom`：必须提供自定义三目标权重。
 
 三项权重之和必须等于 `1`。归一化使用 `config/recommendation_scoring.yaml` 中的固定锚点，不依赖本次候选最大值。缺失风险保持 `null`，不填 50；缺失和低置信度通过 `uncertaintyPenalty` 单独扣分。
+
+`requiredModes` 是 `allowedModes` 的子集，并在候选生成和最终硬约束校验两个阶段执行。例如 `allowedModes=["road","sea"]` 且 `requiredModes=["road","sea"]` 才表示每条结果都必须同时包含公路和海运；`shipmentMethod` 仍只是货物/报价方式。
 
 响应中的 `snapshotId` 和 `routes[].id` 可用于回读：
 

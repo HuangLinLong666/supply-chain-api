@@ -18,40 +18,42 @@
 8. 旧 GET 接口继续存在，但 OpenAPI 已标记为 `deprecated`。
 9. 路线风险收敛为战争、自然灾害、关税/政策三个可审计因子；计算方法可通过 `GET /api/methodology` 读取。
 
-## 2. 前端推荐调用顺序
+## 2. 服务端推荐调用顺序
 
-### 第一步：查询供应商
+浏览器不应直接携带 `X-Route-Recommendation-Token` 调用本接口；由应用服务端持有 Token 并代理请求。
 
-```http
-GET /api/suppliers?search=CATL
-```
-
-取得供应商 ID，例如 `SUP-CATL`。
-
-### 第二步：查询供应商允许的起点
-
-```http
-GET /api/suppliers/SUP-CATL/origins
-```
-
-新 POST 接口不会只检查供应商名称。所选起点必须与供应商的 `SHIPS_FROM` 关系匹配；否则返回 `422`，避免无关供应商使用任意起点。
-
-### 第三步：查询起终点
+### 第一步：查询起终点
 
 ```http
 GET /api/cities?search=Shanghai
 GET /api/cities?search=Hamburg
 ```
 
-起终点兼容地点 ID、旧别名、节点名称或城市；正式前端请求必须使用 `location-id-v2` 的 `locationId`，例如 `PORT-CNSHG` 或 `AIR-PVG`，避免同名地点歧义。完整规则见 `docs/location_id_naming.md`。
+`origin` 是路线规划的权威起点。起终点兼容地点 ID、旧别名、节点名称或城市；正式请求应使用 `location-id-v2` 的 `locationId`，例如 `PORT-CNSHG` 或 `AIR-PVG`，避免同名地点歧义。
 
-### 第四步：提交推荐请求
+### 第二步（可选）：查询供应商上下文
+
+```http
+GET /api/suppliers?search=CATL
+```
+
+只有需要供应商风险和 `SHIPS_FROM` 约束时才提供 `supplierId`。未提供时不会查询、猜测或创建供应商。
+
+提供供应商时，再查询其允许的起点：
+
+```http
+GET /api/suppliers/SUP-CATL/origins
+```
+
+所选起点必须与真实 `SHIPS_FROM` 关系匹配；否则返回结构化 `422`。完整地点规则见 `docs/location_id_naming.md`。
+
+### 第三步：提交推荐请求
 
 ```bash
 curl -X POST "http://localhost:8000/api/routes/recommend" \
   -H "Content-Type: application/json" \
+  -H "X-Route-Recommendation-Token: $ROUTE_RECOMMENDATION_TOKEN" \
   -d '{
-    "supplierId": "SUP-CATL",
     "origin": "Shanghai",
     "destination": "Hamburg",
     "cargo": {
@@ -272,24 +274,27 @@ GET /api/routes/recommend?supplier=CATL&origin=Shanghai&destination=Hamburg
 
 当前版本已提升为 `route-recommendation-v1.3-three-factor`：路线风险只计算战争、自然灾害、关税/政策；三者都可能在达到阈值后触发跨运输方式自动改道。AIS 拥堵等旧维度继续保留独立观测接口，但不再进入路线综合风险。
 
-## 13. 阶段 10 前端接入模板
+## 13. 阶段 10 服务端接入模板
 
-前端只配置 Base URL：
+应用服务端配置 Base URL 和 Token；禁止使用 `NEXT_PUBLIC_`、`VITE_` 或其他浏览器公开变量保存它们：
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=https://supply-chain-api-kyiy.onrender.com
+SUPPLY_CHAIN_API_BASE_URL=https://supply-chain-api.example.com
+SUPPLY_CHAIN_API_TOKEN=server-only-secret
 ```
 
 推荐请求示例：
 
 ```ts
 const response = await fetch(
-  `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/routes/recommend`,
+  `${process.env.SUPPLY_CHAIN_API_BASE_URL}/api/routes/recommend`,
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Route-Recommendation-Token": process.env.SUPPLY_CHAIN_API_TOKEN,
+    },
     body: JSON.stringify({
-      supplierId: "SUP-CATL",
       origin: "Shanghai",
       destination: "Hamburg",
       cargo: {

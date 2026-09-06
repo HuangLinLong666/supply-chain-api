@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import json
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -17,7 +18,7 @@ from pydantic import BaseModel
 
 from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, risk_optimization_value, shortest_path
 from app.recommendation.config import load_recommendation_settings
-from app.recommendation.engine import RecommendationEngine
+from app.recommendation.engine import RecommendationEngine, supplier_risk_is_active
 from app.recommendation.models import RecommendationRequest, RecommendationResponse
 from app.recommendation.storage import (
     GET_ROUTE_QUERY,
@@ -91,6 +92,17 @@ def safe_query(query: str, parameters: dict[str, Any] | None = None) -> list[dic
         return run_query(query, parameters)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def require_route_recommendation_token(provided: str | None) -> None:
+    expected = os.getenv("ROUTE_RECOMMENDATION_TOKEN", "").strip()
+    environment = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).strip().casefold()
+    if not expected:
+        if environment in {"production", "prod"}:
+            raise HTTPException(status_code=503, detail="Route recommendation authentication is not configured")
+        return
+    if not provided or not secrets.compare_digest(provided, expected):
+        raise HTTPException(status_code=401, detail="Invalid or missing route recommendation token")
 
 
 def decoded_json(value: Any) -> Any:
@@ -671,32 +683,43 @@ def recommendation_supplier(value: str) -> dict[str, Any] | None:
                country:shippingOrigin.country,
                labels:labels(shippingOrigin)
              } END) WHERE item IS NOT NULL] AS shippingOrigins
+        WITH supplier,exactRank,shippingOrigins,
+             supplier.provider_risk_status IN ['available','partial']
+             AND size(coalesce(supplier.provider_risk_providers,[]))>0
+             AND size(coalesce(supplier.provider_risk_evidence,[]))>0
+             AND supplier.provider_risk_expires_at IS NOT NULL
+             AND datetime(toString(supplier.provider_risk_expires_at))>datetime() AS activeRisk
         RETURN coalesce(supplier.supplier_id,supplier.supplierCode,elementId(supplier)) AS id,
                supplier.name AS name,supplier.city AS city,supplier.country AS country,
-               CASE WHEN supplier.provider_risk_status IN ['available','partial']
-                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
-                    THEN supplier.provider_risk_score END AS riskScore,
-               CASE WHEN supplier.provider_risk_status IN ['available','partial']
-                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
-                    THEN supplier.provider_risk_status ELSE 'unavailable' END AS riskStatus,
-               CASE WHEN supplier.provider_risk_status IN ['available','partial']
-                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
-                    THEN coalesce(supplier.provider_risk_data_completeness,0.0) ELSE 0.0 END AS riskDataCompleteness,
-               CASE WHEN supplier.provider_risk_status IN ['available','partial']
-                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
-                    THEN coalesce(supplier.provider_risk_providers,[]) ELSE [] END AS riskProviders,
-               CASE WHEN supplier.provider_risk_status IN ['available','partial']
-                          AND size(coalesce(supplier.provider_risk_providers,[]))>0
-                    THEN coalesce(supplier.provider_risk_evidence,[]) ELSE [] END AS riskEvidence,
+               CASE WHEN activeRisk THEN supplier.provider_risk_score END AS riskScore,
+               CASE WHEN activeRisk THEN supplier.provider_risk_status ELSE 'unavailable' END AS riskStatus,
+               CASE WHEN activeRisk THEN coalesce(supplier.provider_risk_data_completeness,0.0) ELSE 0.0 END AS riskDataCompleteness,
+               CASE WHEN activeRisk THEN supplier.provider_risk_confidence END AS riskConfidence,
+               CASE WHEN activeRisk THEN coalesce(supplier.provider_risk_providers,[]) ELSE [] END AS riskProviders,
+               CASE WHEN activeRisk THEN coalesce(supplier.provider_risk_evidence,[]) ELSE [] END AS riskEvidence,
+               CASE WHEN activeRisk THEN toString(supplier.provider_risk_observed_at) END AS riskObservedAt,
+               CASE WHEN activeRisk THEN toString(supplier.provider_risk_expires_at) END AS riskExpiresAt,
                supplier.risk_explanation AS riskExplanation,
                shippingOrigins,
                exactRank
         ORDER BY exactRank,name
-        LIMIT 1
+        LIMIT 20
         """,
         {"value": value},
     )
-    return rows[0] if rows else None
+    if not rows:
+        return None
+    exact = [row for row in rows if int(row.get("exactRank") or 0) == 0]
+    candidates = exact or rows
+    if len(candidates) != 1:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "supplier_ambiguous",
+                "message": "supplierId matched multiple suppliers; submit an exact supplier ID",
+            },
+        )
+    return {key: value for key, value in candidates[0].items() if key != "exactRank"}
 
 
 def supplier_origin_node_ids(
@@ -1006,10 +1029,19 @@ def geography_segment(segment_id: str) -> dict[str, Any]:
     response_model=RecommendationResponse,
     response_model_by_alias=True,
 )
-def recommend_routes_post(payload: RecommendationRequest) -> RecommendationResponse:
-    supplier = recommendation_supplier(payload.supplier_id)
-    if supplier is None:
-        raise HTTPException(status_code=404, detail=f"Supplier {payload.supplier_id!r} was not found")
+def recommend_routes_post(
+    payload: RecommendationRequest,
+    x_route_recommendation_token: str | None = Header(default=None),
+) -> RecommendationResponse:
+    require_route_recommendation_token(
+        x_route_recommendation_token if isinstance(x_route_recommendation_token, str) else None
+    )
+    supplier = recommendation_supplier(payload.supplier_id) if payload.supplier_id is not None else None
+    if payload.supplier_id is not None and supplier is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "supplier_not_found", "message": "Supplier was not found"},
+        )
 
     segments = route_graph_segments()
     matched_origin_ids = matching_node_ids(segments, payload.origin)
@@ -1020,19 +1052,24 @@ def recommend_routes_post(payload: RecommendationRequest) -> RecommendationRespo
         raise HTTPException(status_code=404, detail=f"Destination {payload.destination!r} was not found in the route network")
     ensure_unambiguous_location_match("origin", payload.origin, segments, matched_origin_ids)
     ensure_unambiguous_location_match("destination", payload.destination, segments, destination_ids)
-    if not supplier.get("shippingOrigins"):
+    origin_ids = matched_origin_ids
+    if supplier is not None and not supplier.get("shippingOrigins"):
         raise HTTPException(
             status_code=422,
-            detail=f"Supplier {supplier['id']!r} has no SHIPS_FROM origin mapping; recommendation was not guessed",
+            detail={
+                "code": "supplier_origin_unmapped",
+                "message": "Supplier has no SHIPS_FROM origin mapping; recommendation was not guessed",
+            },
         )
-    origin_ids = supplier_origin_node_ids(segments, matched_origin_ids, supplier)
-    if not origin_ids:
+    if supplier is not None:
+        origin_ids = supplier_origin_node_ids(segments, matched_origin_ids, supplier)
+    if supplier is not None and not origin_ids:
         raise HTTPException(
             status_code=422,
-            detail=(
-                f"Origin {payload.origin!r} is not linked to supplier {supplier['id']!r}; "
-                "use GET /api/suppliers/{supplier_id}/origins"
-            ),
+            detail={
+                "code": "supplier_origin_mismatch",
+                "message": "Origin is not linked to the supplied supplier; use GET /api/suppliers/{supplier_id}/origins",
+            },
         )
 
     engine = RecommendationEngine()
@@ -1043,21 +1080,29 @@ def recommend_routes_post(payload: RecommendationRequest) -> RecommendationRespo
     if not result["networkPathFound"]:
         raise HTTPException(
             status_code=404,
-            detail="No directed feasible RouteSegment path connects the supplier origin and destination",
+            detail="No directed feasible RouteSegment path connects the selected origin and destination",
         )
 
     generated_at = datetime.now(timezone.utc)
-    supplier_summary = {
+    supplier_summary = None if supplier is None else {
         "id": supplier["id"],
         "name": supplier.get("name"),
         "city": supplier.get("city"),
         "country": supplier.get("country"),
+    }
+    supplier_context = {
+        "status": "not_provided" if supplier is None else "resolved",
+        "supplierId": None if supplier is None else str(supplier["id"]),
+        "riskStatus": supplier.get("riskStatus", "unavailable")
+        if supplier_risk_is_active(supplier)
+        else "unavailable",
     }
     response = RecommendationResponse.model_validate(
         {
             "snapshotId": f"recommendation_{uuid4().hex}",
             "scoringVersion": engine.scoring_version,
             "generatedAt": generated_at,
+            "supplierContext": supplier_context,
             "query": {
                 "supplier": supplier_summary,
                 "origin": payload.origin,
@@ -1557,13 +1602,23 @@ def news_risk_clusters(
 class GdeltUpdateRequest(BaseModel):
     dryRun: bool = False
     zoneIds: list[str] = []
+    waitForCompletion: bool = False
 
 
 @app.post("/api/admin/gdelt/update", tags=["Dynamic News Risk Admin"], status_code=202)
-def trigger_gdelt_update(payload: GdeltUpdateRequest, background_tasks: BackgroundTasks, x_gdelt_admin_token: str | None = Header(None)) -> dict[str, str]:
+def trigger_gdelt_update(payload: GdeltUpdateRequest, background_tasks: BackgroundTasks, x_gdelt_admin_token: str | None = Header(None)) -> dict[str, Any]:
     token = GdeltSettings().admin_token
     if not token or x_gdelt_admin_token != token:
         raise HTTPException(401, "Invalid or missing GDELT admin token")
+    if payload.waitForCompletion:
+        result = update_news_risk(payload.dryRun, zone_ids=payload.zoneIds or None)
+        return {
+            "status": "completed",
+            "updatedAt": result["updatedAt"],
+            "zonesUpdated": result["zonesUpdated"],
+            "segmentsExposed": result["segmentsExposed"],
+            "failureCount": len(result["failures"]),
+        }
     background_tasks.add_task(update_news_risk, payload.dryRun, zone_ids=payload.zoneIds or None)
     return {"status": "accepted"}
 
