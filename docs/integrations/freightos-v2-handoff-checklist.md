@@ -250,3 +250,57 @@ supply-chain-api 或 Freightos 真实链路已联通。下一次 Development 真
 - 只为 `app.route_estimates.telemetry` 配置独立 INFO 输出，不启用 root 或整个
   `app.route_estimates` 的 INFO 日志，避免输出既有 requestId 或 fingerprint 日志。
 - `render.yaml` 只声明所需变量名并使用 `sync: false`，不包含任何真实值。
+
+## 12. 2026-09-06 invalid_response 根因细分授权前复核
+
+状态：**授权前复核已完成，未修改实现；等待独立明确授权。**
+
+已知脱敏阶段序列证明请求通过认证、地点解析和 Provider 缓存 miss，随后确实进入一次
+Freightos Provider 调用，并在 Provider 响应解析阶段归类为 `invalid_response`。这排除了本次
+故障属于 timeout、network、HTTP 4xx 或 HTTP 5xx，但现有单一枚举仍无法区分畸形
+Content-Length、超大响应、非 JSON、缺少费率节点、运输方式不匹配、币种不匹配、成本/时效
+区间非法或无可用估算等分支。记录中不保留 requestId、fingerprint、原始响应或货物数据。
+
+2026-09-06 对 Freightos 官方 Shipping Estimates API 文档进行了只读核对。官方 JSON 成功示例
+仍使用 `response.estimatedFreightRates.mode`、`mode.mode`、
+`price.min/max.moneyAmount.amount/currency` 和 `transitTimes.min/max`，与当前成功解析路径一致；
+接口仍标为 Beta。官方页面没有给出足以冻结兼容实现的 JSON “无结果/仅 warning”结构，因此
+本轮不猜测、不新增宽泛兼容分支，也不把未知结构映射为可用估算。官方页面：
+<https://ship.freightos.com/api/shippingCalculator>。
+
+只读源码审计还发现：当前解析器在仅返回一个 mode 时，即使该 mode 不等于请求的 FCL/LCL，
+也会以单项 fallback 接受。冻结候选将移除此 fallback，只允许精确请求 mode；不会把其他运输
+方式当成请求结果。
+
+基线验证：三个现有专项共 `63 passed`；临时目录内存模拟补丁与新 fixture 共 `80 passed`。
+两个仓库的 `git diff --check` 均通过。真实网络调用 0、Provider 调用 0、数据库读写 0、部署
+0、环境变量修改 0、提交 0、推送 0。临时模拟不构成仓库实现。
+
+### 冻结实施计划
+
+- batchId：`freightos-route-estimates-v1-invalid-response-reason-telemetry-fixture-v1`
+- 计划 SHA-256：`a38937fceafd7a88dbbaac0ea8258821ffadb903af22c259c0dbe17af6c48cf8`
+- 修改：`app/route_estimates/freightos.py`、`service.py`、`telemetry.py`
+- 新增：`tests/test_freightos_invalid_response_reasons.py`
+- 新增 1、修改 3、删除 0；模拟 diff 为 `+297/-16`
+- 保持 endpoint、redirect 禁止、超时/重试、1 MiB 上限、认证、地点解析、缓存、限流、熔断、
+  HTTP/响应契约、fail-soft、null 缺失值和署名语义不变。
+
+写前 → 模拟写后 SHA-256：
+
+- `freightos.py`：`8a86ae2286a7bc103c89345309d02ec9328f165e1e44f3d8856f2b532a676e7b` →
+  `10cc1b11e90b0ac7a4b21480e83a68c90bf8803fbacca14d0ff5ae853500a7f7`
+- `service.py`：`25e8c9b397cb006117f3a9aef81cd5054365257d870280a948a233b119d50fe5` →
+  `c4d8e2a6e06b7e3c1699fd8b0ca65ad0f50e64a705d4bd40bc0dfb6b5c20be69`
+- `telemetry.py`：`550f7fdbda91717af7f44eb9357c028474dec2fffbfebf9e64f595c0af503c12` →
+  `7f366229d5d12e73863e14931a17157a664e03f9fa40b0265282b1e6de557e9c`
+- 新测试：`a498f5bef8174f49de266f19826c62ad5aab9ad2113c6547389a291313688018`
+
+规范单行 JSON（按键排序、无尾随换行计算 SHA-256）：
+
+```json
+{"batchId":"freightos-route-estimates-v1-invalid-response-reason-telemetry-fixture-v1","branch":"feature/freightos-route-estimates-v1","calls":{"databaseReads":0,"databaseWrites":0,"deployments":0,"provider":0,"realNetwork":0},"changes":["attach a bounded invalid_response_reason to FreightosProviderError","classify every existing invalid response branch without retaining provider data","emit provider_response_validation with the bounded reason before provider_call invalid_response","reject a returned mode that does not exactly match the requested FCL or LCL mode","add one fail-closed pure-fixture test module"],"contractChanges":0,"counts":{"add":1,"delete":0,"deletions":16,"insertions":297,"modify":3},"environmentChanges":0,"files":{"add":{"tests/test_freightos_invalid_response_reasons.py":"a498f5bef8174f49de266f19826c62ad5aab9ad2113c6547389a291313688018"},"delete":[],"modify":{"app/route_estimates/freightos.py":{"after":"10cc1b11e90b0ac7a4b21480e83a68c90bf8803fbacca14d0ff5ae853500a7f7","before":"8a86ae2286a7bc103c89345309d02ec9328f165e1e44f3d8856f2b532a676e7b"},"app/route_estimates/service.py":{"after":"c4d8e2a6e06b7e3c1699fd8b0ca65ad0f50e64a705d4bd40bc0dfb6b5c20be69","before":"25e8c9b397cb006117f3a9aef81cd5054365257d870280a948a233b119d50fe5"},"app/route_estimates/telemetry.py":{"after":"7f366229d5d12e73863e14931a17157a664e03f9fa40b0265282b1e6de557e9c","before":"550f7fdbda91717af7f44eb9357c028474dec2fffbfebf9e64f595c0af503c12"}}},"head":"a08e55c7e15bf7689969b2a7da70ae3cfebbba72","invalidResponseReasons":["redirect_response","invalid_content_length","response_too_large","non_json_response","invalid_root_object","missing_estimated_freight_rates","unsupported_rate_mode_shape","requested_mode_absent","currency_mismatch","invalid_cost_range","invalid_transit_range","no_usable_estimate","unknown_invalid_response"],"officialReview":{"checkedAt":"2026-09-06","compatibilityExpansionAuthorized":false,"documentedJsonNoResultShapeAvailable":false,"successShapeMatchesCurrentParser":true,"url":"https://ship.freightos.com/api/shippingCalculator"},"preserve":["fixed provider endpoint","redirect prohibition","timeout and retry policy","one MiB response limit","authentication","location-id-v2 resolution","cache rate-limit circuit-breaker","HTTP and route-estimates-v1 response contract","unavailable fail-soft behavior","missing values remain null","Freightos attribution","no Neo4j writes"],"recovery":"Reverse only this four-file patch and remove only the new test file; do not alter credentials, deployment state, databases, caches, contracts, or unrelated work.","repository":"supply-chain-api","tests":["PYTHON_DOTENV_DISABLED=1 python -m pytest -q -p no:cacheprovider tests/test_freightos_invalid_response_reasons.py","PYTHON_DOTENV_DISABLED=1 python -m pytest -q -p no:cacheprovider tests/test_freightos_route_estimates.py tests/test_route_estimate_telemetry.py tests/test_route_estimate_5xx_diagnostics.py","PYTHON_DOTENV_DISABLED=1 python -m pytest -q -p no:cacheprovider","PYTHONPYCACHEPREFIX=<git-ignored-temp-dir> PYTHON_DOTENV_DISABLED=1 python -m compileall -q app","git diff --check"]}
+```
+
+该计划只增加受限原因分类和严格 mode 匹配，不实施未经官方结构支持的兼容解析。未经下一轮
+对该 batchId、计划 SHA、文件集合和 diff 的明确授权，不得应用补丁。
