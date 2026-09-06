@@ -34,6 +34,7 @@ from gdelt.service import update_news_risk
 from app.vehicle_network.api import router as vehicle_network_router
 from app.vehicle_network.core import load_strategy
 from app.route_estimates import router as route_estimates_router
+from app.route_estimates.telemetry import configure_route_estimate_telemetry_logging
 from ais.api import router as ais_router
 
 
@@ -49,6 +50,7 @@ def cors_origins() -> list[str]:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     from weather.scheduler import start_scheduler, stop_scheduler
+    configure_route_estimate_telemetry_logging()
     start_scheduler()
     yield
     stop_scheduler()

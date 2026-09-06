@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, Query
 from neo4j.exceptions import AuthError, Neo4jError, ServiceUnavailable
 
 try:
@@ -65,13 +65,19 @@ def verify_connectivity() -> None:
     get_driver().verify_connectivity()
 
 
-def run_query(query: str, parameters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+def run_query(
+    query: str,
+    parameters: dict[str, Any] | None = None,
+    *,
+    timeout_seconds: float | None = None,
+) -> list[dict[str, Any]]:
     """Run a read query against AuraDB and return JSON-friendly dictionaries."""
     settings = get_settings()
     try:
         session_options = {"database": settings.database} if settings.database else {}
         with get_driver().session(**session_options) as session:
-            result = session.run(query, parameters or {})
+            bounded_query = Query(query, timeout=timeout_seconds) if timeout_seconds is not None else query
+            result = session.run(bounded_query, parameters or {})
             return [to_jsonable(record.data()) for record in result]
     except AuthError as exc:
         raise RuntimeError("AuraDB authentication failed. Check AURA_NEO4J_USERNAME and AURA_NEO4J_PASSWORD.") from exc

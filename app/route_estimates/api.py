@@ -5,9 +5,15 @@ import secrets
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from app.route_estimates.config import RouteEstimateSettings
+from app.route_estimates.diagnostics import (
+    DOWNSTREAM_OUTCOME_HEADER,
+    diagnostic_headers,
+    route_estimate_health_snapshot,
+)
 from app.route_estimates.locations import LocationResolutionError
 from app.route_estimates.models import RouteEstimateRequest, RouteEstimateResponse
 from app.route_estimates.service import RouteEstimateService
@@ -65,11 +71,19 @@ def authorize(request: Request, supplied_token: str | None) -> None:
         settings = RouteEstimateSettings()
     except (TypeError, ValueError):
         record_route_estimate_stage("authentication", "configuration_unavailable")
-        raise
+        raise HTTPException(
+            status_code=503,
+            detail="Route estimate service configuration is unavailable",
+            headers=diagnostic_headers("authentication", "route_estimate_settings_invalid"),
+        )
     if settings.service_token:
         if supplied_token is None or not secrets.compare_digest(supplied_token, settings.service_token):
             record_route_estimate_stage("authentication", "rejected")
-            raise HTTPException(status_code=401, detail="Invalid or missing route estimate service token")
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing route estimate service token",
+                headers=diagnostic_headers("authentication", "authentication_rejected"),
+            )
         record_route_estimate_stage("authentication", "accepted")
         return
     client_host = request.client.host if request.client else ""
@@ -82,7 +96,20 @@ def authorize(request: Request, supplied_token: str | None) -> None:
         record_route_estimate_stage("authentication", "accepted")
         return
     record_route_estimate_stage("authentication", "configuration_unavailable")
-    raise HTTPException(status_code=503, detail="Route estimate service authentication is not configured")
+    raise HTTPException(
+        status_code=503,
+        detail="Route estimate service authentication is not configured",
+        headers=diagnostic_headers("authentication", "authentication_configuration_unavailable"),
+    )
+
+
+@router.get("/health/route-estimates", tags=["Service"])
+def route_estimate_health() -> JSONResponse:
+    def bounded_health_query(query: str, parameters: dict[str, Any] | None) -> list[dict[str, Any]]:
+        return run_query(query, parameters, timeout_seconds=5.0)
+
+    result = route_estimate_health_snapshot(bounded_health_query)
+    return JSONResponse(status_code=200 if result["status"] == "ready" else 503, content=result)
 
 
 @router.post(
@@ -126,12 +153,44 @@ async def route_estimate(
             authorize(request, x_route_estimate_token)
             payload = await parse_request(request)
             try:
-                response = await get_service().estimate(payload)
+                service = get_service()
+            except (TypeError, ValueError, RuntimeError) as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Route estimate service is unavailable",
+                    headers=diagnostic_headers("service_initialization", "service_initialization_failed"),
+                ) from exc
+            try:
+                raw_response = await service.estimate(payload)
             except LocationResolutionError as exc:
-                raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)}) from exc
+                raise HTTPException(
+                    status_code=422,
+                    detail={"code": exc.code, "message": str(exc)},
+                    headers=diagnostic_headers("location_resolution", "location_identity_invalid"),
+                ) from exc
             except RuntimeError as exc:
-                raise HTTPException(status_code=503, detail="Location registry is unavailable") from exc
+                raise HTTPException(
+                    status_code=503,
+                    detail="Location registry is unavailable",
+                    headers=diagnostic_headers("location_resolution", "location_registry_unavailable"),
+                ) from exc
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Route estimate service encountered an internal error",
+                    headers=diagnostic_headers("internal", "unhandled_internal_error"),
+                ) from exc
+            try:
+                response = RouteEstimateResponse.model_validate(raw_response)
+            except ValidationError as exc:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Route estimate response is unavailable",
+                    headers=diagnostic_headers("response_validation", "response_validation_failed"),
+                ) from exc
         except HTTPException as exc:
+            if not exc.headers or DOWNSTREAM_OUTCOME_HEADER not in exc.headers:
+                exc.headers = diagnostic_headers("request_validation", "request_invalid")
             outcome = "service_unavailable" if exc.status_code >= 500 else "client_error"
             record_route_estimate_stage("response_mapping", outcome)
             record_route_estimate_stage("completed", outcome)

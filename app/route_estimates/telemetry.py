@@ -12,6 +12,7 @@ from typing import Callable, Iterator
 
 
 logger = logging.getLogger(__name__)
+_HANDLER_MARKER = "_route_estimate_telemetry_handler"
 
 STAGE_OUTCOMES: dict[str, frozenset[str]] = {
     "request_received": frozenset({"completed"}),
@@ -59,6 +60,19 @@ class TelemetryContext:
 
 
 _context: ContextVar[TelemetryContext | None] = ContextVar("route_estimate_telemetry", default=None)
+
+
+def configure_route_estimate_telemetry_logging() -> None:
+    """Emit only the four-field telemetry logger at INFO in deployed Uvicorn processes."""
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    if any(getattr(handler, _HANDLER_MARKER, False) for handler in logger.handlers):
+        return
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    setattr(handler, _HANDLER_MARKER, True)
+    logger.addHandler(handler)
 
 
 def elapsed_bucket(elapsed_ms: float | None) -> str:

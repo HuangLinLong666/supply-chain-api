@@ -238,3 +238,15 @@ fail-closed 网络保护。真实网络调用 0、数据库读写 0、部署 0�
 本批只证明纯 fixture 阶段分类、时延分桶和脱敏输出已完成，不代表 v2、
 supply-chain-api 或 Freightos 真实链路已联通。下一次 Development 真实请求必须使用
 独立的禁止重放计划并重新获得明确授权。
+
+## 11. HTTP 5xx 根因分类与零 Provider 健康诊断
+
+- `GET /health/route-estimates` 只验证 route-estimates 配置、服务认证是否已配置，以及两个
+  Demo 港口能否按 `location-id-v2` 唯一解析；Provider 固定为 `not_called`。
+- 非 2xx 的 route-estimates 响应只通过 `X-Route-Estimate-Stage` 和
+  `X-Route-Estimate-Outcome` 传递白名单诊断枚举，不返回错误详情或配置值。
+- 配置错误、地点注册表不可用、服务初始化失败、响应校验失败和未捕获内部异常均被明确分类；
+  Provider 的受控失败仍保持 HTTP 200 和 `unavailable/expired` 业务状态。
+- 只为 `app.route_estimates.telemetry` 配置独立 INFO 输出，不启用 root 或整个
+  `app.route_estimates` 的 INFO 日志，避免输出既有 requestId 或 fingerprint 日志。
+- `render.yaml` 只声明所需变量名并使用 `sync: false`，不包含任何真实值。

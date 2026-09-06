@@ -16,3 +16,21 @@ services:
         sync: false
       - key: API_CORS_ORIGINS
         sync: false
+      - key: APP_ENV
+        sync: false
+      - key: ROUTE_ESTIMATE_SERVICE_TOKEN
+        sync: false
+      - key: ROUTE_ESTIMATE_ALLOW_LOCAL_UNAUTHENTICATED
+        sync: false
+      - key: FREIGHTOS_TIMEOUT_SECONDS
+        sync: false
+      - key: FREIGHTOS_MAX_RETRIES
+        sync: false
+      - key: FREIGHTOS_CACHE_TTL_SECONDS
+        sync: false
+      - key: FREIGHTOS_HOURLY_REQUEST_LIMIT
+        sync: false
+      - key: FREIGHTOS_CIRCUIT_FAILURE_THRESHOLD
+        sync: false
+      - key: FREIGHTOS_CIRCUIT_OPEN_SECONDS
+        sync: false
