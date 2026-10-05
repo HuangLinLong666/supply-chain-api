@@ -19,6 +19,12 @@ from pydantic import BaseModel
 from app.route_optimizer import add_coordinate_fallbacks, format_route, k_shortest_paths, risk_optimization_value, shortest_path
 from app.recommendation.config import load_recommendation_settings
 from app.recommendation.engine import RecommendationEngine, supplier_risk_is_active
+from app.recommendation.errors import (
+    InvalidRecommendationConstraints,
+    ROUTE_RECOMMENDATION_ERROR_RESPONSES,
+    route_recommendation_error,
+    validate_recommendation_business_constraints,
+)
 from app.recommendation.models import RecommendationRequest, RecommendationResponse
 from app.recommendation.storage import (
     GET_ROUTE_QUERY,
@@ -1028,6 +1034,7 @@ def geography_segment(segment_id: str) -> dict[str, Any]:
     summary="Recommend routes with multi-objective weights and hard constraints",
     response_model=RecommendationResponse,
     response_model_by_alias=True,
+    responses=ROUTE_RECOMMENDATION_ERROR_RESPONSES,
 )
 def recommend_routes_post(
     payload: RecommendationRequest,
@@ -1036,52 +1043,38 @@ def recommend_routes_post(
     require_route_recommendation_token(
         x_route_recommendation_token if isinstance(x_route_recommendation_token, str) else None
     )
+    try:
+        validate_recommendation_business_constraints(payload)
+    except InvalidRecommendationConstraints as exc:
+        raise route_recommendation_error("invalid_constraints") from exc
     supplier = recommendation_supplier(payload.supplier_id) if payload.supplier_id is not None else None
     if payload.supplier_id is not None and supplier is None:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "supplier_not_found", "message": "Supplier was not found"},
-        )
+        raise route_recommendation_error("supplier_not_found")
 
     segments = route_graph_segments()
     matched_origin_ids = matching_node_ids(segments, payload.origin)
     destination_ids = matching_node_ids(segments, payload.destination)
     if not matched_origin_ids:
-        raise HTTPException(status_code=404, detail=f"Origin {payload.origin!r} was not found in the route network")
+        raise route_recommendation_error("origin_not_found")
     if not destination_ids:
-        raise HTTPException(status_code=404, detail=f"Destination {payload.destination!r} was not found in the route network")
+        raise route_recommendation_error("destination_not_found")
     ensure_unambiguous_location_match("origin", payload.origin, segments, matched_origin_ids)
     ensure_unambiguous_location_match("destination", payload.destination, segments, destination_ids)
     origin_ids = matched_origin_ids
     if supplier is not None and not supplier.get("shippingOrigins"):
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "supplier_origin_unmapped",
-                "message": "Supplier has no SHIPS_FROM origin mapping; recommendation was not guessed",
-            },
-        )
+        raise route_recommendation_error("supplier_origin_unmapped")
     if supplier is not None:
         origin_ids = supplier_origin_node_ids(segments, matched_origin_ids, supplier)
     if supplier is not None and not origin_ids:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "supplier_origin_mismatch",
-                "message": "Origin is not linked to the supplied supplier; use GET /api/suppliers/{supplier_id}/origins",
-            },
-        )
+        raise route_recommendation_error("supplier_origin_mismatch")
 
     engine = RecommendationEngine()
     try:
         result = engine.recommend(segments, origin_ids, destination_ids, supplier, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail="Route recommendation could not be completed") from exc
     if not result["networkPathFound"]:
-        raise HTTPException(
-            status_code=404,
-            detail="No directed feasible RouteSegment path connects the selected origin and destination",
-        )
+        raise route_recommendation_error("no_candidates")
 
     generated_at = datetime.now(timezone.utc)
     supplier_summary = None if supplier is None else {
